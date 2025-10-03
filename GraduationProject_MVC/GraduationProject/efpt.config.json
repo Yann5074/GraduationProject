@@ -1,0 +1,202 @@
+﻿{
+   "CodeGenerationMode": 4,
+   "ContextClassName": "dbFurniMartContext",
+   "ContextNamespace": null,
+   "FilterSchemas": false,
+   "IncludeConnectionString": false,
+   "MinimumProductVersion": "2.6.1186",
+   "ModelNamespace": null,
+   "OutputContextPath": null,
+   "OutputPath": "Models",
+   "PreserveCasingWithRegex": true,
+   "ProjectRootNamespace": "GraduationProject",
+   "Schemas": null,
+   "SelectedHandlebarsLanguage": 2,
+   "SelectedToBeGenerated": 0,
+   "T4TemplatePath": null,
+   "Tables": [
+      {
+         "Name": "[dbo].[tAccount]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tBrowsingHistory]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tCategory]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tChatRoom]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tCheckinRecord]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tColor]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tContactForms]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tCustomer]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tDeliveryStatus]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tEmployees]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tEmployeesRole]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tEmployeesStatus]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tGender]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tLeave]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tLevel]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tLike]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tLogisticsProvider]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tMaterial]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tMember]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tMessages]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tModel]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tOrder]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tOrderDetail]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tOrderStatus]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tPaymentMethod]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tPaymentStatus]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tPickupMethod]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tProduct]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tProductAsset]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tProductReview]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tProductVariant]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tPStatus]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tResponse]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tSalary]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tShoppingCart]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tStatus]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tTexture]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tTimesheet]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tTimesheetStatus]",
+         "ObjectType": 0
+      }
+   ],
+   "UiHint": null,
+   "UncountableWords": null,
+   "UseAsyncStoredProcedureCalls": true,
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": false,
+   "UseDatabaseNamesForRoutines": true,
+   "UseDateOnlyTimeOnly": true,
+   "UseDbContextSplitting": false,
+   "UseDecimalDataAnnotationForSprocResult": true,
+   "UseFluentApiOnly": true,
+   "UseHandleBars": false,
+   "UseHierarchyId": false,
+   "UseInflector": true,
+   "UseInternalAccessModifiersForSprocsAndFunctions": false,
+   "UseLegacyPluralizer": false,
+   "UseManyToManyEntity": false,
+   "UseNoDefaultConstructor": false,
+   "UseNoNavigations": false,
+   "UseNoObjectFilter": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": false,
+   "UsePrefixNavigationNaming": false,
+   "UseSchemaFolders": false,
+   "UseSchemaNamespaces": false,
+   "UseSpatial": false,
+   "UseT4": false,
+   "UseT4Split": false
+}
