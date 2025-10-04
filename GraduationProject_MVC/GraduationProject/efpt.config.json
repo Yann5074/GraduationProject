@@ -40,7 +40,7 @@
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[tContactForms]",
+         "Name": "[dbo].[tContactForm]",
          "ObjectType": 0
       },
       {
@@ -52,15 +52,15 @@
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[tEmployees]",
+         "Name": "[dbo].[tEmployee]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[tEmployeesRole]",
+         "Name": "[dbo].[tEmployeeRole]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[tEmployeesStatus]",
+         "Name": "[dbo].[tEmployeeStatus]",
          "ObjectType": 0
       },
       {
@@ -92,7 +92,7 @@
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[tMessages]",
+         "Name": "[dbo].[tMessage]",
          "ObjectType": 0
       },
       {

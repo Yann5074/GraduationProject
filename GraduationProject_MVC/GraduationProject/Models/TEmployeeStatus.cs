@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace GraduationProject.Models;
 
-public partial class TEmployeesStatus
+public partial class TEmployeeStatus
 {
     public int FStatusId { get; set; }
 
