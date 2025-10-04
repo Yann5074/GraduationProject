@@ -482,6 +482,9 @@ public partial class dbFurniMartContext : DbContext
             entity.ToTable("tMember");
 
             entity.Property(e => e.FMemberId).HasColumnName("fMemberId");
+            entity.Property(e => e.FAccount)
+                .HasMaxLength(20)
+                .HasColumnName("fAccount");
             entity.Property(e => e.FAddress)
                 .HasMaxLength(150)
                 .HasColumnName("fAddress");
@@ -501,6 +504,9 @@ public partial class dbFurniMartContext : DbContext
             entity.Property(e => e.FName)
                 .HasMaxLength(50)
                 .HasColumnName("fName");
+            entity.Property(e => e.FPasswords)
+                .HasMaxLength(500)
+                .HasColumnName("fPasswords");
             entity.Property(e => e.FPhone)
                 .HasMaxLength(50)
                 .IsUnicode(false)

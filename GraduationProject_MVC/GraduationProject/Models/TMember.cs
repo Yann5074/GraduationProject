@@ -32,4 +32,8 @@ public partial class TMember
     public DateTime? FCreatTime { get; set; }
 
     public DateTime? FUpdateTime { get; set; }
+
+    public string FAccount { get; set; }
+
+    public string FPasswords { get; set; }
 }
