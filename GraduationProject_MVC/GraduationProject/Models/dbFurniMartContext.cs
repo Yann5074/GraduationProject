@@ -33,9 +33,9 @@ public partial class dbFurniMartContext : DbContext
 
     public virtual DbSet<TEmployee> TEmployees { get; set; }
 
-    public virtual DbSet<TEmployeesRole> TEmployeesRoles { get; set; }
+    public virtual DbSet<TEmployeeRole> TEmployeeRoles { get; set; }
 
-    public virtual DbSet<TEmployeesStatus> TEmployeesStatuses { get; set; }
+    public virtual DbSet<TEmployeeStatus> TEmployeeStatuses { get; set; }
 
     public virtual DbSet<TGender> TGenders { get; set; }
 
@@ -250,9 +250,9 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TContactForm>(entity =>
         {
-            entity.HasKey(e => e.FContactFormsId);
+            entity.HasKey(e => e.FContactFormsId).HasName("PK_tContactForms");
 
-            entity.ToTable("tContactForms");
+            entity.ToTable("tContactForm");
 
             entity.Property(e => e.FContactFormsId).HasColumnName("fContactFormsId");
             entity.Property(e => e.FChatRoomId).HasColumnName("fChatRoomId");
@@ -320,9 +320,9 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TEmployee>(entity =>
         {
-            entity.HasKey(e => e.FEmployeeId);
+            entity.HasKey(e => e.FEmployeeId).HasName("PK_tEmployees");
 
-            entity.ToTable("tEmployees");
+            entity.ToTable("tEmployee");
 
             entity.Property(e => e.FEmployeeId).HasColumnName("fEmployeeID");
             entity.Property(e => e.FAccount)
@@ -360,11 +360,11 @@ public partial class dbFurniMartContext : DbContext
             entity.Property(e => e.FStatusId).HasColumnName("fStatusId");
         });
 
-        modelBuilder.Entity<TEmployeesRole>(entity =>
+        modelBuilder.Entity<TEmployeeRole>(entity =>
         {
-            entity.HasKey(e => e.FRoleId);
+            entity.HasKey(e => e.FRoleId).HasName("PK_tEmployeesRole");
 
-            entity.ToTable("tEmployeesRole");
+            entity.ToTable("tEmployeeRole");
 
             entity.Property(e => e.FRoleId).HasColumnName("fRoleId");
             entity.Property(e => e.FRoleClass)
@@ -372,11 +372,11 @@ public partial class dbFurniMartContext : DbContext
                 .HasColumnName("fRoleClass");
         });
 
-        modelBuilder.Entity<TEmployeesStatus>(entity =>
+        modelBuilder.Entity<TEmployeeStatus>(entity =>
         {
-            entity.HasKey(e => e.FStatusId);
+            entity.HasKey(e => e.FStatusId).HasName("PK_tEmployeesStatus");
 
-            entity.ToTable("tEmployeesStatus");
+            entity.ToTable("tEmployeeStatus");
 
             entity.Property(e => e.FStatusId).HasColumnName("fStatusId");
             entity.Property(e => e.FStatus)
@@ -519,9 +519,9 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TMessage>(entity =>
         {
-            entity.HasKey(e => e.FMessagesId);
+            entity.HasKey(e => e.FMessagesId).HasName("PK_tMessages");
 
-            entity.ToTable("tMessages");
+            entity.ToTable("tMessage");
 
             entity.Property(e => e.FMessagesId).HasColumnName("fMessagesId");
             entity.Property(e => e.FChatRoomId).HasColumnName("fChatRoomId");
