@@ -5,7 +5,7 @@ namespace GraduationProject.Controllers
 {
     public class TestController : Controller
     {
-        //注入語法測試
+        //DI 測試
         dbFurniMartContext _context;
         public TestController(dbFurniMartContext context)
         {

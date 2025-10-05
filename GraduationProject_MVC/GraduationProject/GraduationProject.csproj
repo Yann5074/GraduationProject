@@ -18,6 +18,10 @@
   <ItemGroup>
     <Folder Include="DTOs\" />
     <Folder Include="Interfaces\" />
+    <Folder Include="DTOs\" />
+    <Folder Include="Interfaces\" />
+    <Folder Include="ViewModels\" />
+    <Folder Include="Services\" />
     <Folder Include="Wraps\" />
     <Folder Include="Tools\" />
     <Folder Include="Services\" />
