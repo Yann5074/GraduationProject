@@ -21,7 +21,7 @@ namespace GraduationProject.Services
         {
             string keywordOrderId = vm.txtKeywordOrderId;
             string keywordMemberName = vm.txtKeywordMemberName;
-            string keywordMemberPhone = vm.txtKeywordMemverPhone;
+            string keywordMemberPhone = vm.txtKeywordMemberPhone;
             var query = _context.TOrders
                 .Include(o => o.Member)
                 .Include(o => o.Employee)
@@ -33,6 +33,7 @@ namespace GraduationProject.Services
                 {
                     OrderId = o.FOrderId.ToString(),
                     MemberName = o.Member.FName,
+                    MemberPhone = o.Member.FPhone,
                     EmployeeName = o.Employee.FName,
                     OrderTime = o.FOrderTime.ToString(),
                     OrderStatus = o.OrderStatus.FStatusName,
@@ -44,6 +45,20 @@ namespace GraduationProject.Services
             if (string.IsNullOrEmpty(keywordOrderId) && string.IsNullOrEmpty(keywordMemberName) && string.IsNullOrEmpty(keywordMemberPhone))
                 //query = query.Where(o => o.OrderStatus != "訂單取消");
                 return (query);
+            if (string.IsNullOrEmpty(keywordOrderId) && string.IsNullOrEmpty(keywordMemberName) && keywordMemberPhone != null)
+                query = query.Where(o => o.MemberPhone.Contains(keywordMemberPhone));
+            if (string.IsNullOrEmpty(keywordOrderId) && keywordMemberName != null && keywordMemberPhone != null)
+                query = query.Where(o => o.MemberName.Contains(keywordMemberName) && o.MemberPhone.Contains(keywordMemberPhone));
+            if (keywordOrderId != null && string.IsNullOrEmpty(keywordMemberName) && keywordMemberPhone != null)
+                query = query.Where(o => o.OrderId.Contains(keywordOrderId) && o.MemberPhone.Contains(keywordMemberPhone));
+            if (string.IsNullOrEmpty(keywordOrderId) && keywordMemberName != null && string.IsNullOrEmpty(keywordMemberPhone))
+                query = query.Where(o => o.MemberName.Contains(keywordMemberName));
+            if (keywordOrderId != null && keywordMemberName != null && string.IsNullOrEmpty(keywordMemberPhone))
+                query = query.Where(o => o.OrderId.Contains(keywordOrderId) && o.MemberName.Contains(keywordMemberName));
+            if (keywordOrderId != null && string.IsNullOrEmpty(keywordMemberName) && string.IsNullOrEmpty(keywordMemberPhone))
+                query = query.Where(o => o.OrderId.Contains(keywordOrderId));
+            if (keywordOrderId != null && keywordMemberName != null && keywordMemberPhone != null)
+                query = query.Where(o => o.OrderId.Contains(keywordOrderId) && o.MemberName.Contains(keywordMemberName) && o.MemberPhone.Contains(keywordMemberPhone));
             return (query);
         }
         

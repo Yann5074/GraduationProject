@@ -4,6 +4,7 @@
     {
         public string OrderId { get; set; }
         public string MemberName { get; set; }
+        public string MemberPhone { get; set; }
         public string? EmployeeName { get; set; }
         public string OrderTime { get; set; }
         public string OrderStatus { get; set; }
