@@ -28,8 +28,6 @@
     <Folder Include="Services\" />
     <Folder Include="Wraps\" />
     <Folder Include="Tools\" />
-    <Folder Include="Services\" />
-    <Folder Include="ViewModels\" />
   </ItemGroup>
 
   <ItemGroup>
