@@ -19,6 +19,8 @@
   <ItemGroup>
     <Folder Include="Wraps\" />
     <Folder Include="Tools\" />
+    <Folder Include="Wraps\" />
+    <Folder Include="Tools\" />
   </ItemGroup>
 
   <ItemGroup>

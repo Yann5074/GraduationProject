@@ -4,6 +4,21 @@
     ViewData["Title"] = "List";
 }
 
+@{
+    var error = TempData["ErrorMessage"] as string;
+    var success = TempData["SuccessMessage"] as string;
+}
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+@if (!string.IsNullOrEmpty(success))
+{
+    <div class="alert alert-success">@success</div>
+}
+
 <h1>訂單資料</h1>
 @using (Html.BeginForm())
 {
@@ -90,7 +105,7 @@
             <td>
                 @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
                 @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
+                @Html.ActionLink("刪除", "Delete", "Order", new { id = item.OrderId }, new { onclick = "return confirm('確定要刪除訂單?')", Class= "btn btn-danger"})
             </td>
         </tr>
 }

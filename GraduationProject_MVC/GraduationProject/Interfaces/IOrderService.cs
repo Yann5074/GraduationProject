@@ -11,9 +11,9 @@ namespace GraduationProject.Interfaces
         //Create 建立訂單
         public void CreateOrder();
         //Update 更新訂單
-        public void UpdateOrder();
+        public bool UpdateOrder(int? id);
 
         //Delete 刪除訂單
-        public void DeleteOrder();
+        public bool DeleteOrder(int? id);
     }
 }
