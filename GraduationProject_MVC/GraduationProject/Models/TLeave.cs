@@ -18,4 +18,10 @@ public partial class TLeave
     public DateTime? FStartDate { get; set; }
 
     public DateTime? FEndDate { get; set; }
+
+    public string FDescription { get; set; }
+
+    public int? FStatusId { get; set; }
+
+    public DateTime? FCreatetime { get; set; }
 }

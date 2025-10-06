@@ -144,6 +144,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[tRequestStatus]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[tResponse]",
          "ObjectType": 0
       },
@@ -169,6 +173,10 @@
       },
       {
          "Name": "[dbo].[tTimesheetStatus]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tWorkDaily]",
          "ObjectType": 0
       }
    ],

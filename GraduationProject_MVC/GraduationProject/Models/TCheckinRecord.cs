@@ -18,4 +18,10 @@ public partial class TCheckinRecord
     public decimal? FLatitude { get; set; }
 
     public DateTime? FCheckinTime { get; set; }
+
+    public string FAddress { get; set; }
+
+    public int? FRediusMeters { get; set; }
+
+    public string FRemark { get; set; }
 }
