@@ -7,7 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the DI container.
+builder.Services.AddControllersWithViews();
+
+// Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
@@ -56,5 +58,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Order}/{action=List}/{id?}");
 app.MapRazorPages();
+
+app.MapControllers(); // �� [ApiController] ���ѥͮ�
 
 app.Run();

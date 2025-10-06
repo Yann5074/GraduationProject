@@ -1,4 +1,5 @@
 ﻿using GraduationProject.DTOs;
+using GraduationProject.Queries;
 
 namespace GraduationProject.Interfaces
 {
@@ -8,5 +9,7 @@ namespace GraduationProject.Interfaces
         Task<IReadOnlyList<CProductDTO>> ListAsync(CancellationToken ct = default);
         
         Task<IReadOnlyList<CProductDTO>> SearchAsync(string? keyword, CancellationToken ct = default);
+        Task<ProductDataTableResult> DataTableAsync(ProductDataTableQuery q, CancellationToken ct = default);
     }
+
 }

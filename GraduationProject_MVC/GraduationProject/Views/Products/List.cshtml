@@ -1,20 +1,17 @@
 ﻿@model IEnumerable<GraduationProject.DTOs.CProductDTO>
-
 @{
     ViewData["Title"] = "List";
 }
 
 <h2>商品清單</h2>
 
-<!-- 🔍 搜尋表單 -->
 <form method="get" asp-controller="Products" asp-action="List" class="mb-3">
     <input type="text" name="txtKeyword" value="@ViewBag.Keyword" placeholder="輸入關鍵字搜尋..." class="form-control" style="width:250px; display:inline-block;" />
     <button type="submit" class="btn btn-primary">搜尋</button>
     <a asp-action="List" class="btn btn-secondary">清除</a>
 </form>
 
-<!-- 📋 顯示結果表格 -->
-<table class="table table-striped">
+<table id="products" class="display" style="width:100%">
     <thead>
         <tr>
             <th>編號</th>
@@ -22,36 +19,43 @@
             <th>描述</th>
             <th>折扣</th>
             <th>狀態</th>
+            <th>建立時間</th>
+            <th>更新時間</th>
         </tr>
     </thead>
-    <tbody>
-        @if (!Model.Any())
-        {
-            <tr><td colspan="5" class="text-center">沒有符合的資料</td></tr>
-        }
-        else
-        {
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.ProductId</td>
-                    <td>@item.Name</td>
-                    <td>@item.Description</td>
-                    <td>@item.Discount</td>
-                    <td>
-                        @{
-                            string statusText = item.PStatus switch
-                            {
-                                1 => "上架中",
-                                2 => "下架",
-                                3 => "缺貨中",
-                                _ => "未定義"
-                            };
-                        }
-                        @statusText
-                    </td>
-                </tr>
-            }
-        }
-    </tbody>
 </table>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.7/css/jquery.dataTables.min.css" />
+}
+
+@section Scripts {
+    <!-- 只載 DataTables（jQuery 版本）。jQuery 由 _Layout 提供 -->
+    <script src="https://cdn.datatables.net/2.1.7/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(function () {
+          // 確保外掛有掛在「這份」jQuery 上
+          if (typeof $.fn.DataTable === 'undefined') {
+            console.error('DataTables plugin not loaded on this jQuery instance');
+            return;
+          }
+
+          $('#products').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: { url: '/api/ApiProduct/DataTable', type: 'POST' },
+            order: [[0, 'asc']],
+            columns: [
+              { data: 'productId' },
+              { data: 'name' },
+              { data: 'description' },
+              { data: 'discount' },
+              { data: 'pStatus',
+                render: v => v==1 ? '上架中' : (v==2 ? '下架' : (v==3 ? '缺貨中' : '未定義')) },
+              { data: 'createTime', render: d => d ? d.substring(0,10) : '' },
+              { data: 'updateTime', render: d => d ? d.substring(0,10) : '' }
+            ]
+          });
+        });
+    </script>
+}
