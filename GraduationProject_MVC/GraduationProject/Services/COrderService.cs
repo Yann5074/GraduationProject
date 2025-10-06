@@ -4,6 +4,7 @@ using GraduationProject.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using GraduationProject.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.CodeAnalysis;
 
 namespace GraduationProject.Services
 {
@@ -66,13 +67,27 @@ namespace GraduationProject.Services
         {
             
         }
-        public void UpdateOrder()
+        public bool UpdateOrder(int? id)
         {
+            if (id == null)
+                return false;
+            TOrder od = _context.TOrders.FirstOrDefault(o => o.FOrderId == id);
+            if (od == null)
+                return false;
 
         }
-        public void DeleteOrder()
-        {
 
+        public bool DeleteOrder(int? id)
+        {
+            if (id == null)
+                return false;
+            TOrder od = _context.TOrders.FirstOrDefault(o => o.FOrderId == id);
+            if (od == null)
+                return false;
+            //_context.TOrders.Remove(od); 硬刪語法
+            od.FOrderStatus = 6;
+            _context.SaveChanges();
+            return true;
         }
     }
 }
