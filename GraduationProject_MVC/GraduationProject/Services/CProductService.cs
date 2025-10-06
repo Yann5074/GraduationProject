@@ -38,51 +38,32 @@ namespace GraduationProject.Services
                 .ToListAsync(ct);
         }
 
-        public async Task<CProductDTO> CreateAsync(CProductCreateDTO input, CancellationToken ct = default)
+        public async Task<IReadOnlyList<CProductDTO>> SearchAsync(string? keyword, CancellationToken ct = default)
         {
-            var entity = new TProduct
+            var query = _db.TProducts.AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(keyword))
             {
-                FName = input.Name,
-                FDescription = input.Description,
-                FCategoryId = input.CategoryId,
-                FPstatus = input.PStatus,
-                FDiscount = input.Discount,
-                FCreateTime = DateTime.UtcNow,
-                FUpdateTime = DateTime.UtcNow
-            };
+                var kw = keyword.Trim();
+                query = query.Where(p =>
+                    (p.FName ?? "").Contains(kw) ||
+                    (p.FDescription ?? "").Contains(kw));
+            }
 
-            _db.TProducts.Add(entity);
-            await _db.SaveChangesAsync(ct);
-
-            return MapToDto(entity);
+            return await query
+                .OrderBy(p => p.FProductId)
+                .Select(p => new CProductDTO
+                {
+                    ProductId = p.FProductId,
+                    Name = p.FName,
+                    Description = p.FDescription,
+                    Discount = p.FDiscount,
+                    PStatus = p.FPstatus
+                })
+                .ToListAsync(ct);
         }
 
-        public async Task<CProductDTO> UpdateAsync(CProductUpdateDTO input, CancellationToken ct = default)
-        {
-            var entity = await _db.TProducts.FirstOrDefaultAsync(x => x.FProductId == input.ProductId, ct);
-            if (entity == null)
-                throw new KeyNotFoundException($"Product {input.ProductId} not found.");
-
-            entity.FName = input.Name;
-            entity.FDescription = input.Description;
-            entity.FCategoryId = input.CategoryId;
-            entity.FPstatus = input.PStatus;
-            entity.FDiscount = input.Discount;
-            entity.FUpdateTime = DateTime.UtcNow;
-
-            await _db.SaveChangesAsync(ct);
-            return MapToDto(entity);
-        }
-
-        public async Task<bool> DeleteAsync(int productId, CancellationToken ct = default)
-        {
-            var entity = await _db.TProducts.FirstOrDefaultAsync(x => x.FProductId == productId, ct);
-            if (entity == null) return false;
-
-            _db.TProducts.Remove(entity);
-            await _db.SaveChangesAsync(ct);
-            return true;
-        }
+        
 
         private static CProductDTO MapToDto(TProduct x) => new CProductDTO
         {

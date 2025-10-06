@@ -1,62 +1,47 @@
 ﻿using GraduationProject.DTOs;
 using GraduationProject.Interfaces;
+using GraduationProject.ViewModels;
+using GraduationProject.Services;
+
 using Microsoft.AspNetCore.Mvc;
 
 namespace GraduationProject.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ProductsController : ControllerBase
+    
+    public class ProductsController : Controller
     {
-        private readonly IProductService _svc;
-        public ProductsController(IProductService svc) => _svc = svc;
+        private readonly IProductService _ProductService;
+        public ProductsController(IProductService ProductService)
+        {
+            _ProductService = ProductService;
+        }
 
-        // GET /api/products
+
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<CProductDTO>>> List(CancellationToken ct)
-            => Ok(await _svc.ListAsync(ct));
-
-        // GET /api/products/{id}
-        [HttpGet("{id:int}")]
-        public async Task<ActionResult<CProductDTO>> Get(int id, CancellationToken ct)
+        public async Task<IActionResult> List(CProductSearchKeywordViewModel vm)
         {
-            var dto = await _svc.GetAsync(id, ct);
-            return dto is null ? NotFound() : Ok(dto);
-        }
+            // 從 Service 拿資料
+            var allProducts = await _ProductService.ListAsync();
 
-        // POST /api/products
-        [HttpPost]
-        public async Task<ActionResult<CProductDTO>> Create([FromBody] CProductCreateDTO input, CancellationToken ct)
-        {
-            if (!ModelState.IsValid) return ValidationProblem(ModelState);
-            var created = await _svc.CreateAsync(input, ct);
-            return CreatedAtAction(nameof(Get), new { id = created.ProductId }, created);
-        }
-
-        // PUT /api/products/{id}
-        [HttpPut("{id:int}")]
-        public async Task<ActionResult<CProductDTO>> Update(int id, [FromBody] CProductUpdateDTO input, CancellationToken ct)
-        {
-            if (id != input.ProductId) return BadRequest("Route id and body id mismatch.");
-            if (!ModelState.IsValid) return ValidationProblem(ModelState);
-
-            try
+            // 有關鍵字就過濾
+            if (!string.IsNullOrWhiteSpace(vm?.txtKeyword))
             {
-                var updated = await _svc.UpdateAsync(input, ct);
-                return Ok(updated);
+                string kw = vm.txtKeyword.Trim();
+                allProducts = allProducts
+                    .Where(p =>
+                        (!string.IsNullOrEmpty(p.Name) && p.Name.Contains(kw, StringComparison.OrdinalIgnoreCase)) ||
+                        (!string.IsNullOrEmpty(p.Description) && p.Description.Contains(kw, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
             }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
+
+            // 把搜尋關鍵字放進 ViewBag
+            ViewBag.Keyword = vm?.txtKeyword;
+
+            // 傳給 Razor View (List.cshtml)
+            return View(allProducts);
         }
 
-        // DELETE /api/products/{id}
-        [HttpDelete("{id:int}")]
-        public async Task<IActionResult> Delete(int id, CancellationToken ct)
-        {
-            var ok = await _svc.DeleteAsync(id, ct);
-            return ok ? Ok(new { Result = "OK" }) : NotFound(new { Result = "Error", Message = "Record not found." });
-        }
+
+
     }
 }
