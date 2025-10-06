@@ -28,6 +28,8 @@ builder.Services.AddScoped<IOrderService, COrderService>();
 builder.Services.AddScoped<IOrderDetailService, COrderDetailService>();
 // Application services
 builder.Services.AddScoped<IMemberService, CMemberService>();
+// Application services
+builder.Services.AddScoped<IProductService, CProductService>();
 
 var app = builder.Build();
 
