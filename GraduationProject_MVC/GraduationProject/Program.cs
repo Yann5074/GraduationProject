@@ -17,15 +17,17 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
 
-//ª`¤J¸ê®Æ®w³s½u
+//ï¿½`ï¿½Jï¿½ï¿½Æ®wï¿½sï¿½u
 builder.Services.AddDbContext<dbFurniMartContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart"));
 });
 
-//ª`¤JOrderService
+//ï¿½`ï¿½JOrderService
 builder.Services.AddScoped<IOrderService, COrderService>();
 builder.Services.AddScoped<IOrderDetailService, COrderDetailService>();
+// Application services
+builder.Services.AddScoped<IMemberService, CMemberService>();
 
 var app = builder.Build();
 
