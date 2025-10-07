@@ -34,7 +34,10 @@
     <Folder Include="Interfaces\" />
     <Folder Include="Wraps\" />
     <Folder Include="Services\" />
+    <Folder Include="ViewModels\" />
+    <Folder Include="Api\" />
     <Folder Include="Tools\" />
+    <Folder Include="Wraps\" />
   </ItemGroup>
 
   <ItemGroup>
