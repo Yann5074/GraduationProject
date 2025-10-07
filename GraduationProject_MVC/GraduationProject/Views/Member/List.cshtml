@@ -1,113 +1,62 @@
-﻿@model IEnumerable<GraduationProject.Models.TMember>
+﻿@model IEnumerable<GraduationProject.DTOs.CMemberDTO>
 
 @{
     ViewData["Title"] = "List";
 }
 
-<h1>List</h1>
+<h1>會員管理</h1>
+<!-- 搜尋表單 -->
+<form method="get" asp-controller="Member" asp-action="List" class="mb-3">
+    <input type="text" name="Keyword" value="@ViewBag.Keyword" placeholder="輸入(姓名或手機或地址)" class="form-control" style="width:250px; display:inline-block;" />
+    <button type="submit" class="btn btn-primary">搜尋</button>
+    <a asp-action="List" class="btn btn-secondary">清除</a>
+</form>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
+<!-- 顯示結果表格 -->
+<table class="table table-striped">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.FMemberId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FDisplayName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FGender)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FPhone)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FAddress)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FMemberImage)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FLeveId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FMoneySum)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FStatus)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FCreatTime)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FUpdateTime)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FAccount)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FPasswords)
-            </th>
-            <th></th>
+            <th>編號</th>
+            <th>姓名</th>
+            <th>暱稱</th>
+            <th>性別</th>
+            <th>手機</th>
+            <th>地址</th>
+            <th>狀態</th>
+            <th>等級</th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.FMemberId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FDisplayName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FGender)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FPhone)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FAddress)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FMemberImage)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FLeveId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FMoneySum)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FStatus)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FCreatTime)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FUpdateTime)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FAccount)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FPasswords)
-            </td>
-            <td>
-                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
-            </td>
-        </tr>
-}
+        @if (!Model.Any())
+        {
+            <tr><td colspan="5" class="text-center">沒有符合的資料</td></tr>
+        }
+        else
+        {
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.MemberId</td>
+                    <td>@item.Name</td>
+                    <td>@item.DisplayName</td>
+                    <td>@item.Gender</td>
+                    <td>@item.Phone</td>
+                    <td>@item.Address</td>
+                    <td>@item.Status</td>
+                    <td>@item.LeveId</td>
+                    @* <td>
+                        @{
+                            string statusText = item.PStatus switch
+                            {
+                                1 => "上架",
+                                2 => "審核中",
+                                _ => "下架"
+                            };
+                        }
+                        @statusText
+                    </td> *@
+                </tr>
+            }
+        }
     </tbody>
 </table>
