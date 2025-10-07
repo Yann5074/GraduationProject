@@ -46,7 +46,6 @@ builder.Services.AddDbContext<dbFurniMartContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart"));
 });
 
-
 //�`�JOrderService
 builder.Services.AddScoped<IOrderService, COrderService>();
 builder.Services.AddScoped<IOrderDetailService, COrderDetailService>();
