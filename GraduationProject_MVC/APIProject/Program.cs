@@ -16,7 +16,7 @@ builder.Services.AddCors(option =>
     option.AddPolicy(name: "VueClient", policy =>
     {
         policy.WithOrigins(
-            "http://localhost:5173" //´ú¸ÕÀô¹Ò¥¼¨Ó¥i¯à¸É¤W½uÀô¹Ò
+            "http://localhost:5173" //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò¥ï¿½ï¿½Ó¥iï¿½ï¿½É¤Wï¿½uï¿½ï¿½ï¿½ï¿½
             )
         .AllowAnyHeader()
         .AllowAnyMethod();
@@ -25,8 +25,13 @@ builder.Services.AddCors(option =>
 
 builder.Services.AddDbContext<dbFurniMartContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart")));
 
-// ª`¤J COrderService
+// ï¿½`ï¿½J COrderService
 builder.Services.AddScoped<IOrderService, COrderService>();
+
+builder.Services.AddDbContext<dbFurniMartContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart"));
+});
 
 var app = builder.Build();
 
