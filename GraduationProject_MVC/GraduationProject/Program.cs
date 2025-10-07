@@ -38,7 +38,7 @@ builder.Services.AddSession(o =>
     o.Cookie.IsEssential = true;
 });
 
-//µù¥U (ª`¤J)
+//ï¿½ï¿½ï¿½U (ï¿½`ï¿½J)
 builder.Services.AddDbContext<dbFurniMartContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart"));
