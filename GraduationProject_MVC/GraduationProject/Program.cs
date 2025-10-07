@@ -25,6 +25,7 @@ builder.Services.AddDbContext<dbFurniMartContext>(options =>
 
 //ª`¤JOrderService
 builder.Services.AddScoped<IOrderService, COrderService>();
+builder.Services.AddScoped<IOrderDetailService, COrderDetailService>();
 
 var app = builder.Build();
 

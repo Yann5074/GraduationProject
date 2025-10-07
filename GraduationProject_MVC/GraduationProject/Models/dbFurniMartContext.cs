@@ -594,6 +594,7 @@ public partial class dbFurniMartContext : DbContext
                 .HasColumnType("decimal(4, 2)")
                 .HasColumnName("fDiscount");
             entity.Property(e => e.FEmployeeId).HasColumnName("fEmployeeId");
+            entity.Property(e => e.FIsDeleted).HasColumnName("fIsDeleted");
             entity.Property(e => e.FLogisticsProvider).HasColumnName("fLogisticsProvider");
             entity.Property(e => e.FMemberId).HasColumnName("fMemberId");
             entity.Property(e => e.FNote)
@@ -630,6 +631,7 @@ public partial class dbFurniMartContext : DbContext
 
             entity.Property(e => e.FOrderId).HasColumnName("fOrderId");
             entity.Property(e => e.FProductVariantId).HasColumnName("fProductVariantId");
+            entity.Property(e => e.FIsDeleted).HasColumnName("fIsDeleted");
             entity.Property(e => e.FQuantity).HasColumnName("fQuantity");
             entity.Property(e => e.FUnitPrice).HasColumnName("fUnitPrice");
         });

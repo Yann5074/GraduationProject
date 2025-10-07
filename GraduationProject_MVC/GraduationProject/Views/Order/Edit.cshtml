@@ -4,6 +4,19 @@
     ViewData["Title"] = "Edit";
 }
 
+@{
+    //要改成在後端判斷，帶入會員的折扣之後
+    var discount = "";
+    if (@Model.Discount == null || @Model.Discount == 0)
+    {
+        discount += "無折扣";
+    }
+    else
+    {
+        discount += (int?)(@Model.Discount * 100) + " 折";
+    }
+}
+
 <h1>修改訂單</h1>
 
 <h4>訂單資訊</h4>
@@ -15,19 +28,20 @@
             <input type="hidden" value="@Model.OrderId" name="OrderId"/>
             <div class="form-group">
                 <label asp-for="EmployeeName" class="control-label"></label>
-                <input asp-for="EmployeeName" class="form-control" />
+                <label asp-for="EmployeeName" class="form-control">@Model.EmployeeName</label>
                 <span asp-validation-for="EmployeeName" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Discount" class="control-label"></label>
-                <input asp-for="Discount" class="form-control" />
+                <label asp-for="Discount" class="form-control">@discount</label>
+                <input type="hidden" value="@Model.Discount" name="Discount" />
                 <span asp-validation-for="Discount" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="OrderStatus" class="control-label"></label>
                 @* <input asp-for="OrderStatus" class="form-control" /> *@
                 <select asp-for="OrderStatus" class="form-control">
-                    <option value="0">--請選擇訂單狀態--</option>
+                    <option value="">--請選擇訂單狀態--</option>
                     <option value="1">處理中</option>
                     <option value="2">訂單成立</option>
                     <option value="3">付款資訊確認</option>
@@ -41,7 +55,7 @@
                 <label asp-for="PaymentStatus" class="control-label"></label>
                 @* <input asp-for="PaymentStatus" class="form-control" /> *@
                 <select asp-for="PaymentStatus" class="form-control">
-                    <option value="0">--請選擇付款狀態--</option>
+                    <option value="">--請選擇付款狀態--</option>
                     <option value="1">未付款</option>
                     <option value="2">付款失敗</option>
                     <option value="3">超過付款時間</option>
@@ -55,7 +69,7 @@
                 <label asp-for="PickupMethod" class="control-label"></label>
                 @* <input asp-for="PickupMethod" class="form-control" /> *@
                 <select asp-for="PickupMethod" class="form-control">
-                    <option value="0">--請選擇取貨方式--</option>
+                    <option value="">--請選擇取貨方式--</option>
                     <option value="1">店取</option>
                     <option value="2">宅配</option>
                 </select>
@@ -65,7 +79,7 @@
                 <label asp-for="DeliveryStatus" class="control-label"></label>
                 @* <input asp-for="DeliveryStatus" class="form-control" /> *@
                 <select asp-for="DeliveryStatus" class="form-control">
-                    <option value="0">--請選擇運送狀態--</option>
+                    <option value="">--請選擇運送狀態--</option>
                     <option value="1">備貨中</option>
                     <option value="2">運送中</option>
                     <option value="3">已送達</option>
@@ -94,7 +108,7 @@
                 <label asp-for="LogisticsProvider" class="control-label"></label>
                 @* <input asp-for="LogisticsProvider" class="form-control" /> *@
                 <select asp-for="LogisticsProvider" class="form-control">
-                    <option value="0">--請選擇物流商--</option>
+                    <option value="">--請選擇物流商--</option>
                     <option value="1">郵局</option>
                     <option value="2">黑貓宅急便</option>
                     <option value="3">新竹貨運</option>

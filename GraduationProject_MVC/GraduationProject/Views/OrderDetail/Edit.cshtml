@@ -1,0 +1,45 @@
+﻿@model GraduationProject.ViewModels.COrderDetailViewModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>修改商品數量</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="OrderId" />
+            <input type="hidden" asp-for="ProductVariantId" />
+
+            <div class="form-group">
+                <label asp-for="ProductName" class="control-label"></label>
+                <label asp-for="ProductName" class="form-control">@Model.ProductName</label>
+                <span asp-validation-for="ProductName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="UnitPrice" class="control-label"></label>
+                <label asp-for="UnitPrice" class="form-control">@Model.UnitPrice</label>
+                <span asp-validation-for="UnitPrice" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Quantity" class="control-label"></label>
+                <input asp-for="Quantity" class="form-control" />
+                <span asp-validation-for="Quantity" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="儲存變更" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-controller="OrderDetail" asp-action="List" asp-route-id="@Model.OrderId">返回訂單明細</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

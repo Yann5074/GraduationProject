@@ -11,6 +11,8 @@ public partial class TOrderDetail
 
     public int FProductVariantId { get; set; }
 
+    public int FIsDeleted { get; set; }
+
     public int FUnitPrice { get; set; }
 
     public int FQuantity { get; set; }

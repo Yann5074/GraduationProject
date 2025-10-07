@@ -7,6 +7,7 @@ namespace GraduationProject.DTOs
         [Display(Name = "訂單編號")]
         [Required]
         public string OrderId { get; set; }
+        public int IsDeleted { get; set; }
         [Display(Name = "會員姓名")]
         [Required]
         public string MemberName { get; set; }

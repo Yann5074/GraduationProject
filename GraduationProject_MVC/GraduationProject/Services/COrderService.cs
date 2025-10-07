@@ -34,6 +34,7 @@ namespace GraduationProject.Services
                 .Select(o => new OrderSearchDTO
                 {
                     OrderId = o.FOrderId.ToString(),
+                    IsDeleted = o.FIsDeleted,
                     MemberName = o.Member.FName,
                     MemberPhone = o.Member.FPhone,
                     EmployeeName = o.Employee.FName,
@@ -44,9 +45,10 @@ namespace GraduationProject.Services
                     LogisticsProvider = o.LogisticsProvider.FLogisticsProviderName,
                     Note = o.FNote
                 });
+            // 不顯示已刪除的訂單
+            query = query.Where(o => o.IsDeleted != 1);
             if (string.IsNullOrEmpty(keywordOrderId) && string.IsNullOrEmpty(keywordMemberName) && string.IsNullOrEmpty(keywordMemberPhone))
-                //query = query.Where(o => o.OrderStatus != "訂單取消");
-                return (query);
+                return query;
             if (string.IsNullOrEmpty(keywordOrderId) && string.IsNullOrEmpty(keywordMemberName) && keywordMemberPhone != null)
                 query = query.Where(o => o.MemberPhone.Contains(keywordMemberPhone));
             if (string.IsNullOrEmpty(keywordOrderId) && keywordMemberName != null && keywordMemberPhone != null)
@@ -70,6 +72,7 @@ namespace GraduationProject.Services
             var od = new TOrder
             {
                 FMemberId = dtoUi.MemberId,
+                FIsDeleted = 0,
                 FEmployeeId = dtoUi.EmployeeId,
                 FTotalPrice = dtoUi.TotalPrice,
                 FDiscount = dtoUi.Discount,
@@ -124,7 +127,7 @@ namespace GraduationProject.Services
             if (od == null)
                 return false;
             //_context.TOrders.Remove(od); 硬刪語法
-            od.FOrderStatus = 6;
+            od.FIsDeleted = 1; //軟刪 
             _context.SaveChanges();
             return true;
         }
@@ -149,7 +152,7 @@ namespace GraduationProject.Services
 
             dto.isValid = true;
             dto.OrderId = od.FOrderId;
-            dto.EmployeeName = od.Employee?.FName ?? "--顧客網路下單--";
+            dto.EmployeeName = od.Employee?.FName ?? "--網路下單--";
             dto.Discount = od.FDiscount;
             dto.OrderStatus = od.FOrderStatus;
             dto.PaymentStatus = od.FPaymentStatus;
