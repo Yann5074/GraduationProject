@@ -75,6 +75,11 @@ builder.Services.AddDbContext<dbFurniMartContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart"));
 });
 
+builder.Services.AddDbContext<dbFurniMartContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart"));
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
