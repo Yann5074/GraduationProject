@@ -18,6 +18,10 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// 介面對應實作（關鍵一行）
+builder.Services.AddScoped<IEmployeeService, CEmployeeService>();
+
 builder.Services.AddControllersWithViews();
 
 //嚙窯嚙皚嚙踝蕭おw嚙編嚙線
