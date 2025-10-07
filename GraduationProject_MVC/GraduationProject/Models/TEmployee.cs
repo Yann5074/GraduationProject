@@ -21,7 +21,7 @@ public partial class TEmployee
 
     public string FBloodType { get; set; }
 
-    public DateOnly? FHireDate { get; set; }
+    public DateTime? FHireDate { get; set; }
 
     public int? FRoleId { get; set; }
 
