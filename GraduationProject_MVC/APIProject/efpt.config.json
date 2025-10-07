@@ -136,6 +136,8 @@
          "ObjectType": 0
       },
       {
+=======
+>>>>>>> 169ad50 (修改: 資料表更新)
          "Name": "[dbo].[tPaymentMethod]",
          "ObjectType": 0
       },
@@ -172,10 +174,13 @@
          "ObjectType": 0
       },
       {
+<<<<<<< HEAD
          "Name": "[dbo].[tRequestStatus]",
          "ObjectType": 0
       },
       {
+=======
+>>>>>>> 169ad50 (修改: 資料表更新)
          "Name": "[dbo].[tResponse]",
          "ObjectType": 0
       },
@@ -198,10 +203,13 @@
       {
          "Name": "[dbo].[tTimesheetStatus]",
          "ObjectType": 0
+<<<<<<< HEAD
       },
       {
          "Name": "[dbo].[tWorkDaily]",
          "ObjectType": 0
+=======
+>>>>>>> 169ad50 (修改: 資料表更新)
       }
    ],
    "UiHint": null,

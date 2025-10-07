@@ -401,7 +401,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TEmployee>(entity =>
         {
-            entity.HasKey(e => e.FEmployeeId).HasName("PK_tEmployees");
+            entity.HasKey(e => e.FEmployeeId);
 
             entity.ToTable("tEmployee");
 
