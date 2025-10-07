@@ -10,7 +10,7 @@ namespace GraduationProject.Models
         public TMember Member { get; set; }
 
         [ForeignKey(nameof(FEmployeeId))]
-        public TEmployee Employee { get; set; }
+        public TEmployee? Employee { get; set; }
 
         [ForeignKey(nameof(FOrderStatus))]
         public TOrderStatus OrderStatus { get; set; }
