@@ -1,0 +1,108 @@
+﻿@model IEnumerable<GraduationProject.DTOs.OrderDetailShowDTO>
+
+@{
+    ViewData["Title"] = "List";
+}
+
+@{
+    var deleteError = TempData["deleteErrorMessage"] as string;
+    var deleteSuccess = TempData["deleteSuccessMessage"] as string;
+    var searchError = TempData["searchErrorMessage"] as string;
+    var updateError = TempData["updateErrorMessage"] as string;
+    var updateSuccess = TempData["updateSuccessMessage"] as string;
+    
+    
+}
+
+@if (!string.IsNullOrEmpty(deleteError))
+{
+    <div class="alert alert-danger">@deleteError</div>
+}
+
+@if (!string.IsNullOrEmpty(deleteSuccess))
+{
+    <div class="alert alert-success">@deleteSuccess</div>
+}
+
+@if (!string.IsNullOrEmpty(searchError))
+{
+    <div class="alert alert-danger">@searchError</div>
+}
+
+@if (!string.IsNullOrEmpty(updateError))
+{
+    <div class="alert alert-danger">@updateError</div>
+}
+
+@if (!string.IsNullOrEmpty(updateSuccess))
+{
+    <div class="alert alert-success">@updateSuccess</div>
+}
+
+<h1>訂單詳細資訊</h1>
+
+<p>
+    <a asp-action="Create">加入商品</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                序
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ProductName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UnitPrice)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Quantity)
+            </th>
+            <th>
+                小計
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            int count = 0;
+            decimal sum = 0;
+            decimal total = 0;
+            foreach (var item in Model) {
+                count++;
+                sum = item.UnitPrice * item.Quantity;
+                total += sum;
+                <tr>
+            <td>
+                @count
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ProductName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.UnitPrice)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Quantity)
+            </td>
+            <td>
+                @sum.ToString("###,###,##0") 元
+            </td>
+            <td>
+                @Html.ActionLink("編輯", "Edit", "OrderDetail", new { proId = item.ProductVariantId, orderId = item.OrderId }, new {@class="btn btn-success"}) |
+                @Html.ActionLink("刪除", "Delete", "OrderDetail", new { proId = item.ProductVariantId, orderId = item.OrderId }, new { onclick = "return confirm('確定刪除該品項?')", @class = "btn btn-danger" })
+            </td>
+        </tr>
+}
+}
+    </tbody>
+</table>
+<div>
+    <li> 總計金額: @total.ToString("###,###,##0") 元</li>
+</div>
+
+<div>
+    <a asp-controller="Order" asp-action="List">返回訂單總覽</a>
+</div>

@@ -9,6 +9,8 @@ public partial class TOrder
 {
     public int FOrderId { get; set; }
 
+    public int FIsDeleted { get; set; }
+
     public int FMemberId { get; set; }
 
     public int? FEmployeeId { get; set; }

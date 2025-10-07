@@ -115,14 +115,14 @@ namespace GraduationProject.Controllers
         }
 
         // Order/Create [HttpGet]
-        public IActionResult Create(int memberId)
+        public IActionResult Create(int? memberId)
         {
             if (memberId == null)
                 return RedirectToAction("FindMember");
             var vm = new COrderCreateViewModel
             {
                 OrderTime = DateTime.Now,
-                MemberId = memberId,
+                MemberId = (int)memberId,
                 MemberName = "10012",
                 // 要在最一開始便判定登入的員工是誰 TODO
                 // 20 - LinYan
