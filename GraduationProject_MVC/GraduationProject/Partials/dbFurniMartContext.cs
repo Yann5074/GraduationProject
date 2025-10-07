@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace GraduationProject.Models
+namespace ApiProject.Models
 {
     public partial class dbFurniMartContext : DbContext
     {

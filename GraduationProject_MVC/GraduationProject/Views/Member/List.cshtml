@@ -1,0 +1,113 @@
+﻿@model IEnumerable<GraduationProject.Models.TMember>
+
+@{
+    ViewData["Title"] = "List";
+}
+
+<h1>List</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.FMemberId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FDisplayName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FGender)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FPhone)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FAddress)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FMemberImage)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FLeveId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FMoneySum)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FStatus)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FCreatTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FUpdateTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FAccount)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FPasswords)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.FMemberId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FDisplayName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FGender)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FPhone)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FAddress)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FMemberImage)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FLeveId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FMoneySum)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FStatus)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FCreatTime)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FUpdateTime)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FAccount)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FPasswords)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
+                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
+                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
