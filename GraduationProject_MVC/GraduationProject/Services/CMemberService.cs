@@ -29,6 +29,15 @@ namespace GraduationProject.Services
             return p == null ? null : MapToDto(p);
         }
 
+        public async Task<CMemberDTO?> GetAsync(int memberId, CancellationToken ct = default)
+        {
+            var p = await _db.TMembers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.FMemberId == memberId, ct);
+
+            return p == null ? null : MapToDto(p);
+        }
+
         public async Task<IReadOnlyList<CMemberDTO>> MemberListAsync(CancellationToken ct = default)
         {
             return await _db.TMembers
