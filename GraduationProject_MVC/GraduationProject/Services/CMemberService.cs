@@ -138,6 +138,21 @@ namespace GraduationProject.Services
             };
         }
 
+        public bool MemberDelete(int? id)
+        {
+            if (id == null)
+                return false;
+            TMember od = _db.TMembers.FirstOrDefault(o => o.FMemberId == id);
+            if (od == null)
+                return false;
+            //_context.TOrders.Remove(od); 硬刪語法
+            od.FStatus = 3; //軟刪 
+            od.FUpdateTime = DateTime.Now;
+            _db.SaveChanges();
+            return true;
+        }
+
+
 
 
         private static CMemberDTO MapToDto(TMember x) => new CMemberDTO

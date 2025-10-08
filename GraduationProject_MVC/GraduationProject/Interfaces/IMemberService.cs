@@ -12,6 +12,6 @@ namespace GraduationProject.Interfaces
 
         Task<CMemberCreatedDTO> MemberCreateAsync(CMemberCreateDTO dto, CancellationToken ct = default);
 
-      
+        public bool MemberDelete(int? id);
     }
 }
