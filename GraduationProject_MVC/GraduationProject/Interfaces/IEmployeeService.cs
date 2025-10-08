@@ -1,4 +1,5 @@
 ﻿using GraduationProject.DTOs;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace GraduationProject.Interfaces
 {
@@ -6,5 +7,6 @@ namespace GraduationProject.Interfaces
     {
         Task<List<CEmployeeListItemDTO>> GetEmployeeListAsync(
         string? keyword, CancellationToken ct = default);
+        Task<int> CreateEmployeeAsync(CEmployeeCreateDTO dto, CancellationToken ct = default);
     }
 }

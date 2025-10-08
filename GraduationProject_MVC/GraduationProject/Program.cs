@@ -21,6 +21,7 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 
 // 介面對應實作（關鍵一行）
 builder.Services.AddScoped<IEmployeeService, CEmployeeService>();
+builder.Services.AddScoped<IPasswordHasher<TEmployee>, PasswordHasher<TEmployee>>();
 
 builder.Services.AddControllersWithViews();
 

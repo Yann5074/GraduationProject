@@ -1,19 +1,21 @@
 ﻿using GraduationProject.DTOs;
 using GraduationProject.Interfaces;
 using GraduationProject.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace GraduationProject.Services
 {
     public class CEmployeeService : IEmployeeService
     {
-        //私有唯讀欄位 _db，型別是你的 EF Core DbContext。
         private readonly dbFurniMartContext _db;
-        //建構子注入：DI 會把已註冊的 dbFurniMartContext 傳進來
-        public CEmployeeService(dbFurniMartContext db) => _db = db;
+        private readonly IPasswordHasher<TEmployee> _hasher;
+        public CEmployeeService(dbFurniMartContext db, IPasswordHasher<TEmployee> hasher)
+        {
+            _db = db;
+            _hasher = hasher;
+        }
 
-        //對外公開方法，非同步回傳 Task<List<CEmployeeListItemDTO>>（清單 DTO）。
-        //ct 是 取消權杖，預設值 default 代表呼叫端可選擇性傳入，非必要。
         public async Task<List<CEmployeeListItemDTO>> GetEmployeeListAsync(
             string? keyword, CancellationToken ct = default)
         {
@@ -29,10 +31,10 @@ namespace GraduationProject.Services
                     EF.Functions.Like(e.FPhone ?? "", pattern) ||
                     EF.Functions.Like(e.FEmail ?? "", pattern) ||
                     EF.Functions.Like(e.FBloodType ?? "", pattern) ||
-                    EF.Functions.Like(e.FAccount ?? "", pattern)
-                    //(e.FGenderNavigation != null && EF.Functions.Like(e.FGenderNavigation.FGenderName ?? "", pattern)) ||
-                    //(e.FRole != null && EF.Functions.Like(e.FRole.FRoleClass ?? "", pattern)) ||
-                    //(e.FStatus != null && EF.Functions.Like(e.FStatus.FStatus ?? "", pattern))
+                    EF.Functions.Like(e.FAccount ?? "", pattern) ||
+                    (e.FGenderNavigation != null && EF.Functions.Like(e.FGenderNavigation.FGenderName ?? "", pattern)) ||
+                    (e.FRole != null && EF.Functions.Like(e.FRole.FRoleClass ?? "", pattern)) ||
+                    (e.FStatus != null && EF.Functions.Like(e.FStatus.FStatus ?? "", pattern))
                 );
             }
 
@@ -40,16 +42,50 @@ namespace GraduationProject.Services
                           .Select(e => new CEmployeeListItemDTO
                           {
                               Id = e.FEmployeeId,
+                              HeadShot = e.FHeadShot,
                               Name = e.FName,
                               Phone = e.FPhone,
                               Email = e.FEmail,
                               BloodType = e.FBloodType,
                               Account = e.FAccount,
-                              //GenderName = e.FGenderNavigation != null ? e.FGenderNavigation.FGenderName : null,
-                              //RoleClass = e.FRole != null ? e.FRole.FRoleClass : null,
-                              //Status = e.FStatus != null ? e.FStatus.FStatus : null
+                              GenderName = e.FGenderNavigation != null ? e.FGenderNavigation.FGenderName : null,
+                              RoleClass = e.FRole != null ? e.FRole.FRoleClass : null,
+                              Status = e.FStatus != null ? e.FStatus.FStatus : null
                           })
                           .ToListAsync(ct);
+        }
+        public async Task<int> CreateEmployeeAsync(CEmployeeCreateDTO dto, CancellationToken ct = default)
+        {
+            // 帳號重複檢查
+            bool exists = await _db.TEmployees.AsNoTracking()
+                               .AnyAsync(x => x.FAccount == dto.FAccount, ct);
+            if (exists)
+                throw new InvalidOperationException("帳號已存在。");
+
+            var emp = new TEmployee
+            {
+                FName = dto.FName,
+                FPhone = dto.FPhone,
+                FEmail = dto.FEmail,
+                FHeadShot = dto.HeadShotFileName ?? "default.png",
+                FGender = dto.FGender,
+                FBloodType = dto.FBloodType,
+                FHireDate = dto.FHireDate,
+                FRoleId = dto.FRoleId,
+                FStatusId = dto.FStatusId,
+                FAccount = dto.FAccount,
+                FPasswords = dto.FPasswords,
+                FLoginTime = DateTime.Now,
+                FChangePasswordTime = DateTime.Now
+            };
+
+            // 雜湊密碼（使用 Identity 提供的 PasswordHasher）
+            emp.FPasswords = _hasher.HashPassword(emp, dto.FPasswords);
+
+            _db.TEmployees.Add(emp);
+            await _db.SaveChangesAsync(ct);
+
+            return emp.FEmployeeId;
         }
     }
 }
