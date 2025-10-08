@@ -8,7 +8,7 @@
 
 <!-- 搜尋表單 -->
 <form method="get" asp-controller="Products" asp-action="List" class="mb-3">
-    <input type="text" name="txtKeyword" value="@ViewBag.Keyword" placeholder="輸入關鍵字搜尋..." class="form-control" style="width:250px; display:inline-block;" />
+    <input type="text" name="txtKeywordProductName" value="@ViewBag.Keyword" placeholder="輸入關鍵字搜尋..." class="form-control" style="width:250px; display:inline-block;" />
     <button type="submit" class="btn btn-primary">搜尋</button>
     <a asp-action="List" class="btn btn-secondary">清除</a>
 </form>
@@ -19,8 +19,9 @@
         <tr>
             <th>編號</th>
             <th>名稱</th>
+            <th>種類</th>
+            <th>價格</th>
             <th>描述</th>
-            <th>折扣</th>
             <th>狀態</th>
         </tr>
     </thead>
@@ -36,8 +37,9 @@
                 <tr>
                     <td>@item.ProductId</td>
                     <td>@item.Name</td>
+                    <td>@item.CategoryName</td>
+                    <td>@item.Price</td>
                     <td>@item.Description</td>
-                    <td>@item.Discount</td>
                     <td>
                         @{
                             string statusText = item.PStatus switch
