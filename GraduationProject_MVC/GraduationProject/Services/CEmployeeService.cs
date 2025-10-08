@@ -8,6 +8,7 @@ namespace GraduationProject.Services
 {
     public class CEmployeeService : IEmployeeService
     {
+        //建構子注入
         private readonly dbFurniMartContext _db;
         private readonly IPasswordHasher<TEmployee> _hasher;
         public CEmployeeService(dbFurniMartContext db, IPasswordHasher<TEmployee> hasher)
@@ -22,7 +23,7 @@ namespace GraduationProject.Services
             // 基底查詢：不含 Include
             IQueryable<TEmployee> q = _db.TEmployees.AsNoTracking();
 
-            // 關鍵字條件（可被翻譯成 SQL，含導覽欄位的篩選）
+            // 關鍵字條件
             if (!string.IsNullOrWhiteSpace(keyword))
             {
                 var pattern = $"%{keyword.Trim()}%";
@@ -86,6 +87,18 @@ namespace GraduationProject.Services
             await _db.SaveChangesAsync(ct);
 
             return emp.FEmployeeId;
+        }
+        public async Task<bool> DeleteEmployeeAsync(int? id)
+        {
+            if (id == null)
+                return false;
+            var emp = await _db.TEmployees
+                           .FirstOrDefaultAsync(e => e.FEmployeeId == id.Value);
+            if (emp is null) return false;
+
+            emp.FStatusId = 4; // 軟刪除
+            await _db.SaveChangesAsync();
+            return true;
         }
     }
 }

@@ -58,6 +58,11 @@ namespace GraduationProject.Controllers
                 return View(vm);
             }
         }
+        public async Task<IActionResult> Delete(int? id)
+        {
+            var delete = await _svc.DeleteEmployeeAsync(id);
+            return RedirectToAction(nameof(List));
+        }
 
         public IActionResult Index()
         {
