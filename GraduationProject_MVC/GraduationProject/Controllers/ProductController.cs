@@ -31,7 +31,7 @@ namespace GraduationProject.Controllers
             var vm = new CProductCreateViewModel
             {
                 ProductId = productId.Value
-                // 可能還需要載入商品資訊/會員清單等
+                
             };
             return View(vm);
         }
@@ -51,13 +51,13 @@ namespace GraduationProject.Controllers
                     
                 };
 
-                int newProductId = _ProductService.CreateProduct(dto); // 回傳訂單ID
-                TempData["createSuccessMessage"] = "訂單建立成功";
+                int newProductId = _ProductService.CreateProduct(dto); 
+                TempData["createSuccessMessage"] = "商品建立成功";
                 return RedirectToAction("List", new { id = newProductId });
             }
             catch
             {
-                TempData["createErrorMessage"] = "訂單建立失敗";
+                TempData["createErrorMessage"] = "商品建立失敗";
                 return View(vm);
             }
         }
