@@ -66,5 +66,17 @@ namespace GraduationProject.Controllers
             }
         }
 
+        public IActionResult Delete(int? id) 
+        {
+            var success = _MemberService.MemberDelete(id);
+            if (!success)
+            {
+                TempData["DeleteErrorMessage"] = "刪除失敗，查無指定的訂單";
+                return RedirectToAction("List");
+            }
+            TempData["DeleteSuccessMessage"] = "刪除訂單成功";
+            return RedirectToAction("List");
+        }
+
     }
 }
