@@ -2,7 +2,9 @@
 {
     public class CProductSearchKeywordViewModel
     {
-        public string? txtKeyword { get; set; }
+        public string? txtKeywordProductId { get; set; }
+        public string? txtKeywordProductName { get; set; }
+        public string? txtKeywordCategoryId { get; set; }
 
     }
 }

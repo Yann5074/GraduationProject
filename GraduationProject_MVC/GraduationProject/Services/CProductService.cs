@@ -1,7 +1,10 @@
 ﻿using GraduationProject.DTOs;
 using GraduationProject.Interfaces;
 using GraduationProject.Models;
+using GraduationProject.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Runtime.Intrinsics.X86;
 
 
 namespace GraduationProject.Services
@@ -11,71 +14,44 @@ namespace GraduationProject.Services
         private readonly dbFurniMartContext _db;
         public CProductService(dbFurniMartContext db) => _db = db;
 
-        public async Task<CProductDTO?> GetAsync(int productId, CancellationToken ct = default)
+        public IEnumerable<CProductDTO> SearchProduct(CProductSearchKeywordViewModel vm)
         {
-            var p = await _db.TProducts
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.FProductId == productId, ct);
-
-            return p == null ? null : MapToDto(p);
-        }
-
-        public async Task<IReadOnlyList<CProductDTO>> ListAsync(CancellationToken ct = default)
-        {
-            return await _db.TProducts
-                .AsNoTracking()
-                .OrderBy(x => x.FProductId)
-                .Select(x => new CProductDTO
+            string keywordProductId = vm.txtKeywordProductId;
+            string keywordMemberName = vm.txtKeywordProductName;
+            string keywordMemberPhone = vm.txtKeywordCategoryId;
+            var query = _db.TProducts
+                .Include(o => o.ProductVariant)
+                .Include(o => o.ProductAsset)
+                .Include(o => o.Category)
+                .Select(o => new CProductDTO
                 {
-                    ProductId = x.FProductId,
-                    Name = x.FName,
-                    Description = x.FDescription,
-                    CategoryId = x.FCategoryId,
-                    PStatus = x.FPstatus,
-                    Discount = x.FDiscount,
-                    CreateTime = x.FCreateTime,
-                    UpdateTime = x.FUpdateTime
-                })
-                .ToListAsync(ct);
+                    ProductId = o.FProductId,
+                    Name = o.FName,
+                    Description = o.FDescription,
+                    CategoryId = o.FCategoryId,
+                    CategoryName = o.Category.FName,
+                    PStatus = o.FPstatus,
+                    Price = o.ProductVariant.FPrice,
+
+                });
+            return query.ToList();
         }
 
-        public async Task<IReadOnlyList<CProductDTO>> SearchAsync(string? keyword, CancellationToken ct = default)
-        {
-            var query = _db.TProducts.AsNoTracking();
 
-            if (!string.IsNullOrWhiteSpace(keyword))
+        public int CreateProduct(CProductCreateDTO dtoUi)
+        {
+            var od = new TProduct
             {
-                var kw = keyword.Trim();
-                query = query.Where(p =>
-                    (p.FName ?? "").Contains(kw) ||
-                    (p.FDescription ?? "").Contains(kw));
-            }
-
-            return await query
-                .OrderBy(p => p.FProductId)
-                .Select(p => new CProductDTO
-                {
-                    ProductId = p.FProductId,
-                    Name = p.FName,
-                    Description = p.FDescription,
-                    Discount = p.FDiscount,
-                    PStatus = p.FPstatus
-                })
-                .ToListAsync(ct);
+                FName = dtoUi.Name,
+                FDescription = dtoUi.Description,
+                FCategoryId = dtoUi.CategoryId,
+                FPstatus = dtoUi.PStatus,
+            
+            };
+            _db.TProducts.Add(od);
+            _db.SaveChanges();
+            return od.FProductId;
         }
 
-        private static CProductDTO MapToDto(TProduct x) => new CProductDTO
-        {
-            ProductId = x.FProductId,
-            Name = x.FName,
-            Description = x.FDescription,
-            CategoryId = x.FCategoryId,
-            PStatus = x.FPstatus,
-            Discount = x.FDiscount,
-            CreateTime = x.FCreateTime,
-            UpdateTime = x.FUpdateTime
-        };
-
-        
     }
 }

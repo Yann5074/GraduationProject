@@ -6,5 +6,9 @@ namespace GraduationProject.Models
     {
         [ForeignKey(nameof(FProductId))]
         public TProduct product { get; set; }
+        [ForeignKey(nameof(FColorId))]
+        public TColor Color { get; set; }
     }
 }
+
+
