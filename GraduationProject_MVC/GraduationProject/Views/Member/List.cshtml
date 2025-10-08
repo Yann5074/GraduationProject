@@ -4,59 +4,138 @@
     ViewData["Title"] = "List";
 }
 
-<h1>會員管理</h1>
-<!-- 搜尋表單 -->
-<form method="get" asp-controller="Member" asp-action="List" class="mb-3">
-    <input type="text" name="Keyword" value="@ViewBag.Keyword" placeholder="輸入(姓名或手機或地址)" class="form-control" style="width:250px; display:inline-block;" />
-    <button type="submit" class="btn btn-primary">搜尋</button>
-    <a asp-action="List" class="btn btn-secondary">清除</a>
-</form>
+<div class="container-xxl py-4">
+    <!-- Header / Toolbar -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <h1 class="h3 mb-0">會員一覽表</h1>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i>
+            新增會員資料
+        </a>
+    </div>
 
-<!-- 顯示結果表格 -->
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>編號</th>
-            <th>姓名</th>
-            <th>暱稱</th>
-            <th>性別</th>
-            <th>手機</th>
-            <th>地址</th>
-            <th>狀態</th>
-            <th>等級</th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (!Model.Any())
-        {
-            <tr><td colspan="5" class="text-center">沒有符合的資料</td></tr>
-        }
-        else
-        {
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.MemberId</td>
-                    <td>@item.Name</td>
-                    <td>@item.DisplayName</td>
-                    <td>@item.Gender</td>
-                    <td>@item.Phone</td>
-                    <td>@item.Address</td>
-                    <td>@item.Status</td>
-                    <td>@item.LeveId</td>
-                    @* <td>
+    <!-- Search -->
+    @using (Html.BeginForm(null, null, FormMethod.Post, new { @class = "mb-3" }))
+    {
+        <div class="input-group">
+            @Html.TextBox("Keyword", ViewBag.Keyword as string, new { @class = "form-control", placeholder = "輸入關鍵字" })
+            <button type="submit" class="btn btn-outline-secondary">查詢</button>
+        </div>
+    }
+
+    <!-- Table Card -->
+    <div class="card shadow-sm ">
+        <div class="card-body p-0">
+            <div class="table-responsive custom-table">
+                <table class="table table-striped table-hover align-middle custom-table mb-0">
+                    <!-- 固定欄寬，確保表頭與內容對齊 -->
+                    <colgroup>
+                        <col style="width: 56px;">   <!-- 序 -->
+                        <col style="width: 90px;">   <!-- 編號 -->
+                        <col style="width: 110px;">  <!-- 大頭貼 -->
+                        <col style="width: 120px;">  <!-- 姓名 -->
+                        <col style="width: 120px;">  <!-- 暱稱 -->
+                        <col style="width: 100px;">  <!-- 性別 -->
+                        <col style="width: 150px;">  <!-- 手機 -->
+                        <col>                         <!-- 地址（自適應） -->
+                        <col style="width: 120px;">  <!-- 等級 -->
+                        <col style="width: 100px;">  <!-- 狀態 -->
+                        <col style="width: 160px;">  <!-- 操作 -->
+                    </colgroup>
+
+                    <thead class="table-light text-nowrap">
+                        <tr>
+                            <th class="text-center">序</th>
+                            <th class="text-center">編號</th>
+                            <th class="text-center">大頭貼</th>
+                            <th class="text-center">姓名</th>
+                            <th class="text-center">暱稱</th>
+                            <th class="text-center">性別</th>
+                            <th class="text-center">手機</th>
+                            <th>地址</th>
+                            <th class="text-center">等級</th>
+                            <th class="text-center">狀態</th>
+                            <th class="text-center">操作</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
                         @{
-                            string statusText = item.PStatus switch
+                            // int seqStart = ((int)ViewBag.Page - 1) * (int)ViewBag.PageSize;
+                            int count = 0;
+                            foreach (var item in Model)
                             {
-                                1 => "上架",
-                                2 => "審核中",
-                                _ => "下架"
-                            };
+                                count++;
+                                <tr>
+                                    <!-- 序 / 編號 -->
+                                    <td class="text-center text-muted">@count</td>
+                                    <td class="text-center text-muted">
+                                        @Html.DisplayFor(modelItem => item.MemberId)
+                                    </td>
+
+                                    <!-- 大頭貼 -->
+                                    <td class="text-center">
+                                        <img src="~/MemberHeadImages/@item.MemberImage"
+                                             alt="頭貼"
+                                             class=" rounded-circle"
+                                             style="width:80px;height:80px;object-fit:cover;" />
+                                    </td>
+
+                                    <!-- 姓名 / 暱稱 / 性別 -->
+                                    <td class="text-center fw-semibold">
+                                        @Html.DisplayFor(modelItem => item.Name)
+                                    </td>
+                                    <td class="text-center">
+                                        @Html.DisplayFor(modelItem => item.DisplayName)
+                                    </td>
+                                    <td class="text-center">
+                                        @Html.DisplayFor(modelItem => item.GenderName)
+                                    </td>
+
+                                    <!-- 手機 -->
+                                    <td class="text-center text-nowrap">
+                                        @Html.DisplayFor(modelItem => item.Phone)
+                                    </td>
+
+                                    <!-- 地址（可截斷） -->
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 360px;">
+                                            @Html.DisplayFor(modelItem => item.Address)
+                                        </div>
+                                    </td>
+
+                                    <!-- 等級 -->
+                                    <td class="text-center">
+                                        @Html.DisplayFor(modelItem => item.LevelName)
+                                    </td>
+
+                                    <!-- 狀態 -->
+                                    <td class="text-center">
+                                        @Html.DisplayFor(modelItem => item.StatusName)
+                                    </td>
+
+                                    <!-- 動作 -->
+                                    <td class="text-center text-nowrap">
+                                        <a asp-action="Details" asp-route-id="@item.MemberId"
+                                           class="btn btn-sm btn-outline-success me-1">
+                                            <i class="bi bi-eye"></i> 詳細
+                                        </a>
+
+                                        <a asp-action="Edit" asp-route-id="@item.MemberId" class="btn btn-sm btn-outline-primary me-1">
+                                            <i class="bi bi-pencil"></i> 編輯
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.MemberId"
+                                           class="btn btn-sm btn-outline-danger"
+                                           onclick="return confirm('確定要刪除這筆資料嗎?')">
+                                            <i class="bi bi-trash"></i> 刪除
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
                         }
-                        @statusText
-                    </td> *@
-                </tr>
-            }
-        }
-    </tbody>
-</table>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

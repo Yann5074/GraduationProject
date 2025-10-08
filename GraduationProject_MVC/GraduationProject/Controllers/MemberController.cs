@@ -1,4 +1,5 @@
-﻿using GraduationProject.Interfaces;
+﻿using GraduationProject.DTOs;
+using GraduationProject.Interfaces;
 using GraduationProject.Models;
 using GraduationProject.Services;
 using GraduationProject.ViewModels;
@@ -18,25 +19,51 @@ namespace GraduationProject.Controllers
         [HttpGet]
         public async Task<IActionResult> List(CMemberListKeyeordViewModel vm) 
         {
-            // 從 Service 拿資料
-            var allMembers = await _MemberService.MemberListAsync();
+            var members = await _MemberService.MemberSearchAsync(vm.Keyword);
+            ViewBag.Keyword = vm.Keyword;
+            return View(members);
+        }
 
-            // 有關鍵字就過濾
-            if (!string.IsNullOrWhiteSpace(vm?.Keyword))
+        [HttpGet]
+        public IActionResult Create()
+        {
+            return View(new CMemberCreateViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CMemberCreateViewModel vm, CancellationToken ct)
+        {
+            if (!ModelState.IsValid)
+                return View(vm);
+
+            try
             {
-                string kw = vm.Keyword.Trim();
-                allMembers = allMembers
-                    .Where(p =>
-                        (!string.IsNullOrEmpty(p.Name) && p.Name.Contains(kw, StringComparison.OrdinalIgnoreCase))||
-                        (!string.IsNullOrEmpty(p.Phone) && p.Phone.Contains(kw, StringComparison.OrdinalIgnoreCase))||
-                        (!string.IsNullOrEmpty(p.Address) && p.Address.Contains(kw, StringComparison.OrdinalIgnoreCase)))
-                    .ToList();
+                // VM -> DTO
+                var dto = new CMemberCreateDTO
+                {
+                    FName = vm.FName!,
+                    FDisplayName = vm.FDisplayName,
+                    FGender = vm.FGender,
+                    FPhone = vm.FPhone,                   
+                    FAddress = vm.FAddress
+                };
+
+                var created = await _MemberService.MemberCreateAsync(dto, ct);
+
+                TempData["Success"] = $"新增成功（ID: {created.FMemberId}）。";
+                return RedirectToAction("List");
             }
-
-            // 把搜尋關鍵字放進 ViewBag
-            ViewBag.Keyword = vm?.Keyword;
-
-            return View(allMembers);
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return View(vm);
+            }
+            catch
+            {
+                ModelState.AddModelError(string.Empty, "發生未知錯誤，請稍後再試。");
+                return View(vm);
+            }
         }
 
     }

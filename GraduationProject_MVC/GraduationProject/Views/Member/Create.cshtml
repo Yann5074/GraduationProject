@@ -1,0 +1,55 @@
+﻿@model GraduationProject.ViewModels.CMemberCreateViewModel
+@{
+    ViewData["Title"] = "Create Member";
+}
+<h2>新增會員個資</h2>
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-2">
+        <label asp-for="FName">姓名</label>
+        <input asp-for="FName" class="form-control" />
+        <span asp-validation-for="FName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-2">
+        <label asp-for="FDisplayName">暱稱</label>
+        <input asp-for="FDisplayName" class="form-control" />
+    </div>
+
+    <div class="mb-2">
+        <label asp-for="FGender">性別</label>
+        <select asp-for="FGender" class="form-control">
+            <option value="1">男性</option>
+            <option value="2">女性</option>
+            <option value="3">中性</option>
+            <option value="4">不願告知</option>
+        </select>
+        <span asp-validation-for="FGender" class="text-danger"></span>
+    </div>
+
+    <div class="mb-2">
+        <label asp-for="FPhone">手機</label>
+        <input asp-for="FPhone" class="form-control" />
+        <span asp-validation-for="FPhone" class="text-danger"></span>
+    </div>
+
+    @* <div class="mb-2">
+        <label asp-for="FBirthDate"></label>
+        <input asp-for="FBirthDate" type="date" class="form-control" />
+    </div> *@
+
+    <div class="mb-2">
+        <label asp-for="FAddress">地址</label>
+        <input asp-for="FAddress" class="form-control" />
+        <span asp-validation-for="FAddress" class="text-danger"></span>
+    </div>
+
+    <button class="btn btn-primary" type="submit">儲存</button>
+    <a asp-action="List" class="btn btn-secondary">返回</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

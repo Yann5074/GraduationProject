@@ -9,5 +9,9 @@ namespace GraduationProject.Interfaces
         Task<CMemberDTO?> GetAsync(int memberId, CancellationToken ct = default);
 
         Task<IReadOnlyList<CMemberDTO>> MemberSearchAsync(string? keyword, CancellationToken ct = default);
+
+        Task<CMemberCreatedDTO> MemberCreateAsync(CMemberCreateDTO dto, CancellationToken ct = default);
+
+      
     }
 }

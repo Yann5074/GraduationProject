@@ -35,7 +35,6 @@
     <Folder Include="Api\" />
     <Folder Include="Wraps\" />
     <Folder Include="Tools\" />
-
   </ItemGroup>
 
   <ItemGroup>
