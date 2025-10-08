@@ -100,5 +100,31 @@ namespace GraduationProject.Services
             await _db.SaveChangesAsync();
             return true;
         }
+        public async Task<bool> EditEmployeeAsync(int id, CEmployeeEditDTO dto, CancellationToken ct = default)
+        {
+            var emp = await _db.TEmployees.FirstOrDefaultAsync(x => x.FEmployeeId == id, ct);
+            if (emp is null) return false;
+
+            emp.FName = dto.FName;
+            emp.FPhone = dto.FPhone;
+            emp.FEmail = dto.FEmail;
+            emp.FHeadShot = dto.FHeadShot;
+            emp.FGender = dto.FGender;
+            emp.FBloodType = dto.FBloodType;
+            emp.FHireDate = dto.FHireDate;
+            emp.FRoleId = dto.FRoleId;
+            emp.FStatusId = dto.FStatusId;
+            // emp.FAccount = dto.FAccount;
+
+            // 密碼（只有有填新密碼才更新）
+            if (!string.IsNullOrWhiteSpace(dto.FPasswords))
+                emp.FPasswords = _hasher.HashPassword(emp, dto.FPasswords);
+
+            emp.FLoginTime = dto.FLoginTime ?? emp.FLoginTime;
+            emp.FChangePasswordTime = dto.FChangePasswordTime ?? DateTime.Now;
+
+            await _db.SaveChangesAsync(ct);
+            return true;
+        }
     }
 }

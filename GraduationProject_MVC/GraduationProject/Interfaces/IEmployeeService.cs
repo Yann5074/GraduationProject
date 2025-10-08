@@ -9,5 +9,6 @@ namespace GraduationProject.Interfaces
         string? keyword, CancellationToken ct = default);
         Task<int> CreateEmployeeAsync(CEmployeeCreateDTO dto, CancellationToken ct = default);
         Task<bool> DeleteEmployeeAsync(int? id);
+        Task<bool> EditEmployeeAsync(int id, CEmployeeEditDTO dto, CancellationToken ct = default);
     }
 }
