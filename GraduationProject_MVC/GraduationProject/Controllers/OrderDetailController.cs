@@ -73,5 +73,36 @@ namespace GraduationProject.Controllers
             TempData["updateSuccessMessage"] = "成功更新商品明細";
             return RedirectToAction("List", "OrderDetail", new { id = orderId });
         }
+
+        //[HttpGet]
+        public IActionResult Create(int? orderId)
+        {
+            if (orderId == null)
+                return RedirectToAction("List", new { id = orderId});
+            var vm = new COrderDetailCreateViewModel
+            {
+                OrderId = (int)orderId,
+            };
+            return View(vm);
+        }
+
+        [HttpPost]
+        public IActionResult Create(COrderDetailCreateViewModel vm)
+        {
+            var dtoUi = new OrderDetailCreateDTO
+            {
+                OrderId = vm.OrderId,
+                ProductVariantId = vm.ProductVariantId,
+                Quantity = vm.Quantity,
+            };
+            var result = _orderDetailService.CreateOrderDetail(dtoUi);
+            if (result == false)
+            {
+                TempData["createErrorMessage"] = "商品加入失敗，請重新操作";
+                return RedirectToAction("List", new { id = vm.OrderId });
+            }
+            TempData["createSuccessMessage"] = "商品加入成功";
+            return RedirectToAction("List", new {id = vm.OrderId});
+        }
     }
 }

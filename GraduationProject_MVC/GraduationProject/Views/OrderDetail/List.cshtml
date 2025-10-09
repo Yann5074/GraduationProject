@@ -10,8 +10,9 @@
     var searchError = TempData["searchErrorMessage"] as string;
     var updateError = TempData["updateErrorMessage"] as string;
     var updateSuccess = TempData["updateSuccessMessage"] as string;
-    
-    
+    var createError = TempData["createErrorMessage"] as string;
+    var createSuccess = TempData["createSuccessMessage"] as string;
+
 }
 
 @if (!string.IsNullOrEmpty(deleteError))
@@ -39,10 +40,20 @@
     <div class="alert alert-success">@updateSuccess</div>
 }
 
+@if (!string.IsNullOrEmpty(createError))
+{
+    <div class="alert alert-danger">@createError</div>
+}
+
+@if (!string.IsNullOrEmpty(createSuccess))
+{
+    <div class="alert alert-success">@createSuccess</div>
+}
+
 <h1>訂單詳細資訊</h1>
 
 <p>
-    <a asp-action="Create">加入商品</a>
+    <a asp-action="Create" asp-route-orderId="@Model.FirstOrDefault()?.OrderId">加入商品</a>
 </p>
 <table class="table">
     <thead>
