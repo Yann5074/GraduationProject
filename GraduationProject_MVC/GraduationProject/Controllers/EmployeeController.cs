@@ -66,6 +66,8 @@ namespace GraduationProject.Controllers
                 return View(vm);
             }
         }
+
+        //Delete
         public async Task<IActionResult> Delete(int? id)
         {
             var delete = await _svc.DeleteEmployeeAsync(id);
