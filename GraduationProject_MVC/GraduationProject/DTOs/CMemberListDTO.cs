@@ -1,6 +1,6 @@
 ﻿namespace GraduationProject.DTOs
 {
-    public class CMemberListPageDTO
+    public class CMemberListDTO
     {
         public required IReadOnlyList<CMemberDTO> Items { get; init; }
         public required int Page { get; init; }

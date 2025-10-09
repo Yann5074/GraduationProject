@@ -2,6 +2,9 @@
 //using ApiProject.Models;
 using GraduationProject.Interfaces;
 using GraduationProject.Models;
+using GraduationProject.ViewModels;
+using Humanizer;
+
 // using Microsoft.CodeAnalysis.Elfie.Model; // 移除
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +13,12 @@ namespace GraduationProject.Services
     public class CMemberService : IMemberService
     {
         private readonly dbFurniMartContext _db;
-        public CMemberService(dbFurniMartContext db) => _db = db;
+        private IWebHostEnvironment _enviro;
+        public CMemberService(dbFurniMartContext db, IWebHostEnvironment enviro)
+        {
+            _db = db;
+            _enviro = enviro;
+        } 
 
         public async Task<CMemberDTO?> GetAsync(int memberId, CancellationToken ct = default)
         {
@@ -37,7 +45,6 @@ namespace GraduationProject.Services
                 DisplayName = x.FDisplayName,
                 Address = x.FAddress,
                 MemberImage = x.FMemberImage,
-
 
                 // 關聯表顯示名稱
                 GenderName = x.FGenderNavigation != null ? x.FGenderNavigation.FGenderName : null,
@@ -152,9 +159,112 @@ namespace GraduationProject.Services
             return true;
         }
 
+        //public bool MemberUpdate(CMemberUpdateDTO dtoui, CancellationToken ct = default)
+        //{
+        //    TMember od = _db.TMembers.FirstOrDefault(o => o.FMemberId == dtoui.MemberId);
+        //    if (od == null)
+        //        return false;
+
+        //od.FName = dtoui.Name;
+        //    od.FDisplayName = dtoui.DisplayName;
+        //    od.FPhone = dtoui.Phone;
+        //    od.FAddress = dtoui.Address;
+        //    od.FGender = dtoui.Gender;
+        //    od.FLeveId = dtoui.LeveId;
+        //    od.FMoneySum = dtoui.MoneySum;
+        //    od.FUpdateTime = DateTime.Now;
+        //    od.FCreatTime = dtoui.CreatTime;
+        //    od.FStatus = dtoui.Status;
+
+        //    // 只有在 dto.MemberImage 有值時才更新，避免覆蓋成 null
+        //    if (!string.IsNullOrWhiteSpace(dtoui.MemberImage))
+        //        od.FMemberImage = dtoui.MemberImage;
+
+        //    _db.SaveChanges();
+        //    return true;
+        //}
 
 
+        //public CMemberUpdateDTO SearchUpdateMember(int? id)
+        //{
+        //    var dto = new CMemberUpdateDTO()
+        //    {
+        //        isValid = false
+        //    };
 
+        //    if (id == null)
+        //        return dto;
+
+        //    TMember od = _db.TMembers.FirstOrDefault(o => o.FMemberId == id);
+        //    if (od == null)
+        //        return dto;
+        //dto.isValid = true;
+        //    dto.MemberId = od.FMemberId;
+        //    dto.Name = od.FName;
+        //    dto.DisplayName = od.FDisplayName;
+        //    dto.Gender = od.FGender;
+        //    dto.Phone = od.FPhone;
+        //    dto.Address = od.FAddress;
+        //    dto.MemberImage = od.FMemberImage;
+        //    dto.LeveId = od.FLeveId;
+        //    dto.MoneySum = od.FMoneySum;
+        //    dto.Status = od.FStatus;
+        //    dto.CreatTime = od.FCreatTime;
+        //    dto.Account = od.FAccount;
+        //    dto.Passwords = od.FPasswords;
+
+        //    return dto;
+        //}
+
+        public async Task<bool> MemberEdit(int id, CMemberUpdateDTO dto, CancellationToken ct = default)
+        {
+            var mem = await _db.TMembers.FirstOrDefaultAsync(o => o.FMemberId == id,ct);
+            if(mem == null)return false;
+            mem.FName = dto.Name;
+            mem.FDisplayName = dto.DisplayName;
+            mem.FPhone = dto.Phone;
+            mem.FAddress = dto.Address;
+            mem.FGender = dto.Gender;
+            mem.FLeveId = dto.LeveId;
+            mem.FMoneySum = dto.MoneySum;
+            mem.FUpdateTime = DateTime.Now;
+            mem.FCreatTime = dto.CreatTime;
+            mem.FStatus = dto.Status;
+            if (!string.IsNullOrWhiteSpace(dto.MemberImage))
+                mem.FMemberImage = dto.MemberImage;
+
+            //if (!string.IsNullOrWhiteSpace(dto.Passwords))
+            //{
+            //    mem.FPasswords = dto.Passwords;
+            //}
+
+            await _db.SaveChangesAsync(ct);
+            return true;
+            
+        }
+        public async Task<CMemberUpdateViewModel?> GetEditMember(int id, CancellationToken ct = default)
+        {
+            return await _db.TMembers
+                .AsNoTracking()
+                .Where(e => e.FMemberId == id)
+                .Select(e => new CMemberUpdateViewModel
+                {
+                    Name = e.FName ?? string.Empty,
+                    DisplayName = e.FDisplayName ?? string.Empty,
+                    Gender = e.FGender,
+                    Phone = e.FPhone ?? string.Empty,
+                    Address = e.FAddress ?? string.Empty,
+                    MemberImage = e.FMemberImage,
+                    LeveId = e.FLeveId,
+                    MoneySum = e.FMoneySum,
+                    Status = e.FStatus,
+                    CreatTime = e.FCreatTime,
+                    Account = e.FAccount ?? string.Empty,
+                    //Passwords = e.FPasswords ?? string.Empty
+                })
+                .FirstOrDefaultAsync(ct);
+
+        }
         private static CMemberDTO MapToDto(TMember x) => new CMemberDTO
         {
             MemberId = x.FMemberId,

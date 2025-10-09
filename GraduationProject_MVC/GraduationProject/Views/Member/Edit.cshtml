@@ -1,0 +1,199 @@
+﻿@model GraduationProject.ViewModels.CMemberUpdateViewModel
+
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">修改會員作業</h5>
+                </div>
+
+                <div class="card-body">
+                    @* <h6 class="card-subtitle mb-3 text-muted">請修改會員資訊</h6>
+                    <hr /> *@
+
+                    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <!-- 隱藏鍵值 -->
+                        <input type="hidden" asp-for="MemberId" />
+                        <input type="hidden" asp-for="CreatTime" />
+
+                        <!-- 姓名 -->
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label fw-semibold">姓名</label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <!-- 暱稱 -->
+                        <div class="mb-3">
+                            <label asp-for="DisplayName" class="form-label fw-semibold">暱稱</label>
+                            <input asp-for="DisplayName" class="form-control" />
+                            <span asp-validation-for="DisplayName" class="text-danger"></span>
+                        </div>
+
+                        <!-- 性別 -->
+                        <div class="mb-3">
+                            <label asp-for="Gender" class="form-label d-block fw-semibold">性別</label>
+                            <div class="d-flex flex-wrap gap-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="Gender" value="1" id="gender-male" />
+                                    <label class="form-check-label" for="gender-male">男性</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="Gender" value="2" id="gender-female" />
+                                    <label class="form-check-label" for="gender-female">女性</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="Gender" value="3" id="gender-neutral" />
+                                    <label class="form-check-label" for="gender-neutral">中性</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="Gender" value="4" id="gender-na" />
+                                    <label class="form-check-label" for="gender-na">不願告知</label>
+                                </div>
+                            </div>
+                            <span asp-validation-for="Gender" class="text-danger"></span>
+                        </div>
+
+                        <!-- 手機 -->
+                        <div class="mb-3">
+                            <label asp-for="Phone" class="form-label fw-semibold">手機</label>
+                            <input asp-for="Phone" class="form-control" />
+                            <span asp-validation-for="Phone" class="text-danger"></span>
+                        </div>
+
+                        <!-- 地址 -->
+                        <div class="mb-3">
+                            <label asp-for="Address" class="form-label fw-semibold">地址</label>
+                            <input asp-for="Address" class="form-control" />
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+
+                        <!-- 會員頭貼 -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">會員頭貼</label>
+                            <!-- 關鍵：把舊檔名也隱藏帶回去 -->
+                            <input type="hidden" asp-for="MemberImage" />     
+                            <img id="headshotPreview"
+                                 src="@Url.Content($"~/MemberHeadImages/{Model.MemberImage ?? "default.png"}")"
+                                 class="rounded-circle border"
+                                 style="width:100px;height:100px;object-fit:cover"
+                                 alt="頭像預覽"
+                                 onerror="this.onerror=null;this.src='@Url.Content("~/MemberHeadImages/default.png")';" />
+                            <input asp-for="Photo" type="file" class="form-control" accept="image/*" />
+                            <small class="text-muted">支援 jpg/png/webp，照片檔案必須小於 2MB。</small>
+                        </div>
+
+                        <!-- 等級 -->
+                        <div class="mb-3">
+                            <label asp-for="LeveId" class="form-label d-block fw-semibold">等級</label>
+                            <div class="d-flex flex-wrap gap-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="LeveId" value="1" id="lv-1" />
+                                    <label class="form-check-label" for="lv-1">銅級</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="LeveId" value="2" id="lv-2" />
+                                    <label class="form-check-label" for="lv-2">銀級</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="LeveId" value="3" id="lv-3" />
+                                    <label class="form-check-label" for="lv-3">金級</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="LeveId" value="4" id="lv-4" />
+                                    <label class="form-check-label" for="lv-4">白金級</label>
+                                </div>
+                            </div>
+                            <span asp-validation-for="LeveId" class="text-danger"></span>
+                        </div>
+
+                        <!-- 總消費金額 -->
+                        <div class="mb-3">
+                            <label asp-for="MoneySum" class="form-label fw-semibold">總消費金額</label>
+                            <div class="input-group">
+                                <input asp-for="MoneySum" class="form-control" />
+                                <span class="input-group-text">元</span>
+                            </div>
+                            <span asp-validation-for="MoneySum" class="text-danger"></span>
+                        </div>
+
+                        <!-- 狀態 -->
+                        <div class="mb-2">
+                            <label asp-for="Status" class="form-label d-block fw-semibold">狀態</label>
+                            <div class="d-flex flex-wrap gap-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="Status" value="1" id="status-1" />
+                                    <label class="form-check-label" for="status-1">正常</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="Status" value="2" id="status-2" />
+                                    <label class="form-check-label" for="status-2">凍結</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="Status" value="3" id="status-3" />
+                                    <label class="form-check-label" for="status-3">刪除</label>
+                                </div>
+                            </div>
+                            <span asp-validation-for="Status" class="text-danger"></span>
+                        </div>
+
+                        <!-- 按鈕 -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <input type="submit" value="送出並儲存" class="btn btn-primary me-2" />
+                            <a asp-action="List" class="btn btn-outline-secondary">取消</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+           (function () {
+            const fileInput = document.getElementById('Photo');
+            const img = document.getElementById('headshotPreview');
+            const originalSrc = img.getAttribute('src');
+
+            fileInput?.addEventListener('change', () => {
+                const f = fileInput.files && fileInput.files[0];
+                if (!f) { img.src = originalSrc; return; }
+
+                // 基本前端檢查
+                if (!f.type.startsWith('image/')) {
+                    alert('請選擇圖片檔案');
+                    fileInput.value = '';
+                    img.src = originalSrc;
+                    return;
+                    }
+                const maxBytes = 2 * 1024 * 1024; // 2MB
+                if (f.size > maxBytes) {
+                    alert('檔案過大，請小於 2MB');
+                    fileInput.value = '';
+                    img.src = originalSrc;
+                    return;
+                    }
+
+                // 即時預覽
+                const url = URL.createObjectURL(f);
+                img.src = url;
+                img.onload = () => URL.revokeObjectURL(url);
+            });
+        })();
+
+    </script>
+}
