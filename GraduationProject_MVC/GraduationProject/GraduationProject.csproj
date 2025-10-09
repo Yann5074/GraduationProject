@@ -27,6 +27,7 @@
     <Folder Include="Services\" />
     <Folder Include="ViewModels\" />
     <Folder Include="Services\" />
+    <Folder Include="Api\" />
     <Folder Include="Wraps\" />
     <Folder Include="Tools\" />
     <Folder Include="Wraps\" />

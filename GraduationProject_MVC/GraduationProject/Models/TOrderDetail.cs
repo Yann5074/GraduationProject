@@ -13,7 +13,7 @@ public partial class TOrderDetail
 
     public int FIsDeleted { get; set; }
 
-    public int FUnitPrice { get; set; }
+    public decimal FUnitPrice { get; set; }
 
     public int FQuantity { get; set; }
 }

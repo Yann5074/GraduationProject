@@ -32,9 +32,24 @@ namespace GraduationProject.Services
         }
 
         // 新增訂單明細
-         public void CreateOrderDetail()
+         public bool CreateOrderDetail(OrderDetailCreateDTO dtoUi)
         {
-
+            var proId = _context.TProductVariants.FirstOrDefault(o => o.FProductVariantId == dtoUi.ProductVariantId);
+            if (proId == null)
+            {
+                return false;
+            }
+            var odd = new TOrderDetail
+            {
+                FOrderId = dtoUi.OrderId,
+                FProductVariantId = dtoUi.ProductVariantId,
+                FIsDeleted = 0,
+                FUnitPrice = (decimal)proId.FPrice, 
+                FQuantity = dtoUi.Quantity,
+            };
+            _context.TOrderDetails.Add(odd);
+            _context.SaveChanges();
+            return true;
         }
         // 修改訂單明細
          public bool UpdateOrderDetail(OrderDetailUpdateDTO dtoUi)
