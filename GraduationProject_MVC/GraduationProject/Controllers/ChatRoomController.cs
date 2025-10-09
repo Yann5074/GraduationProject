@@ -87,13 +87,14 @@ namespace GraduationProject.Controllers
             //output 聊天室的 chatroomid 以及 會員id 或 訪客id 訊息 建立時間 與 關閉時間
             _context.TChatRooms
                 
-                .Select(c => new ChatRoomViewModel
+                .Select(c => new ChatRoomLlistVM
                 {
-                    c.FChatRoomId,
-                    c.FMemberId,
-                    c.FVisitorKey,
-                    c.FCreatedAt,
-                    c.FClosedAt
+                    FChatRoomId = c.FChatRoomId,
+                    FMemberId = c.FMemberId,
+                    FVisitorKey = c.FVisitorKey,
+                    FCreatedAt= c.FCreatedAt,
+                    FClosedAt=c.FClosedAt,
+                    FStatus=c.FStatus
                 })
                 .ToList();
 
