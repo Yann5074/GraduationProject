@@ -1,0 +1,230 @@
+﻿@model GraduationProject.ViewModels.CEmployeeEditViewModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1 class="mb-4">職員資料修改</h1>
+
+<h4 class="mb-3">編輯職員資料</h4>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <input type="hidden" name="fEmployeeId" value="@Model.EmployeeId" />
+
+            <div class="mb-3">
+                <label asp-for="FName" class="form-label">姓名</label>
+                <input asp-for="FName" class="form-control" />
+                <span asp-validation-for="FName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FPhone" class="form-label"></label>
+                <input asp-for="FPhone" class="form-control" type="tel" />
+                <span asp-validation-for="FPhone" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FEmail" class="form-label"></label>
+                <input asp-for="FEmail" class="form-control" type="email" />
+                <span asp-validation-for="FEmail" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">大頭照</label>
+                <div class="d-flex align-items-center gap-3">
+                    <input asp-for="FHeadShot" type="hidden" />
+                    <!-- 目前頭像 / 預覽 -->
+                    <img id="headshotPreview"
+                         src="@Url.Content($"~/HeadShotImages/{Model.FHeadShot ?? "default.png"}")"
+                         class="rounded-circle border"
+                         style="width:100px;height:100px;object-fit:cover"
+                         alt="頭像預覽"
+                         onerror="this.onerror=null;this.src='@Url.Content("~/HeadShotImages/default.png")';" />
+                    <div class="flex-grow-1">
+                        <input asp-for="Photo" type="file" class="form-control" accept="image/*" />
+                        <small class="text-muted">支援 jpg/png/webp，照片檔案必須小於 2MB。</small>
+                    </div>
+                </div>
+                <span asp-validation-for="FHeadShot" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FGender" class="form-label">性別</label>
+                <div>
+                    <label>
+                        <input type="radio" asp-for="FGender" value="1" />
+                        男性
+                    </label>
+                    <label>
+                        <input type="radio" asp-for="FGender" value="2" />
+                        女性
+                    </label>
+                    <label>
+                        <input type="radio" asp-for="FGender" value="3" />
+                        中性
+                    </label>
+                    <label>
+                        <input type="radio" asp-for="FGender" value="4" />
+                        不願告知
+                    </label>
+                </div>
+                <span asp-validation-for="FGender" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FBloodType" class="form-label"></label>
+                <select asp-for="FBloodType" class="form-select">
+                    <option value="">請選擇</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="O">O</option>
+                    <option value="AB">AB</option>
+                </select>
+                <span asp-validation-for="FBloodType" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FHireDate" class="form-label"></label>
+                <input asp-for="FHireDate" type="date" class="form-control" />
+                <span asp-validation-for="FHireDate" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FRoleId" class="form-label">權限</label>
+                <div>
+                    <label>
+                        <input type="radio" asp-for="FRoleId" value="1" />
+                        實習生
+                    </label>
+                    <label>
+                        <input type="radio" asp-for="FRoleId" value="2" />
+                        職員
+                    </label>
+                    <label>
+                        <input type="radio" asp-for="FRoleId" value="3" />
+                        組長
+                    </label>
+                    <label>
+                        <input type="radio" asp-for="FRoleId" value="4" />
+                        管理者
+                    </label>
+                </div>
+                <span asp-validation-for="FRoleId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FStatusId" class="form-label">狀態</label>
+                <div>
+                    <label>
+                        <input type="radio" asp-for="FStatusId" value="1" />
+                        在職
+                    </label>
+                    <label>
+                        <input type="radio" asp-for="FStatusId" value="2" />
+                        離職
+                    </label>
+                    <label>
+                        <input type="radio" asp-for="FStatusId" value="3" />
+                        退休
+                    </label>
+                    <label>
+                        <input type="radio" asp-for="FStatusId" value="4" />
+                        帳號註銷
+                    </label>
+                </div>
+                <span asp-validation-for="FStatusId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FAccount" class="form-label"></label>
+                <input asp-for="FAccount" class="form-control" readonly />
+                <span asp-validation-for="FAccount" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="NewPassword" class="form-label">新密碼</label>
+                <div class="input-group">
+                    <input asp-for="NewPassword" type="password" class="form-control" placeholder="********" autocomplete="new-password" />
+                    <button type="button" class="btn btn-outline-secondary" id="togglePwd"><i class="bi bi-eye-slash"></i></button>
+                </div>
+                <span asp-validation-for="NewPassword" class="text-danger"></span>
+            </div>
+
+            <!-- 確認新密碼 -->
+            <div class="mb-3">
+                <label asp-for="ConfirmPassword" class="form-label">確認新密碼</label>
+                <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="********" autocomplete="new-password" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FLoginTime" class="form-label"></label>
+                <input asp-for="FLoginTime" class="form-control" type="datetime-local" />
+                <span asp-validation-for="FLoginTime" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FChangePasswordTime" class="form-label"></label>
+                <input asp-for="FChangePasswordTime" class="form-control" type="datetime-local" readonly />
+                <span asp-validation-for="FChangePasswordTime" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <input type="submit" value="送出並儲存" class="btn btn-primary" />
+                <a asp-action="Details" asp-route-id="@Model.EmployeeId" class="btn btn-secondary">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        const btn = document.getElementById('togglePwd');
+        const input = document.getElementById('NewPassword');
+        btn?.addEventListener('click', () => {
+          const show = input.type === 'text';
+          input.type = show ? 'password' : 'text';
+          btn.innerHTML = show ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+        });
+
+        (function () {
+            const fileInput = document.getElementById('Photo');
+            const img = document.getElementById('headshotPreview');
+            const originalSrc = img.getAttribute('src');
+
+            fileInput?.addEventListener('change', () => {
+                const f = fileInput.files && fileInput.files[0];
+                if (!f) { img.src = originalSrc; return; }
+
+                // 基本前端檢查
+                if (!f.type.startsWith('image/')) {
+                    alert('請選擇圖片檔案');
+                    fileInput.value = '';
+                    img.src = originalSrc;
+                    return;
+                    }
+                const maxBytes = 2 * 1024 * 1024; // 2MB
+                if (f.size > maxBytes) {
+                    alert('檔案過大，請小於 2MB');
+                    fileInput.value = '';
+                    img.src = originalSrc;
+                    return;
+                    }
+
+                // 即時預覽
+                const url = URL.createObjectURL(f);
+                img.src = url;
+                img.onload = () => URL.revokeObjectURL(url);
+            });
+        })();
+    </script>
+}
+
+

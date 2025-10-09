@@ -1,6 +1,7 @@
 ﻿using GraduationProject.DTOs;
 using GraduationProject.Interfaces;
 using GraduationProject.Models;
+using GraduationProject.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +18,7 @@ namespace GraduationProject.Services
             _hasher = hasher;
         }
 
+        //List
         public async Task<List<CEmployeeListItemDTO>> GetEmployeeListAsync(
             string? keyword, CancellationToken ct = default)
         {
@@ -55,6 +57,8 @@ namespace GraduationProject.Services
                           })
                           .ToListAsync(ct);
         }
+        
+        //Create
         public async Task<int> CreateEmployeeAsync(CEmployeeCreateDTO dto, CancellationToken ct = default)
         {
             // 帳號重複檢查
@@ -88,6 +92,8 @@ namespace GraduationProject.Services
 
             return emp.FEmployeeId;
         }
+
+        //Delete
         public async Task<bool> DeleteEmployeeAsync(int? id)
         {
             if (id == null)
@@ -100,6 +106,8 @@ namespace GraduationProject.Services
             await _db.SaveChangesAsync();
             return true;
         }
+
+        //Edit畫面
         public async Task<bool> EditEmployeeAsync(int id, CEmployeeEditDTO dto, CancellationToken ct = default)
         {
             var emp = await _db.TEmployees.FirstOrDefaultAsync(x => x.FEmployeeId == id, ct);
@@ -108,7 +116,8 @@ namespace GraduationProject.Services
             emp.FName = dto.FName;
             emp.FPhone = dto.FPhone;
             emp.FEmail = dto.FEmail;
-            emp.FHeadShot = dto.FHeadShot;
+            if (!string.IsNullOrWhiteSpace(dto.FHeadShot))
+                emp.FHeadShot = dto.FHeadShot;
             emp.FGender = dto.FGender;
             emp.FBloodType = dto.FBloodType;
             emp.FHireDate = dto.FHireDate;
@@ -116,15 +125,43 @@ namespace GraduationProject.Services
             emp.FStatusId = dto.FStatusId;
             // emp.FAccount = dto.FAccount;
 
-            // 密碼（只有有填新密碼才更新）
             if (!string.IsNullOrWhiteSpace(dto.FPasswords))
+            {
                 emp.FPasswords = _hasher.HashPassword(emp, dto.FPasswords);
+                emp.FChangePasswordTime = DateTime.Now;
+            }
 
-            emp.FLoginTime = dto.FLoginTime ?? emp.FLoginTime;
-            emp.FChangePasswordTime = dto.FChangePasswordTime ?? DateTime.Now;
+            if (dto.FLoginTime.HasValue)
+                emp.FLoginTime = dto.FLoginTime;
 
             await _db.SaveChangesAsync(ct);
             return true;
+        }
+
+        //讀取EditViewModel
+        public async Task<CEmployeeEditViewModel?> GetEmployeeEditVmAsync(int id, CancellationToken ct = default)
+        {
+            return await _db.TEmployees
+                .AsNoTracking()
+                .Where(e => e.FEmployeeId == id)
+                .Select(e => new CEmployeeEditViewModel
+                {
+                    FName = e.FName ?? string.Empty,
+                    FPhone = e.FPhone ?? string.Empty,
+                    FEmail = e.FEmail ?? string.Empty,
+                    FHeadShot = e.FHeadShot,
+                    FGender = e.FGender,
+                    FBloodType = e.FBloodType ?? string.Empty,
+                    FHireDate = e.FHireDate,
+                    FRoleId = e.FRoleId,
+                    FStatusId = e.FStatusId,
+                    FAccount = e.FAccount ?? string.Empty,
+                    // 密碼不回填（避免洩漏）；給空字串，讓畫面顯示為空
+                    FPasswords = string.Empty,
+                    FLoginTime = e.FLoginTime,
+                    FChangePasswordTime = e.FChangePasswordTime
+                })
+                .FirstOrDefaultAsync(ct);
         }
     }
 }
