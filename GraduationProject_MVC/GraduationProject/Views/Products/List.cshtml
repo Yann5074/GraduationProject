@@ -3,56 +3,99 @@
 @{
     ViewData["Title"] = "List";
 }
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
 
 <h2>商品清單</h2>
-
-<!-- 搜尋表單 -->
-<form method="get" asp-controller="Products" asp-action="List" class="mb-3">
-    <input type="text" name="txtKeywordProductName" value="@ViewBag.Keyword" placeholder="輸入關鍵字搜尋..." class="form-control" style="width:250px; display:inline-block;" />
+@* <form method="get" asp-controller="Products" asp-action="List" class="mb-3">
+    <input type="text" name="txtKeyword" value="@ViewBag.Keyword"
+           placeholder="輸入關鍵字搜尋（名稱、分類、狀態、顏色）..."
+           class="form-control" style="width:300px; display:inline-block;" />
     <button type="submit" class="btn btn-primary">搜尋</button>
     <a asp-action="List" class="btn btn-secondary">清除</a>
-</form>
-
-<!-- 顯示結果表格 -->
-<table class="table table-striped">
-    <thead>
+</form> *@
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h1 class="h4 mb-0">Products</h1>
+        <div class="d-flex gap-2">
+            <form method="get" asp-controller="Products" asp-action="List" class="mb-3">
+                <input type="text" name="txtKeyword" value="@ViewBag.Keyword"
+                       placeholder="輸入關鍵字搜尋（名稱、分類、狀態、顏色）..."
+                       class="form-control" style="width:300px; display:inline-block;" />
+                <button type="submit" class="btn btn-primary">搜尋</button>
+                <a asp-action="List" class="btn btn-secondary">清除</a>
+            </form>
+        </div>
+    </div>
+<p>
+    <a asp-action="FindMember">新增訂單</a>
+</p>
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
         <tr>
-            <th>編號</th>
-            <th>名稱</th>
-            <th>種類</th>
-            <th>價格</th>
-            <th>描述</th>
-            <th>狀態</th>
+            
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+  
+            <th>
+                @Html.DisplayNameFor(model => model.Price)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Cost)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CategoryName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ColorName)
+            </th>
+        
+            <th></th>
         </tr>
     </thead>
     <tbody>
-        @if (!Model.Any())
+        @foreach (var item in Model)
         {
-            <tr><td colspan="5" class="text-center">沒有符合的資料</td></tr>
-        }
-        else
-        {
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.ProductId</td>
-                    <td>@item.Name</td>
-                    <td>@item.CategoryName</td>
-                    <td>@item.Price</td>
-                    <td>@item.Description</td>
-                    <td>
-                        @{
-                            string statusText = item.PStatus switch
-                            {
-                                1 => "上架",
-                                2 => "審核中",
-                                _ => "下架"
-                            };
-                        }
-                        @statusText
-                    </td>
-                </tr>
-            }
+            <tr>
+                
+                <td>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </td>
+ 
+                <td>
+                    @Html.DisplayFor(modelItem => item.Price)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Cost)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.CategoryName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ColorName)
+                </td>
+          
+                <td>
+                        <a class="btn btn-sm btn-outline-primary"
+                           asp-controller="Products"
+                           asp-action="Detail"
+                           asp-route-id="@item.ProductId">
+                            詳情
+                        </a>
+                        <a class="btn btn-sm btn-outline-secondary"
+                           asp-action="Edit" asp-route-id="@item.ProductId">編輯</a>
+                   
+                    @Html.ActionLink("刪除", "Delete", "Order", new { id = item.ProductId }, new { onclick = "return confirm('確定要刪除訂單?')", Class = "btn btn-danger" })
+                </td>
+            </tr>
         }
     </tbody>
 </table>
+
+
+
+
+

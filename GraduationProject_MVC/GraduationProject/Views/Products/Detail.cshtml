@@ -1,0 +1,97 @@
+﻿@model GraduationProject.DTOs.CProductDetailDTO
+
+@{
+    ViewData["Title"] = "Detail";
+}
+
+<h2 class="mb-3">@Model.Name</h2>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card mb-3">
+            <img class="card-img-top" src="@Model.MainImageUrl" alt="@Model.Name" />
+        </div>
+        @if (Model.Images?.Count > 1)
+        {
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var img in Model.Images.Skip(1))
+                {
+                    <img src="@img.Url" style="width:90px;height:90px;object-fit:cover;border-radius:8px;" />
+                }
+            </div>
+        }
+    </div>
+
+    <div class="col-md-7">
+        <dl class="row">
+            <dt class="col-sm-3">分類</dt>
+            <dd class="col-sm-9">@Model.CategoryName</dd>
+            <dt class="col-sm-3">狀態</dt>
+            <dd class="col-sm-9">@Model.PStatusName</dd>
+            <dt class="col-sm-3">價格</dt>
+            <dd class="col-sm-9">
+                @if (Model.PriceMin.HasValue && Model.PriceMax.HasValue)
+                {
+                    if (Model.PriceMin == Model.PriceMax)
+                    {
+                        @Model.PriceMin.Value.ToString("N0")
+                    }
+                    else
+                    {
+
+                        @($"{Model.PriceMin:N0} ~ {Model.PriceMax:N0}")
+                    }
+                }
+                else
+                {
+
+                    @("-")
+                }
+            </dd>
+            <dt class="col-sm-3">成本</dt>
+            <dd class="col-sm-9">
+                @if (Model.CostMin.HasValue && Model.CostMax.HasValue)
+                {
+                    if (Model.CostMin == Model.CostMax)
+                    {
+                        @Model.CostMin.Value.ToString("N0")
+                    }
+                    else
+                    {
+
+                        @($"{Model.CostMin:N0} ~ {Model.CostMax:N0}")
+                    }
+                }
+                else
+                {
+
+                    @("-")
+                }
+            </dd>
+            <dt class="col-sm-3">顏色</dt>
+            <dd class="col-sm-9">
+                @if (Model.Colors?.Any() == true)
+                {
+                    @string.Join("、", Model.Colors)
+                }
+                else
+                {
+
+                    @("-")
+                }
+            </dd>
+        </dl>
+
+        <div class="mt-3">
+            <h5>商品描述</h5>
+            <p class="text-muted" style="white-space:pre-line;">@Model.Description</p>
+        </div>
+        <div class="mt-4">
+            <a class="btn btn-secondary" asp-action="Edit" asp-route-id="@Model.ProductId">編輯</a>
+        </div>
+        <div class="mt-4">
+            <a asp-action="List" class="btn btn-outline-secondary">回列表</a>
+        </div>
+    </div>
+</div>
+

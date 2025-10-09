@@ -4,8 +4,17 @@ namespace GraduationProject.Models
 {
     public partial class TProductVariant
     {
+
+       
+
+        [ForeignKey(nameof(FPstatus))]
+        public virtual TPstatus PStatus { get; set; }
+
+
         [ForeignKey(nameof(FProductId))]
         public TProduct product { get; set; }
+
+    
         [ForeignKey(nameof(FColorId))]
         public TColor Color { get; set; }
     }
