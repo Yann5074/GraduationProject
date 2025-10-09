@@ -285,6 +285,12 @@ namespace GraduationProject.Services
         }
 
 
+        //public CMemberUpdateDTO SearchUpdateMember(int? id)
+        //{
+        //    var dto = new CMemberUpdateDTO()
+        //    {
+        //        isValid = false
+        //    };
 
         public async Task<CMemberDetailsDTO?> GetMemberDetailsAsync(int id, CancellationToken ct = default)
         {
