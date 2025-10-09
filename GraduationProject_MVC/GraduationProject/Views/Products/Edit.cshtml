@@ -1,0 +1,156 @@
+﻿@model GraduationProject.ViewModels.CProductEditViewModel
+
+@@{
+    ViewData["Title"] = "編輯商品";
+}
+<h2 class="mb-3">編輯商品</h2>
+
+<div class="text-danger">
+    @Html.ValidationSummary(excludePropertyErrors: true)
+</div>
+
+<form asp-action="Edit" method="post" enctype="multipart/form-data" class="row g-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="ProductId" />
+
+    <!-- 商品本體 -->
+    <div class="col-md-6">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="WarrantyMonth" class="form-label">保固（月）</label>
+        <input asp-for="WarrantyMonth" class="form-control" />
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="CategoryId" class="form-label">分類</label>
+        <select asp-for="CategoryId" asp-items="Model.CategoryOptions" class="form-select">
+            <option value="">請選擇分類</option>
+        </select>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="PStatusId" class="form-label">商品狀態</label>
+        <select asp-for="PStatusId" asp-items="Model.PStatusOptions" class="form-select">
+            <option value="">請選擇狀態</option>
+        </select>
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">是否需要組裝</label>
+        <select asp-for="AssemblyRequired" class="form-select">
+            <option value="">未設定</option>
+            <option value="true">需要</option>
+            <option value="false">不需要</option>
+        </select>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="AssemblyPart" class="form-label">組裝部件/說明</label>
+        <input asp-for="AssemblyPart" class="form-control" />
+    </div>
+
+    <!-- 變體區（可多筆） -->
+    <div class="col-12 mt-4">
+        <h5>變體</h5>
+        <table class="table table-bordered align-middle">
+            <thead>
+                <tr>
+                    <th>顏色</th>
+                    <th>價格</th>
+                    <th>成本</th>
+                    <th>庫存</th>
+                    <th>L</th>
+                    <th>W</th>
+                    <th>H</th>
+                    <th>重量</th>
+                    <th>變體狀態</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.Variants.Count; i++)
+                {
+                    <tr>
+                        <td>
+                            @Model.Variants[i].ColorName
+                            <input type="hidden" asp-for="Variants[@i].ProductVariantId" />
+                        </td>
+                        <td><input asp-for="Variants[@i].Price" class="form-control" /></td>
+                        <td><input asp-for="Variants[@i].Cost" class="form-control" /></td>
+                        <td><input asp-for="Variants[@i].Stock" class="form-control" /></td>
+                        <td><input asp-for="Variants[@i].Length" class="form-control" /></td>
+                        <td><input asp-for="Variants[@i].Width" class="form-control" /></td>
+                        <td><input asp-for="Variants[@i].Height" class="form-control" /></td>
+                        <td><input asp-for="Variants[@i].Weight" class="form-control" /></td>
+                        <td>
+                            <select asp-for="Variants[@i].PStatusId" asp-items="Model.Variants[@i].PStatusOptions" class="form-select">
+                                <option value="">未設定</option>
+                            </select>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 圖片資產 -->
+    <div class="col-12 mt-4">
+        <h5>圖片</h5>
+        <table class="table table-bordered align-middle">
+            <thead>
+                <tr>
+                    <th>預覽</th>
+                    <th>URL</th>
+                    <th>主圖</th>
+                    <th>排序</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.Assets.Count; i++)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(Model.Assets[i].Url))
+                            {
+                                <img src="@Model.Assets[i].Url" style="width:80px;height:80px;object-fit:cover;border-radius:6px;" />
+                            }
+                            <input type="hidden" asp-for="Assets[@i].AssetId" />
+                        </td>
+                        <td><input asp-for="Assets[@i].Url" class="form-control" /></td>
+                        <td class="text-center">
+                            <input asp-for="Assets[@i].IsPrimary" type="checkbox" class="form-check-input" />
+                        </td>
+                        <td style="width:120px;">
+                            <input asp-for="Assets[@i].SortOrder" class="form-control" />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="mt-2">
+            <label class="form-label">新增圖片</label>
+            <input asp-for="NewPictures" type="file" multiple class="form-control" />
+            <div class="form-text">可多選；上傳後自動加在清單尾端。</div>
+        </div>
+    </div>
+
+    <div class="col-12 mt-3">
+        <button type="submit" class="btn btn-primary">儲存</button>
+        <a asp-action="List" class="btn btn-outline-secondary">取消</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
