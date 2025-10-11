@@ -1,4 +1,4 @@
-﻿﻿using GraduationProject.DTOs;
+﻿using GraduationProject.DTOs;
 using GraduationProject.Interfaces;
 using GraduationProject.Models;
 using GraduationProject.Services;
@@ -198,7 +198,6 @@ namespace GraduationProject.Controllers
             // 5) 回傳新檔名（DB 只存檔名，頁面用 /MemberHeadImages/{檔名} 顯示）
             return fileName;
         }
-
 
 
         public async Task<IActionResult> Details(int? id, CancellationToken ct = default)
