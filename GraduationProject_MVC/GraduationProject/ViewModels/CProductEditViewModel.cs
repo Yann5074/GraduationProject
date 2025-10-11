@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
+
+
 namespace GraduationProject.ViewModels
 {
     public class CProductEditViewModel
@@ -28,6 +30,7 @@ namespace GraduationProject.ViewModels
         public List<CProductAssetEditItem> Assets { get; set; } = new();
 
         //新增上傳（多檔）
-        public List<IFormFile> NewPictures { get; set; } = new(); // 對應 <input type="file" multiple>
+        public List<IFormFile> NewPictures { get; set; } = new();
+        public List<CProductPictureViewModel> NewPicturesMeta { get; set; } = new();  // 與 NewPictures 同順序填入
     }
 }
