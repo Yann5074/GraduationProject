@@ -175,5 +175,31 @@ namespace GraduationProject.Controllers
             return fileName;
         }
 
+
+        public async Task<IActionResult> Details(int? id, CancellationToken ct = default)
+        {
+            if (id is null) return RedirectToAction("List");
+
+            var dto = await _MemberService.GetMemberDetailsAsync(id.Value, ct);
+            if (dto is null) return RedirectToAction("List");
+
+            var vm = new CMemberDetailsViewModel
+            {
+                MemberId = dto.MemberId,
+                Name = dto.Name,
+                DisplayName = dto.DisplayName,
+                GenderName = dto.GenderName,
+                Phone = dto.Phone,
+                Address = dto.Address,
+                StatusName = dto.StatusName,
+                MoneySum = dto.MoneySum,
+                LevelName = dto.LevelName,
+                MemberImage = dto.MemberImage,
+                CreatTime = dto.CreatTime,
+                UpdateTime = dto.UpdateTime
+            };
+
+            return View(vm); // 強型別 View
+        }
     }
 }
