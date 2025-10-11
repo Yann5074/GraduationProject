@@ -1,0 +1,63 @@
+﻿@model GraduationProject.ViewModels.CMemberDetailsViewModel
+@{
+    ViewData["Title"] = "會員詳細資料";
+    string photo = string.IsNullOrEmpty(Model.MemberImage)
+       ? "~/MemberHeadImages/default.png"
+       : $"~/MemberHeadImages/{Model.MemberImage}";
+}
+
+<h1>會員詳細資料</h1>
+
+<div class="row">
+    <div class="col-md-3">
+        <img src="@Url.Content(photo)" alt="Headshot" class="img-fluid  rounded-circle" />
+    </div>
+    <div class="col-md-9">
+        <dl class="row">
+            <dt class="col-sm-3">編號</dt>
+            <dd class="col-sm-9">@Model.MemberId</dd>
+
+            <dt class="col-sm-3">姓名</dt>
+            <dd class="col-sm-9">@Model.Name</dd>
+
+            <dt class="col-sm-3">暱稱</dt>
+            <dd class="col-sm-9">@Model.DisplayName</dd>
+
+            <dt class="col-sm-3">性別</dt>
+            <dd class="col-sm-9">@Model.GenderName</dd>
+
+            <dt class="col-sm-3">手機</dt>
+            <dd class="col-sm-9">@Model.Phone</dd>
+
+            <dt class="col-sm-3">地址</dt>
+            <dd class="col-sm-9">@Model.Address</dd>
+
+            <dt class="col-sm-3">等級</dt>
+            <dd class="col-sm-9">@Model.LevelName</dd>
+
+            <dt class="col-sm-3">總消費金額</dt>
+            <dd class="col-sm-9">@Model.MoneySum</dd>
+
+            <dt class="col-sm-3">狀態</dt>
+            <dd class="col-sm-9">@Model.StatusName</dd>
+
+            <dt class="col-sm-3">資料建立時間</dt>
+            <dd class="col-sm-9">@Model.CreatTime?.ToString("yyyy/MM/dd HH:mm")</dd>
+
+            <dt class="col-sm-3">資料更新時間</dt>
+            <dd class="col-sm-9">@Model.UpdateTime?.ToString("yyyy/MM/dd HH:mm")</dd>
+        </dl>
+        <a asp-action="List" class="btn btn-sm btn-outline-secondary me-1">
+            <i class="bi bi-arrow-left"></i> 返回
+        </a>
+
+        <a asp-action="Edit" asp-route-id="@Model.MemberId" class="btn btn-sm btn-outline-primary me-1">
+            <i class="bi bi-pencil"></i> 編輯
+        </a>
+        <a asp-action="Delete" asp-route-id="@Model.MemberId"
+           class="btn btn-sm btn-outline-danger"
+           onclick="return confirm('確定要刪除這筆資料嗎?')">
+            <i class="bi bi-trash"></i> 刪除
+        </a>
+    </div>
+</div>

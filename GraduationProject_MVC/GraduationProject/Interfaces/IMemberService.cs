@@ -21,6 +21,6 @@ namespace GraduationProject.Interfaces
         //SearchUpdate 搜尋欲更新訂單
         Task<CMemberUpdateViewModel?> GetEditMember(int id, CancellationToken ct = default);
 
-
+        Task<CMemberDetailsDTO?> GetMemberDetailsAsync(int id, CancellationToken ct = default);
     }
 }

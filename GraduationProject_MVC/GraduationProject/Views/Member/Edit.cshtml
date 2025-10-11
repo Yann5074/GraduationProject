@@ -78,7 +78,7 @@
                         </div>
 
                         <!-- 會員頭貼 -->
-                        <div class="mb-3">
+                        <div class="mb-3"> 
                             <label class="form-label fw-semibold">會員頭貼</label>
                             <!-- 關鍵：把舊檔名也隱藏帶回去 -->
                             <input type="hidden" asp-for="MemberImage" />     
@@ -120,7 +120,7 @@
                         <div class="mb-3">
                             <label asp-for="MoneySum" class="form-label fw-semibold">總消費金額</label>
                             <div class="input-group">
-                                <input asp-for="MoneySum" class="form-control" />
+                                <input asp-for="MoneySum" class="form-control" id="moneySumInput" />
                                 <span class="input-group-text">元</span>
                             </div>
                             <span asp-validation-for="MoneySum" class="text-danger"></span>
@@ -164,6 +164,8 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
     <script>
+
+           // ====== 既有：頭像預覽 ======
            (function () {
             const fileInput = document.getElementById('Photo');
             const img = document.getElementById('headshotPreview');
@@ -194,6 +196,96 @@
                 img.onload = () => URL.revokeObjectURL(url);
             });
         })();
+
+        // ====== 新增：依等級自動帶入 MoneySum 起始值 ======
+        // 等級 ↔ 金額門檻（建議值/判斷用）
+          const levelStart = { 1: 0, 2: 10000, 3: 100000, 4: 250000 };
+
+          const moneyInput  = document.getElementById('moneySumInput');
+          const levelRadios = document.querySelectorAll("input[name='LeveId']");
+
+          // 避免「程式設值」觸發「事件又回頭」的無限循環
+          let suppress = false;
+
+          // 使用者是否手動改過金額（避免等級改變時強制覆蓋）
+          let userEditedMoney = false;
+
+          // 依等級帶入建議金額（但尊重使用者已手動輸入）
+          function applyStartMoneyByLevel(leveId, force = false) {
+            if (!levelStart.hasOwnProperty(leveId)) return;
+            const start = levelStart[leveId];
+
+            if (!userEditedMoney || force) {
+              suppress = true;
+              moneyInput.value = start;
+              suppress = false;
+              userEditedMoney = false;
+              return;
+            }
+
+            // 使用者曾輸入過，詢問是否覆蓋
+            const ok = confirm('要依等級帶入建議起始金額嗎？目前輸入會被覆蓋。');
+            if (ok) {
+              suppress = true;
+              moneyInput.value = start;
+              suppress = false;
+              userEditedMoney = false;
+            }
+          }
+
+          // 依金額反推等級
+          function getLevelByMoney(money) {
+            if (money >= levelStart[4]) return 4;       // ≥ 250000 → 白金
+            if (money >= levelStart[3]) return 3;       // ≥ 100000 → 金
+            if (money >= levelStart[2]) return 2;       // ≥ 10000  → 銀
+            return 1;                                    // 其他      → 銅
+          }
+
+          // 將 radio 設為指定等級
+          function checkLevelRadio(level) {
+            levelRadios.forEach(r => {
+              if (parseInt(r.value, 10) === level) {
+                r.checked = true;
+              }
+            });
+          }
+
+          // === 事件 1：等級變更 → 帶入建議金額 ===
+          levelRadios.forEach(r => {
+            r.addEventListener('change', () => {
+              if (!r.checked) return;
+              const leveId = parseInt(r.value, 10);
+              applyStartMoneyByLevel(leveId);
+            });
+          });
+
+          // === 事件 2：金額輸入 → 反推並切換等級 ===
+          moneyInput.addEventListener('input', () => {
+            if (suppress) return;                 // 程式設值時不處理
+            userEditedMoney = true;
+
+            const raw = moneyInput.value.replace(/[, ]/g, '');
+            const money = parseInt(raw || '0', 10);
+            if (Number.isNaN(money)) return;
+
+            const level = getLevelByMoney(money);
+            suppress = true;
+            checkLevelRadio(level);
+            suppress = false;
+          });
+
+          // === 初始化：如果有已選等級且金額為空/0，就先帶一次建議值 ===
+          (function init() {
+            const checked = document.querySelector("input[name='LeveId']:checked");
+            const current = parseInt((moneyInput.value || '0').replace(/[, ]/g, ''), 10);
+            if (checked && (!current || current === 0)) {
+              applyStartMoneyByLevel(parseInt(checked.value, 10), /*force*/ true);
+            } else if (!checked) {
+              // 若尚未選等級但金額有值，反推一次等級
+              const lvl = getLevelByMoney(current || 0);
+              checkLevelRadio(lvl);
+            }
+          })();
 
     </script>
 }

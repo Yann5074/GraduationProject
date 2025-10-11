@@ -215,7 +215,13 @@ namespace GraduationProject.Services
 
         //    return dto;
         //}
-
+        private static int GetLevelByMoney(int money)
+        {
+            if (money >= 250_000) return 4;  // 白金
+            if (money >= 100_000) return 3;  // 金
+            if (money >= 10_000) return 2;  // 銀
+            return 1;                        // 銅
+        }
         public async Task<bool> MemberEdit(int id, CMemberUpdateDTO dto, CancellationToken ct = default)
         {
             var mem = await _db.TMembers.FirstOrDefaultAsync(o => o.FMemberId == id,ct);
@@ -225,8 +231,12 @@ namespace GraduationProject.Services
             mem.FPhone = dto.Phone;
             mem.FAddress = dto.Address;
             mem.FGender = dto.Gender;
-            mem.FLeveId = dto.LeveId;
-            mem.FMoneySum = dto.MoneySum;
+
+            // 以「使用者送來的金額」為準，回推等級
+            var money = dto.MoneySum ?? 0;
+            mem.FMoneySum = money;
+            mem.FLeveId = GetLevelByMoney(money);
+
             mem.FUpdateTime = DateTime.Now;
             mem.FCreatTime = dto.CreatTime;
             mem.FStatus = dto.Status;
@@ -263,6 +273,39 @@ namespace GraduationProject.Services
                     //Passwords = e.FPasswords ?? string.Empty
                 })
                 .FirstOrDefaultAsync(ct);
+        }
+
+
+
+        public async Task<CMemberDetailsDTO?> GetMemberDetailsAsync(int id, CancellationToken ct = default)
+        {
+            var e = await _db.TMembers
+               .AsNoTracking()
+               .Include(x => x.FGenderNavigation)
+               .Include(x => x.FStatusNavigation)
+               .Include(x => x.FLeveIdNavigation)
+               .FirstOrDefaultAsync(x => x.FMemberId == id, ct);
+
+            if (e == null) return null;
+
+            return new CMemberDetailsDTO
+            {
+                MemberId = e.FMemberId,
+                Name = e.FName,
+                DisplayName = e.FDisplayName,
+                Gender = e.FGender,
+                GenderName = e.FGenderNavigation?.FGenderName,
+                Phone = e.FPhone,
+                Address = e.FAddress,
+                Status = e.FStatus,
+                MoneySum= e.FMoneySum,
+                StatusName = e.FStatusNavigation?.FStatusName,
+                LeveId = e.FLeveId,
+                LevelName = e.FLeveIdNavigation?.FLevelName,
+                MemberImage = e.FMemberImage,
+                CreatTime = e.FCreatTime,
+                UpdateTime = e.FUpdateTime
+            };
 
         }
         private static CMemberDTO MapToDto(TMember x) => new CMemberDTO
