@@ -1,5 +1,6 @@
 ﻿using GraduationProject.DTOs;
 using GraduationProject.Interfaces;
+using GraduationProject.Models;
 using GraduationProject.Services;
 using GraduationProject.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -9,16 +10,18 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace GraduationProject.Controllers
 {
-    
+
     public class ProductsController : Controller
     {
         private readonly IProductService _ProductService;
         private readonly IWebHostEnvironment _env; // 為了存圖片
+        private readonly dbFurniMartContext _db;
 
-        public ProductsController(IProductService ProductService, IWebHostEnvironment env)
+        public ProductsController(IProductService ProductService, IWebHostEnvironment env, dbFurniMartContext db)
         {
             _ProductService = ProductService;
             _env = env;
+            _db = db;
         }
 
         [HttpGet]
@@ -81,7 +84,65 @@ namespace GraduationProject.Controllers
             return RedirectToAction("List");
         }
 
+        [HttpGet]
+        public IActionResult Create()
+        {
+            var vm = new CProductCreateViewModel
+            {
+                CategoryOptions = _db.TCategories
+                    .OrderBy(c => c.FSortOrder)
+                    .Select(c => new SelectListItem { Value = c.FCategoryId.ToString(), Text = c.FName }).ToList(),
+                PStatusOptions = _db.TPstatuses
+                    .Select(s => new SelectListItem { Value = s.FPstatus.ToString(), Text = s.FPstatusName }).ToList(),
+                ColorOptions = _db.TColors
+                    .Select(c => new SelectListItem { Value = c.FColorId.ToString(), Text = c.FColorName }).ToList()
+            };
+
+            vm.Product.Variants.Add(new CProductVariantDto { PStatus = 1 });
+            vm.Product.Assets.Add(new CProductAssetDto { IsPrimary = true });
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Create(CProductCreateViewModel vm)
+        {
+            if (!ModelState.IsValid)
+            {
+                vm.CategoryOptions = _db.TCategories.OrderBy(c => c.FSortOrder)
+                    .Select(c => new SelectListItem { Value = c.FCategoryId.ToString(), Text = c.FName }).ToList();
+                vm.PStatusOptions = _db.TPstatuses
+                    .Select(s => new SelectListItem { Value = s.FPstatus.ToString(), Text = s.FPstatusName }).ToList();
+                vm.ColorOptions = _db.TColors
+                    .Select(c => new SelectListItem { Value = c.FColorId.ToString(), Text = c.FColorName }).ToList();
+                return View(vm);
+            }
+
+            var id = _ProductService.Create(vm.Product);
+            TempData["Msg"] = $"已新增商品（ID={id}）。";
+            return RedirectToAction(nameof(Detail), new { id });
+        }
 
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Delete(int? id)
+        {
+            if (id == null) return RedirectToAction("List");
+
+            var prod = _db.TProducts.FirstOrDefault(p => p.FProductId == id.Value);
+            if (prod == null) return RedirectToAction("List");
+
+            // 軟刪除
+            prod.FPstatus = 4;                   // 4 = 刪除/下架（依你的定義）
+            prod.FUpdateTime = DateTime.Now;
+
+            _db.SaveChanges();
+
+            TempData["Msg"] = "商品已刪除（軟刪除）。";
+            return RedirectToAction("List");
+        }
     }
+
 }

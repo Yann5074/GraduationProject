@@ -1,11 +1,15 @@
-﻿namespace GraduationProject.ViewModels
+﻿using GraduationProject.DTOs;
+using Microsoft.AspNetCore.Mvc.Rendering;
+
+namespace GraduationProject.ViewModels
 {
     public class CProductCreateViewModel
     {
-        public int ProductId { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public int CategoryId { get; set; }
-        public int PStatus { get; set; }
+  
+        public CProductCreateDto Product { get; set; } = new();
+
+        public IEnumerable<SelectListItem> CategoryOptions { get; set; } = new List<SelectListItem>();
+        public IEnumerable<SelectListItem> PStatusOptions { get; set; } = new List<SelectListItem>();
+        public IEnumerable<SelectListItem> ColorOptions { get; set; } = new List<SelectListItem>();
     }
 }
