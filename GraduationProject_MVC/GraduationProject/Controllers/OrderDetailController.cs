@@ -17,12 +17,13 @@ namespace GraduationProject.Controllers
         public IActionResult List(int? id)
         {
             var query = _orderDetailService.ShowOrderDetail(id);
+            ViewBag.OrderId = id;
             return View(query);
         }
 
         public IActionResult Delete(int? proId, int? orderId)
         {
-            var result = _orderDetailService.DeleteOrderDetail(proId);
+            var result = _orderDetailService.DeleteOrderDetail(orderId, proId);
             if (result == false)
             {
                 TempData["deleteErrorMessage"] = "品項刪除失敗，請重新操作";
@@ -77,8 +78,9 @@ namespace GraduationProject.Controllers
         //[HttpGet]
         public IActionResult Create(int? orderId)
         {
+            //如果為空，則建立虛假的訂單明細，以顯示於畫面
             if (orderId == null)
-                return RedirectToAction("List", new { id = orderId});
+                return RedirectToAction("List", "Order");
             var vm = new COrderDetailCreateViewModel
             {
                 OrderId = (int)orderId,

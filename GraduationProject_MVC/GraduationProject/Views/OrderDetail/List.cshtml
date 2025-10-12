@@ -53,7 +53,7 @@
 <h1>訂單詳細資訊</h1>
 
 <p>
-    <a asp-action="Create" asp-route-orderId="@Model.FirstOrDefault()?.OrderId">加入商品</a>
+    <a asp-action="Create" asp-route-orderId="@ViewBag.OrderId">加入商品</a>
 </p>
 <table class="table">
     <thead>
@@ -65,7 +65,7 @@
                 @Html.DisplayNameFor(model => model.ProductName)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.UnitPrice)
+                @Html.DisplayNameFor(model => model.UnitPrice) <!--可考慮是否在無小數點時不顯示0 #TODO-->
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.Quantity)

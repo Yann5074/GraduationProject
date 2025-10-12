@@ -28,6 +28,7 @@ namespace GraduationProject.Services
                     Quantity = o.FQuantity
                 });
             query = query.Where(o => o.OrderId == id && o.IsDeleted != 1);
+            
             return query;
         }
 
@@ -63,11 +64,11 @@ namespace GraduationProject.Services
             return true;
         }
         // 刪除訂單明細
-        public bool DeleteOrderDetail(int? id)
+        public bool DeleteOrderDetail(int? orderId, int? id)
         {
             if (id == null)
                 return false;
-            TOrderDetail odd = _context.TOrderDetails.FirstOrDefault(od => od.FProductVariantId == id);
+            TOrderDetail odd = _context.TOrderDetails.FirstOrDefault(od => od.FOrderId == orderId && od.FProductVariantId == id);
             if (odd == null)
                 return false;
             odd.FIsDeleted = 1;
