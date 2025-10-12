@@ -2,6 +2,7 @@
 using GraduationProject.Interfaces;
 using GraduationProject.Models;
 using GraduationProject.ViewModels;
+using Humanizer;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GraduationProject.Controllers
@@ -142,6 +143,36 @@ namespace GraduationProject.Controllers
             }
 
             return fileName;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Details(int id, CancellationToken ct)
+        {
+            var dto = await _svc.DetailEmployeeAsync(id, ct);
+            if (dto is null) return NotFound();
+
+            var vm = new CEmployeeDetailViewModel
+            {
+                FEmployeeId = dto.FEmployeeId,
+                FHeadShot = $"~/HeadShotImages/{dto.FHeadShot}",
+                FName = dto.FName ?? "",
+                FEmail = dto.FEmail,
+                FPhone = dto.FPhone,
+                FGenderName = dto.FGenderName,
+                FBloodType = dto.FBloodType,
+                FRoleClass = dto.FRoleClass,
+                FStatus = dto.FStatus,
+                //StatusBadgeClass = dto.FStatusId == 1 ? "bg-success" : "bg-secondary",
+                FAccount = dto.FAccount,
+                FHireDate = dto.FHireDate,
+                FLoginTime = dto.FLoginTime,
+                FChangePasswordTime = dto.FChangePasswordTime,
+                // 可根據使用者權限設定
+                CanEdit = User.IsInRole("Admin") || User.IsInRole("Manager"),
+                CanDelete = User.IsInRole("Admin")
+            };
+
+            return View(vm);
         }
 
         public IActionResult Index()

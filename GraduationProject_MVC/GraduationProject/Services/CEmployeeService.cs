@@ -57,7 +57,7 @@ namespace GraduationProject.Services
                           })
                           .ToListAsync(ct);
         }
-        
+
         //Create
         public async Task<int> CreateEmployeeAsync(CEmployeeCreateDTO dto, CancellationToken ct = default)
         {
@@ -155,9 +155,42 @@ namespace GraduationProject.Services
                     FHireDate = e.FHireDate,
                     FRoleId = e.FRoleId,
                     FStatusId = e.FStatusId,
-                    FAccount = e.FAccount ?? string.Empty,
-                    // 密碼不回填（避免洩漏）；給空字串，讓畫面顯示為空
+                    FAccount = e.FAccount,
                     FPasswords = string.Empty,
+                    FLoginTime = e.FLoginTime,
+                    FChangePasswordTime = e.FChangePasswordTime
+                })
+                .FirstOrDefaultAsync(ct);
+        }
+
+        //Detail
+        public async Task<CEmployeeDetailDTO?> DetailEmployeeAsync(int? id, CancellationToken ct = default)
+        {
+            return await _db.TEmployees
+            .AsNoTracking()
+            .Where(e => e.FEmployeeId == id)
+            .Select(e => new CEmployeeDetailDTO
+                {
+                    FEmployeeId = e.FEmployeeId,
+                    FHeadShot = e.FHeadShot,
+
+                    FName = e.FName,
+                    FPhone = e.FPhone,
+                    FEmail = e.FEmail,
+
+                    FBloodType = e.FBloodType,
+                    FHireDate = e.FHireDate,
+
+                    FGender = e.FGender,
+                    FGenderName = e.FGenderNavigation != null ? e.FGenderNavigation.FGenderName : null,
+
+                    FRoleId = e.FRoleId,
+                    FRoleClass = e.FRole != null ? e.FRole.FRoleClass : null,
+
+                    FStatusId = e.FStatusId,
+                    FStatus = e.FStatus != null ? e.FStatus.FStatus : null,
+
+                    FAccount = e.FAccount,
                     FLoginTime = e.FLoginTime,
                     FChangePasswordTime = e.FChangePasswordTime
                 })

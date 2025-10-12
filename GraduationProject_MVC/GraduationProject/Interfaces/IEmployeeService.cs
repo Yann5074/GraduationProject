@@ -13,5 +13,6 @@ namespace GraduationProject.Interfaces
         Task<bool> EditEmployeeAsync(int id, CEmployeeEditDTO dto, CancellationToken ct = default);
         // 讀取 Edit 畫面的資料（直接回 VM，找不到回 null）
         Task<CEmployeeEditViewModel?> GetEmployeeEditVmAsync(int id, CancellationToken ct = default);
+        Task<CEmployeeDetailDTO?> DetailEmployeeAsync(int? id, CancellationToken ct = default);
     }
 }

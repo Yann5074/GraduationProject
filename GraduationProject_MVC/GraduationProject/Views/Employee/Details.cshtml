@@ -1,0 +1,62 @@
+﻿@using GraduationProject.ViewModels
+@model CEmployeeDetailViewModel
+@{
+    ViewData["Title"] = "員工明細";
+}
+
+<h2 class="mb-3">員工明細</h2>
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="d-flex gap-3 align-items-center mb-3">
+            <img src="@Url.Content(Model.FHeadShot)"
+                 class="rounded-circle border"
+                 style="width:120px;height:120px;object-fit:cover"
+                 alt="大頭照"
+                 onerror="this.onerror=null;this.src='@Url.Content("~/HeadShotImages/default.png")';" />
+            <div>
+                <h4 class="mb-1">@Model.FName</h4>
+                @* @if (!string.IsNullOrEmpty(Model.FStatus))
+                {
+                    <span class="badge @Model.StatusBadgeClass">@Model.Status</span>
+                } *@
+            </div>
+        </div>
+
+        <dl class="row">
+            <dt class="col-sm-3">帳號</dt>
+            <dd class="col-sm-9">@Model.FAccount</dd>
+            <dt class="col-sm-3">Email</dt>
+            <dd class="col-sm-9">@Model.FEmail</dd>
+            <dt class="col-sm-3">電話</dt>
+            <dd class="col-sm-9">@Model.FPhone</dd>
+            <dt class="col-sm-3">性別</dt>
+            <dd class="col-sm-9">@Model.FGenderName</dd>
+            <dt class="col-sm-3">血型</dt>
+            <dd class="col-sm-9">@Model.FBloodType</dd>
+            <dt class="col-sm-3">職稱/權限</dt>
+            <dd class="col-sm-9">@Model.FRoleClass</dd>
+            <dt class="col-sm-3">到職日</dt>
+            <dd class="col-sm-9">@Model.FHireDate</dd>
+            <dt class="col-sm-3">上次登入</dt>
+            <dd class="col-sm-9">@Model.FLoginTime</dd>
+            <dt class="col-sm-3">密碼變更</dt>
+            <dd class="col-sm-9">@Model.FChangePasswordTime</dd>
+        </dl>
+
+        <div class="mt-3 d-flex gap-2">
+            @if (Model.CanEdit)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.FEmployeeId" class="btn btn-primary">編輯</a>
+            }
+            <a asp-action="List" class="btn btn-outline-secondary">返回清單</a>
+            @if (Model.CanDelete)
+            {
+                <form asp-action="Delete" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.FStatusId" />
+                    <button class="btn btn-danger" onclick="return confirm('確定刪除？')">刪除</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
