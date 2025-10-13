@@ -145,6 +145,7 @@ namespace GraduationProject.Controllers
             return fileName;
         }
 
+        //Details
         [HttpGet]
         public async Task<IActionResult> Details(int id, CancellationToken ct)
         {
@@ -161,15 +162,30 @@ namespace GraduationProject.Controllers
                 FGenderName = dto.FGenderName,
                 FBloodType = dto.FBloodType,
                 FRoleClass = dto.FRoleClass,
+                FRoleBadgeClass = dto.FRoleId switch
+                {
+                    1 => "bg-success",   // 實習生
+                    2 => "bg-primary",    // 職員
+                    3 => "bg-info",   // 組長
+                    4 => "bg-warning", // 管理者
+                    _ => "bg-dark" //其他
+                },
                 FStatus = dto.FStatus,
-                //StatusBadgeClass = dto.FStatusId == 1 ? "bg-success" : "bg-secondary",
+                FStatusBadgeClass = dto.FStatusId switch
+                {
+                    1 => "bg-success",   // 在職
+                    2 => "bg-secondary",    // 離職
+                    3 => "bg-warning",   // 退休
+                    4 => "bg-danger", // 註銷
+                    _ => "bg-dark" //其他
+                },
                 FAccount = dto.FAccount,
                 FHireDate = dto.FHireDate,
                 FLoginTime = dto.FLoginTime,
                 FChangePasswordTime = dto.FChangePasswordTime,
                 // 可根據使用者權限設定
-                CanEdit = User.IsInRole("Admin") || User.IsInRole("Manager"),
-                CanDelete = User.IsInRole("Admin")
+                CanEdit = User.IsInRole("管理者"),
+                CanDelete = User.IsInRole("管理者")
             };
 
             return View(vm);

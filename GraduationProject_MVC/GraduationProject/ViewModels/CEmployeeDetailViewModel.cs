@@ -21,10 +21,10 @@
 
         public int? FRoleId { get; set; }
         public string? FRoleClass { get; set; }
-
+        public string? FRoleBadgeClass { get; set; }
         public int? FStatusId { get; set; }
         public string? FStatus { get; set; }
-
+        public string? FStatusBadgeClass { get; set; }
         public string? FAccount { get; set; }
 
         public string? FPasswords { get; set; }
