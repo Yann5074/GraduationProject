@@ -35,5 +35,23 @@ namespace ApiProject.Controllers
             var result = await _orderService.GetOrdersByIdAndProdNameAsync(keyword);
             return result;
         }
+
+        // DELETE:api/Order/id
+        [HttpDelete("id")]
+        public async Task<IActionResult> DeleteOrder(int orderId)
+        {
+            var result = await _orderService.DeleteOrderAsync(orderId);
+            if (!result.Ok)
+            {
+                switch (result.Code)
+                {
+                    case StatusCodes.Status404NotFound:
+                        return NotFound();
+                    default:
+                        return StatusCode(StatusCodes.Status500InternalServerError);
+                }
+            }
+            return NoContent();
+        }
     }
 }
