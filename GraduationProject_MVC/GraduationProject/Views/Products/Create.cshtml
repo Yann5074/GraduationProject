@@ -1,291 +1,212 @@
-﻿@model GraduationProject.ViewModels.CProductCreateViewModel
+﻿@model GraduationProject.DTOs.CProductCreateDTO
 
+
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
-    ViewData["Title"] = "新增商品";
+    ViewData["Title"] = "Create Product";
 }
 
-<h2 class="mb-3">@ViewData["Title"]</h2>
+<h1 class="mb-4">Create Product</h1>
 
-<form asp-action="Create" method="post" enctype="multipart/form-data">
+<form asp-controller="Products" asp-action="Create" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
     @Html.AntiForgeryToken()
 
-    <div class="card mb-4">
-        <div class="card-header">基本資訊</div>
-        <div class="card-body">
-            <div class="mb-3">
-                <label asp-for="Product.Name" class="form-label"></label>
-                <input asp-for="Product.Name" class="form-control" />
-                <span asp-validation-for="Product.Name" class="text-danger"></span>
-            </div>
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label asp-for="Product.CategoryId" class="form-label"></label>
-                    <select asp-for="Product.CategoryId" class="form-select" asp-items="Model.CategoryOptions"></select>
-                    <span asp-validation-for="Product.CategoryId" class="text-danger"></span>
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Product.PStatus" class="form-label"></label>
-                    <select asp-for="Product.PStatus" class="form-select" asp-items="Model.PStatusOptions"></select>
-                    <span asp-validation-for="Product.PStatus" class="text-danger"></span>
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Product.WarrantyMonth" class="form-label"></label>
-                    <input asp-for="Product.WarrantyMonth" class="form-control" />
-                    <span asp-validation-for="Product.WarrantyMonth" class="text-danger"></span>
-                </div>
-            </div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
 
-            <div class="row g-3 mt-1">
-                <div class="col-md-6">
-                    <div class="form-check mt-4">
-                        <input asp-for="Product.AssemblyRequired" class="form-check-input" />
-                        <label asp-for="Product.AssemblyRequired" class="form-check-label"></label>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="Product.AssemblyPart" class="form-label"></label>
-                    <input asp-for="Product.AssemblyPart" class="form-control" />
-                </div>
-            </div>
+        <div class="col-md-6">
+            <label asp-for="CategoryId" class="form-label"></label>
+            <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select">
+                <option value="">-- Select Category --</option>
+            </select>
+            <span asp-validation-for="CategoryId" class="text-danger"></span>
+        </div>
 
-            <div class="row g-3 mt-1">
-                <div class="col-md-4">
-                    <label asp-for="Product.Discount" class="form-label"></label>
-                    <input asp-for="Product.Discount" class="form-control" />
-                </div>
-            </div>
+        <div class="col-12">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
 
-            <div class="mt-3">
-                <label asp-for="Product.Description" class="form-label"></label>
-                <textarea asp-for="Product.Description" rows="4" class="form-control"></textarea>
+        <div class="col-md-4">
+            <label asp-for="WarrantyMonth" class="form-label"></label>
+            <input asp-for="WarrantyMonth" class="form-control" />
+            <span asp-validation-for="WarrantyMonth" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="Discount" class="form-label"></label>
+            <input asp-for="Discount" class="form-control" />
+            <span asp-validation-for="Discount" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="PStatusId" class="form-label"></label>
+            <select asp-for="PStatusId" asp-items="ViewBag.PStatus" class="form-select">
+                <option value="">-- Select Status --</option>
+            </select>
+            <span asp-validation-for="PStatusId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4">
+            <div class="form-check mt-4">
+                <input asp-for="AssemblyRequired" class="form-check-input" />
+                <label asp-for="AssemblyRequired" class="form-check-label"></label>
             </div>
+            <span asp-validation-for="AssemblyRequired" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-8" id="AssemblyPartGroup">
+            <label asp-for="AssemblyPart" class="form-label"></label>
+            <input asp-for="AssemblyPart" class="form-control" />
+            <span asp-validation-for="AssemblyPart" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <label asp-for="Images" class="form-label"></label>
+            <input asp-for="Images" type="file" class="form-control" multiple accept=".jpg,.jpeg,.png,.webp,.gif" />
+            <div class="form-text">First image will be marked as primary. You can reorder after creation if needed.</div>
+            <span asp-validation-for="Images" class="text-danger"></span>
         </div>
     </div>
 
-    <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span>規格 / 型號（Variants）</span>
-            <button type="button" id="add-variant" class="btn btn-sm btn-outline-primary">＋ 新增規格</button>
-        </div>
-        <div class="card-body" id="variant-rows">
-            @if (Model.Product?.Variants != null)
-            {
-                for (int i = 0; i < Model.Product.Variants.Count; i++)
-                {
-                    var v = Model.Product.Variants[i];
-                    <div class="border rounded p-3 mb-3 variant-row" data-idx="@i">
-                        <div class="row g-2">
+    <hr class="my-4" />
 
-                            <div class="col-md-2">
-                                <label class="form-label">價格</label>
-                                <input name="Product.Variants[@i].Price" value="@(v.Price)" type="number" step="0.01" class="form-control" required />
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label">庫存</label>
-                                <input name="Product.Variants[@i].Stock" value="@(v.Stock)" type="number" class="form-control" />
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label">顏色</label>
-                                <select name="Product.Variants[@i].ColorId" class="form-select">
-                                    <option value="">--</option>
-                                    @foreach (var opt in Model.ColorOptions)
-                                    {
-                                        var selected = (opt.Value == (v.ColorId?.ToString() ?? "")) ? "selected" : null;
-                                        <option value="@opt.Value" >@opt.Text</option>
-                                    }
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label">狀態</label>
-                                <select name="Product.Variants[@i].PStatus" class="form-select">
-                                    <option value="">--</option>
-                                    @foreach (var s in Model.PStatusOptions)
-                                    {
-                                        var selected = (s.Value == (v.PStatus?.ToString() ?? "")) ? "selected" : null;
-                                        <option value="@s.Value">@s.Text</option>
-                                    }
-                                </select>
-                            </div>
-                            <div class="col-md-1 d-flex align-items-end">
-                                <button type="button" class="btn btn-outline-danger w-100 btn-remove-variant">刪除</button>
-                            </div>
-                        </div>
+    <h5 class="mb-3">Variants</h5>
+    <div id="variants-container"></div>
+    <button type="button" class="btn btn-outline-primary" id="btn-add-variant">+ Add Variant</button>
 
-                        <div class="row g-2 mt-2">
-                            <div class="col-md-3"><input name="Product.Variants[@i].SizeLabel" value="@v.SizeLabel" class="form-control" placeholder="尺寸標籤 e.g. 58x54x87" /></div>
-                            <div class="col-md-3"><input name="Product.Variants[@i].Length" value="@(v.Length)" type="number" step="0.01" class="form-control" placeholder="長" /></div>
-                            <div class="col-md-3"><input name="Product.Variants[@i].Width"  value="@(v.Width)"  type="number" step="0.01" class="form-control" placeholder="寬" /></div>
-                            <div class="col-md-3"><input name="Product.Variants[@i].Height" value="@(v.Height)" type="number" step="0.01" class="form-control" placeholder="高" /></div>
-                        </div>
-                    </div>
-                }
-            }
-        </div>
+    <div class="mt-4">
+        <button type="submit" class="btn btn-success me-2">Create</button>
+        <a asp-action="List" asp-controller="Products" class="btn btn-secondary">Back to List</a>
     </div>
-
-    <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span>圖片 / 資產（Assets）</span>
-            <button type="button" id="add-asset" class="btn btn-sm btn-outline-primary">＋ 新增圖片</button>
-        </div>
-        <div class="card-body" id="asset-rows">
-            @if (Model.Product?.Assets != null)
-            {
-                for (int i = 0; i < Model.Product.Assets.Count; i++)
-                {
-                    <div class="border rounded p-3 mb-3 asset-row" data-idx="@i">
-                        <div class="row g-2 align-items-end">
-                            <div class="col-md-6">
-                                <label class="form-label">圖片檔</label>
-                                <input name="Product.Assets[@i].Upload" type="file" accept="image/*" class="form-control" />
-                            </div>
-                            <div class="col-md-2 form-check mt-4">
-                                <input class="form-check-input" type="checkbox" name="Product.Assets[@i].IsPrimary" />
-                                <label class="form-check-label">設為主圖</label>
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label">排序</label>
-                                <input name="Product.Assets[@i].SortOrder" type="number" class="form-control" />
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label">類型</label>
-                                <input name="Product.Assets[@i].AssetType" class="form-control" placeholder="image/model/..." />
-                            </div>
-                            <div class="col-md-12 mt-2">
-                                <button type="button" class="btn btn-outline-danger btn-remove-asset">刪除此圖片列</button>
-                            </div>
-                        </div>
-                    </div>
-                }
-            }
-        </div>
-    </div>
-
-    <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-success">儲存</button>
-        <a asp-action="List" class="btn btn-secondary">取消</a>
-    </div>
-    <div asp-validation-summary="All" class="text-danger mb-3"></div>
 </form>
 
-<!-- Variant 動態模板（用 __idx__ 佔位替換） -->
 <template id="variant-template">
-<div class="border rounded p-3 mb-3 variant-row" data-idx="__idx__">
-  <div class="row g-2">
-    <div class="col-md-3">
-      <label class="form-label">SKU</label>
-      <input name="Product.Variants[__idx__].SKU" class="form-control" required />
-    </div>
-    <div class="col-md-2">
-      <label class="form-label">價格</label>
-      <input name="Product.Variants[__idx__].Price" type="number" step="0.01" class="form-control" required />
-    </div>
-    <div class="col-md-2">
-      <label class="form-label">庫存</label>
-      <input name="Product.Variants[__idx__].Stock" type="number" class="form-control" />
-    </div>
-    <div class="col-md-2">
-      <label class="form-label">顏色</label>
-      <select name="Product.Variants[__idx__].ColorId" class="form-select">
-        <option value="">--</option>
-        @foreach (var opt in Model.ColorOptions) { <option value="@opt.Value">@opt.Text</option> }
-      </select>
-    </div>
-    <div class="col-md-2">
-      <label class="form-label">狀態</label>
-      <select name="Product.Variants[__idx__].PStatus" class="form-select">
-        <option value="">--</option>
-        @foreach (var s in Model.PStatusOptions) { <option value="@s.Value">@s.Text</option> }
-      </select>
-    </div>
-    <div class="col-md-1 d-flex align-items-end">
-      <button type="button" class="btn btn-outline-danger w-100 btn-remove-variant">刪除</button>
-    </div>
-  </div>
-  <div class="row g-2 mt-2">
-    <div class="col-md-3"><input name="Product.Variants[__idx__].SizeLabel" class="form-control" placeholder="尺寸標籤 e.g. 58x54x87" /></div>
-    <div class="col-md-3"><input name="Product.Variants[__idx__].Length" type="number" step="0.01" class="form-control" placeholder="長" /></div>
-    <div class="col-md-3"><input name="Product.Variants[__idx__].Width"  type="number" step="0.01" class="form-control" placeholder="寬" /></div>
-    <div class="col-md-3"><input name="Product.Variants[__idx__].Height" type="number" step="0.01" class="form-control" placeholder="高" /></div>
-  </div>
-</div>
-</template>
+    <fieldset class="variant border rounded p-3 mb-3">
+        <legend class="float-none w-auto px-2">Variant <span class="variant-index"></span></legend>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label" for="Variants___index__-Price">Price</label>
+                <input class="form-control" id="Variants___index__-Price" name="Variants[__index__].Price" type="number" step="0.01" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="Variants___index__-Cost">Cost</label>
+                <input class="form-control" id="Variants___index__-Cost" name="Variants[__index__].Cost" type="number" step="0.01" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="Variants___index__-Stock">Stock</label>
+                <input class="form-control" id="Variants___index__-Stock" name="Variants[__index__].Stock" type="number" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="Variants___index__-PStatusId">Status</label>
+                <select class="form-select" id="Variants___index__-PStatusId" name="Variants[__index__].PStatusId">
+                    <option value="">-- Select Status --</option>
+                    @if (ViewBag.PStatus != null)
+                    {
+                        foreach (var opt in (IEnumerable<SelectListItem>)ViewBag.PStatus)
+                        {
+                            <option value="@opt.Value">@opt.Text</option>
+                        }
+                    }
+                </select>
+            </div>
 
-<!-- Asset 動態模板 -->
-<template id="asset-template">
-<div class="border rounded p-3 mb-3 asset-row" data-idx="__idx__">
-  <div class="row g-2 align-items-end">
-    <div class="col-md-6">
-      <label class="form-label">圖片檔</label>
-      <input name="Product.Assets[__idx__].Upload" type="file" accept="image/*" class="form-control" required />
-    </div>
-    <div class="col-md-2 form-check mt-4">
-      <input class="form-check-input" type="checkbox" name="Product.Assets[__idx__].IsPrimary" />
-      <label class="form-check-label">設為主圖</label>
-    </div>
-    <div class="col-md-2">
-      <label class="form-label">排序</label>
-      <input name="Product.Assets[__idx__].SortOrder" type="number" class="form-control" />
-    </div>
-    <div class="col-md-2">
-      <label class="form-label">類型</label>
-      <input name="Product.Assets[__idx__].AssetType" class="form-control" placeholder="image/model/..." />
-    </div>
-    <div class="col-md-12 mt-2">
-      <button type="button" class="btn btn-outline-danger btn-remove-asset">刪除此圖片列</button>
-    </div>
-  </div>
-</div>
+            <div class="col-md-4">
+                <label class="form-label" for="Variants___index__-ColorId">Color</label>
+                <select class="form-select" id="Variants___index__-ColorId" name="Variants[__index__].ColorId">
+                    <option value="">-- Select Color --</option>
+                    @if (ViewBag.Colors != null)
+                    {
+                        foreach (var opt in (IEnumerable<SelectListItem>)ViewBag.Colors)
+                        {
+                            <option value="@opt.Value">@opt.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="Variants___index__-Length">Length</label>
+                <input class="form-control" id="Variants___index__-Length" name="Variants[__index__].Length" type="number" step="0.01" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="Variants___index__-Width">Width</label>
+                <input class="form-control" id="Variants___index__-Width" name="Variants[__index__].Width" type="number" step="0.01" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="Variants___index__-Height">Height</label>
+                <input class="form-control" id="Variants___index__-Height" name="Variants[__index__].Height" type="number" step="0.01" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="Variants___index__-Weight">Weight</label>
+                <input class="form-control" id="Variants___index__-Weight" name="Variants[__index__].Weight" type="number" step="0.01" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label" for="Variants___index__-SizeLabel">Size Label</label>
+                <input class="form-control" id="Variants___index__-SizeLabel" name="Variants[__index__].SizeLabel" type="text" />
+            </div>
+
+            <div class="col-12">
+                <label class="form-label" for="Variants___index__-VariantImages">Variant Images</label>
+                <input class="form-control" id="Variants___index__-VariantImages" name="Variants[__index__].VariantImages" type="file" multiple accept=".jpg,.jpeg,.png,.webp,.gif" />
+                <div class="form-text">First image of the variant will be marked as primary.</div>
+            </div>
+        </div>
+        <button type="button" class="btn btn-outline-danger mt-3 btn-remove-variant">Remove Variant</button>
+    </fieldset>
 </template>
 
 @section Scripts{
     <partial name="_ValidationScriptsPartial" />
     <script>
-        function nextIndex(containerId, rowClass) {
-            const container = document.getElementById(containerId);
-            const rows = container.querySelectorAll('.' + rowClass);
-            if (rows.length === 0) return 0;
-            // 找當前最大索引再 +1，避免刪除後重複 name
-            let max = -1;
-            rows.forEach(r => {
-                const idx = parseInt(r.getAttribute('data-idx'));
-                if (!isNaN(idx) && idx > max) max = idx;
+        (function(){
+            // AssemblyPart toggle
+            const ar = document.getElementById('AssemblyRequired');
+            const apGroup = document.getElementById('AssemblyPartGroup');
+            function toggleAp(){ apGroup.style.display = ar && ar.checked ? '' : 'none'; }
+            if (ar) { ar.addEventListener('change', toggleAp); toggleAp(); }
+
+            // Variants dynamic add/remove
+            let variantIndex = 0;
+            const btnAdd = document.getElementById('btn-add-variant');
+            const container = document.getElementById('variants-container');
+            const tpl = document.getElementById('variant-template');
+
+            function renumber(){
+                container.querySelectorAll('.variant').forEach((v,i)=>{
+                    const badge = v.querySelector('.variant-index');
+                    if (badge) badge.textContent = i+1;
+                });
+            }
+
+            function addVariant(){
+                const html = tpl.innerHTML.replace(/__index__/g, variantIndex);
+                const host = document.createElement('div');
+                host.innerHTML = html.trim();
+                const node = host.firstElementChild;
+                container.appendChild(node);
+                variantIndex++;
+                renumber();
+            }
+
+            container.addEventListener('click', function(e){
+                if (e.target && e.target.classList.contains('btn-remove-variant')){
+                    const box = e.target.closest('.variant');
+                    if (box) box.remove();
+                    renumber();
+                }
             });
-            return max + 1;
-        }
 
-        document.getElementById('add-variant').addEventListener('click', function () {
-            const idx = nextIndex('variant-rows', 'variant-row');
-            const html = document.getElementById('variant-template').innerHTML.replaceAll('__idx__', idx);
-            document.getElementById('variant-rows').insertAdjacentHTML('beforeend', html);
-        });
-
-        document.getElementById('add-asset').addEventListener('click', function () {
-            const idx = nextIndex('asset-rows', 'asset-row');
-            const html = document.getElementById('asset-template').innerHTML.replaceAll('__idx__', idx);
-            document.getElementById('asset-rows').insertAdjacentHTML('beforeend', html);
-        });
-
-        document.addEventListener('click', function (e) {
-            if (e.target.classList.contains('btn-remove-variant')) {
-                const row = e.target.closest('.variant-row');
-                row?.remove();
-            }
-            if (e.target.classList.contains('btn-remove-asset')) {
-                const row = e.target.closest('.asset-row');
-                row?.remove();
-            }
-        });
-
-        // 若後端沒先塞一筆，初次載入補一筆
-        (function ensureInitialRows(){
-            if (document.querySelectorAll('#variant-rows .variant-row').length === 0) {
-                document.getElementById('add-variant').click();
-            }
-            if (document.querySelectorAll('#asset-rows .asset-row').length === 0) {
-                document.getElementById('add-asset').click();
-            }
+            if (btnAdd) btnAdd.addEventListener('click', addVariant);
         })();
     </script>
 }

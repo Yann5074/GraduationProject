@@ -17,6 +17,8 @@ namespace GraduationProject.Models
     
         [ForeignKey(nameof(FColorId))]
         public TColor Color { get; set; }
+
+        public ICollection<TProductAsset> TProductAssets { get; set; } = new List<TProductAsset>();
     }
 }
 

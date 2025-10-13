@@ -13,14 +13,23 @@ namespace GraduationProject.Services
 {
     public class CProductService : IProductService
     {
+        private readonly ILogger<CProductService> _logger;
         private readonly dbFurniMartContext _db;
         private readonly string _wwwrootPath;
         private readonly IWebHostEnvironment _env;
-        public CProductService(dbFurniMartContext db, IWebHostEnvironment env)
+        private readonly SkuGenerator _skuGenerator;
+
+
+        private const string ImagesBaseVirtual = "/ProductImages/";
+        private const string PlaceholderPrimary = "/ProductImages/no-image.png";
+        private const string PlaceholderFallback = "/images/no-image.png";
+        public CProductService(ILogger<CProductService> logger, dbFurniMartContext db, IWebHostEnvironment env, SkuGenerator skuGenerator)
         {
             _db = db;
             _env = env;
             _wwwrootPath = env.WebRootPath;
+            _skuGenerator = skuGenerator;
+            _logger = logger;
         }
 
         public IEnumerable<CProductDTO> SearchProduct(CProductSearchKeywordViewModel vm)
@@ -83,12 +92,25 @@ namespace GraduationProject.Services
                 .Include(x => x.Category)
                 .Include(x => x.PStatus)
                 .Include(x => x.ProductVariants).ThenInclude(v => v.Color)
-                .Include(x => x.ProductAssets)
-                .FirstOrDefault(x => x.FProductId == id); // 同步查詢
+                .FirstOrDefault(x => x.FProductId == id);
 
             if (p == null) return null;
 
-            return new CProductDetailDTO
+            var variants = p.ProductVariants ?? new List<TProductVariant>();
+            var variantIds = variants.Select(v => v.FProductVariantId).ToList();
+
+            // ★ 把「產品層資產」+「變體層資產」一起抓
+            var assets = _db.TProductAssets.AsNoTracking()
+                .Where(a => a.FProductId == id
+                         || (a.FProductVariantId != null && variantIds.Contains(a.FProductVariantId.Value)))
+                .OrderByDescending(a => a.FIsPrimary)
+                .ThenBy(a => a.FSortOrder)
+                .ToList();
+
+            Console.WriteLine($"Product ID: {id}");
+            Console.WriteLine($"Assets count: {assets.Count}");
+
+            var dto = new CProductDetailDTO
             {
                 ProductId = p.FProductId,
                 Name = p.FName,
@@ -97,24 +119,105 @@ namespace GraduationProject.Services
                 CategoryName = p.Category?.FName,
                 PStatusId = p.FPstatus,
                 PStatusName = p.PStatus?.FPStatusName,
-                PriceMin = p.ProductVariants.Any() ? p.ProductVariants.Min(v => (decimal?)v.FPrice) : null,
-                PriceMax = p.ProductVariants.Any() ? p.ProductVariants.Max(v => (decimal?)v.FPrice) : null,
-                CostMin = p.ProductVariants.Any() ? p.ProductVariants.Min(v => (decimal?)v.FCost) : null,
-                CostMax = p.ProductVariants.Any() ? p.ProductVariants.Max(v => (decimal?)v.FCost) : null,
-                Colors = p.ProductVariants.Where(v => v.Color != null)
-                                                .Select(v => v.Color.FColorName)
-                                                .Distinct()
-                                                .ToList(),
-                Images = p.ProductAssets.OrderByDescending(a => a.FIsPrimary)
-                                              .ThenBy(a => a.FSortOrder)
-                                              .Select(a => new CProductImageDTO
-                                              {
-                                                  Url = a.FUrl,
-                                                  IsPrimary = a.FIsPrimary,
-                                                  SortOrder = a.FSortOrder
-                                              })
-                                              .ToList()
+
+                PriceMin = variants.Any() ? variants.Min(v => (decimal?)v.FPrice) : null,
+                PriceMax = variants.Any() ? variants.Max(v => (decimal?)v.FPrice) : null,
+                CostMin = variants.Any() ? variants.Min(v => (decimal?)v.FCost) : null,
+                CostMax = variants.Any() ? variants.Max(v => (decimal?)v.FCost) : null,
+
+                Colors = variants.Where(v => v.Color != null)
+                                 .Select(v => v.Color.FColorName)
+                                 .Distinct()
+                                 .ToList(),
+
+                WarrantyMonth = p.FWarrantyMonth,
+                AssemblyRequired = p.FAssemblyRequired,
+                AssemblyPart = p.FAssemblyPart,
+
+                LengthMin = variants.Where(v => v.FLength.HasValue).Min(v => (decimal?)v.FLength),
+                LengthMax = variants.Where(v => v.FLength.HasValue).Max(v => (decimal?)v.FLength),
+                WidthMin = variants.Where(v => v.FWidth.HasValue).Min(v => (decimal?)v.FWidth),
+                WidthMax = variants.Where(v => v.FWidth.HasValue).Max(v => (decimal?)v.FWidth),
+                HeightMin = variants.Where(v => v.FHeight.HasValue).Min(v => (decimal?)v.FHeight),
+                HeightMax = variants.Where(v => v.FHeight.HasValue).Max(v => (decimal?)v.FHeight),
+                WeightMin = variants.Where(v => v.FWeight.HasValue).Min(v => (decimal?)v.FWeight),
+                WeightMax = variants.Where(v => v.FWeight.HasValue).Max(v => (decimal?)v.FWeight),
+
+                StockTotal = variants.Any() ? variants.Sum(v => v.FStock ?? 0) : (int?)null,
+
+                Images = assets.Select(a => new CProductImageDTO
+                {
+                    // ★ 來源欄位優先序：FPicture > FUrl > FPosterUrl
+                    Url = !string.IsNullOrWhiteSpace(a.FPicture) ? a.FPicture
+                                : (!string.IsNullOrWhiteSpace(a.FUrl) ? a.FUrl : a.FPosterUrl),
+                    IsPrimary = a.FIsPrimary,
+                    SortOrder = a.FSortOrder
+                }).ToList()
             };
+
+            // 由 Service 算好 DisplayUrl
+            if (dto.Images != null)
+                foreach (var img in dto.Images)
+                    img.DisplayUrl = ResolveImageUrl(img?.Url);
+
+            return dto;
+        }
+
+
+
+
+        private string ResolveImageUrl(string raw)
+        {
+            var placeholder = FileExistsUnderWebRoot(PlaceholderPrimary) ? PlaceholderPrimary : PlaceholderFallback;
+            if (string.IsNullOrWhiteSpace(raw)) return placeholder;
+
+            // 基本正規化
+            var u = raw.Trim().Replace("\\", "/");
+
+            // 1) 外部或 data URI
+            if (u.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
+                u.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                return u;
+
+            // 2) 去除 query/fragment
+            var cut = u.IndexOfAny(new[] { '?', '#' });
+            if (cut >= 0) u = u.Substring(0, cut);
+
+            // ⭐ 不要解碼，保持原始檔名
+            // u = Uri.UnescapeDataString(u);
+
+            // 3) 統一路徑格式到 /ProductImages/
+            string rel;
+            if (u.StartsWith("~/ProductImages/"))
+                rel = u.Substring(1); // 移除 ~，保留 /ProductImages/xxx
+            else if (u.StartsWith("/ProductImages/", StringComparison.OrdinalIgnoreCase))
+                rel = u; // 已經是正確格式
+            else if (u.StartsWith("~/images/"))
+                rel = "/ProductImages/" + u.Substring(9); // ~/images/ → /ProductImages/
+            else if (u.StartsWith("/images/", StringComparison.OrdinalIgnoreCase))
+                rel = "/ProductImages/" + u.Substring(8); // /images/ → /ProductImages/
+            else if (u.StartsWith("~/"))
+                rel = "/ProductImages/" + u.Substring(2); // ~/ → /ProductImages/
+            else if (u.StartsWith("/"))
+                rel = "/ProductImages/" + u.Substring(1); // / → /ProductImages/
+            else
+                rel = "/ProductImages/" + u; // 純檔名 → /ProductImages/xxx
+
+            // 4) 實體檢查
+            return FileExistsUnderWebRoot(rel) ? rel : placeholder;
+        }
+
+        private bool FileExistsUnderWebRoot(string rootRelativePath)
+        {
+            if (string.IsNullOrWhiteSpace(rootRelativePath) || _env?.WebRootPath == null)
+                return false;
+
+            var physical = Path.Combine(
+                _env.WebRootPath,
+                rootRelativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar)
+            );
+
+            return System.IO.File.Exists(physical);
         }
 
 
@@ -295,107 +398,172 @@ namespace GraduationProject.Services
             return affected > 0;
         }
 
-        public int Create(CProductCreateDto dto)
+        public (bool Success, string Message, int? ProductId) CreateProduct(CProductCreateDTO dto)
         {
-            if (dto == null) throw new ArgumentNullException(nameof(dto));
-            if (dto.Variants == null || dto.Variants.Count == 0)
-                throw new InvalidOperationException("至少需要一個規格/型號。");
-
-            using (var tx = _db.Database.BeginTransaction())
+            try
             {
-                // tProduct
+                _logger.LogInformation("DB={Db}; DataSource={Src}",
+                      _db.Database.GetDbConnection().Database,
+                      _db.Database.GetDbConnection().DataSource);
+
+                var now = DateTime.Now;
                 var product = new TProduct
                 {
                     FName = dto.Name,
                     FCategoryId = dto.CategoryId,
-                    FWarrantyMonth = dto.WarrantyMonth,
                     FDescription = dto.Description,
+                    FWarrantyMonth = dto.WarrantyMonth,
                     FAssemblyRequired = dto.AssemblyRequired,
-                    FAssemblyPart = dto.AssemblyPart,
-                    FDiscount = dto.Discount ?? 0,
-                    FPstatus = dto.PStatus
+                    FAssemblyPart = dto.AssemblyRequired ? dto.AssemblyPart : null,
+                    FDiscount = dto.Discount,
+                    FPstatus = dto.PStatusId, // 確認不是 4
+                    FCreateTime = now,
+                    FUpdateTime = now,
+                    ProductAssets = new List<TProductAsset>(),
+                    ProductVariants = new List<TProductVariant>()
                 };
-                _db.TProducts.Add(product);
-                _db.SaveChanges(); // 拿到 fProductId
 
-                // Variants（SKU 防重）
-                foreach (var v in dto.Variants)
+                // 產品主圖/附圖
+                if (dto.Images?.Any() == true)
                 {
-                    if (_db.TProductVariants.Any(x => x.FSku == v.SKU))
-                        throw new InvalidOperationException($"SKU 重複：{v.SKU}");
-
-                    _db.TProductVariants.Add(new TProductVariant
+                    int sort = 0;
+                    foreach (var file in dto.Images)
                     {
-                        FProductId = product.FProductId,
-                        FSku = v.SKU,
-                        FPrice = v.Price,
-                        FCost = v.Cost,
-                        FStock = v.Stock,
-                        FPstatus = v.PStatus ?? dto.PStatus,
-                        FColorId = v.ColorId,
-                        FLength = v.Length,
-                        FWidth = v.Width,
-                        FHeight = v.Height,
-                        FSizeLabel = v.SizeLabel,
-                        FWeight = v.Weight
-                    });
-                }
-                _db.SaveChanges();
+                        var (ok, fileName, err) = SaveImage(file);
+                        if (!ok) continue;
 
-                // Assets（檔案存到 wwwroot/images；fUrl 一律以 "/" 開頭）
-                if (dto.Assets != null && dto.Assets.Count > 0)
-                {
-                    var imagesRoot = Path.Combine(_env.WebRootPath ?? "wwwroot", "images");
-                    if (!Directory.Exists(imagesRoot)) Directory.CreateDirectory(imagesRoot);
-
-                    bool primaryGiven = dto.Assets.Any(a => a.IsPrimary);
-                    int orderSeed = 0;
-
-                    foreach (var a in dto.Assets)
-                    {
-                        if (a.Upload == null || a.Upload.Length == 0) continue;
-
-                        var ext = Path.GetExtension(a.Upload.FileName);
-                        var fileName = $"{Guid.NewGuid():N}{ext}";
-                        var absPath = Path.Combine(imagesRoot, fileName);
-                        using (var stream = File.Create(absPath))
+                        product.ProductAssets.Add(new TProductAsset
                         {
-                            a.Upload.CopyTo(stream); // 同步寫檔
-                        }
-
-                        var url = "/images/" + fileName; // 重要：以 "/" 開頭
-                        _db.TProductAssets.Add(new TProductAsset
-                        {
-                            FProductId = product.FProductId,
-                            FPicture = fileName, // 檔名
-                            FAssetType = a.AssetType,
-                            FMimeType = string.IsNullOrWhiteSpace(a.MimeType) ? a.Upload.ContentType : a.MimeType,
-                            FUrl = url,          // 站內路徑
-                            FMaterialId = a.MaterialId,
-                            FTexturedId = a.TexturedId,
-                            FModelId = a.ModelId,
-                            FPosterUrl = a.PosterUrl,
-                            FIsPrimary = primaryGiven ? a.IsPrimary : false,
-                            FSortOrder = a.SortOrder ?? orderSeed++
+                            // 不用先知道 ProductId，靠導航關係
+                            FPicture = fileName,
+                            FUrl = $"/ProductImages/{fileName}",
+                            FAssetType = "image",
+                            FMimeType = file.ContentType,
+                            FIsPrimary = sort == 0,
+                            FSortOrder = sort++,
+                            FCreateTime = now,
+                            FUpdateTime = now
                         });
                     }
-
-                    if (!primaryGiven)
-                    {
-                        var first = _db.TProductAssets.Local
-                            .Where(e => e.FProductId == product.FProductId)
-                            .OrderBy(e => e.FSortOrder)
-                            .FirstOrDefault();
-                        if (first != null) first.FIsPrimary = true;
-                    }
-
-                    _db.SaveChanges();
                 }
 
-                tx.Commit();
-                return product.FProductId;
+                // 變體 + 變體圖
+                if (dto.Variants?.Any() == true)
+                {
+                    foreach (var v in dto.Variants)
+                    {
+                        var sku = _skuGenerator.GenerateSku(dto.CategoryId, v.ColorId, v.Length, v.Width, v.Height);
+
+                        var variant = new TProductVariant
+                        {
+                            FSku = sku,
+                            FPrice = v.Price,
+                            FCost = v.Cost,
+                            FStock = v.Stock,
+                            FColorId = v.ColorId,
+                            FLength = v.Length,
+                            FWidth = v.Width,
+                            FHeight = v.Height,
+                            FSizeLabel = string.IsNullOrWhiteSpace(v.SizeLabel) ? $"{v.Length}x{v.Width}x{v.Height}" : v.SizeLabel,
+                            FWeight = v.Weight,
+                            FPstatus = v.PStatusId,
+                            FCreateTime = now,
+                            FUpdateTime = now,
+                            // 關鍵：加入到 product 的導航集合
+                        };
+
+                        product.ProductVariants.Add(variant);
+
+                        if (v.VariantImages?.Any() == true)
+                        {
+                            int vsort = 0;
+                            foreach (var file in v.VariantImages)
+                            {
+                                var (ok, fileName, err) = SaveImage(file);
+                                if (!ok) continue;
+
+                                // 關鍵：用導航屬性關聯到這個 variant
+                                product.ProductAssets.Add(new TProductAsset
+                                {
+                                    FPicture = fileName,
+                                    FUrl = $"/ProductImages/{fileName}",
+                                    FPosterUrl = $"/ProductImages/{fileName}",
+                                    FAssetType = "image",
+                                    FMimeType = file.ContentType,
+                                    FIsPrimary = vsort == 0,
+                                    FSortOrder = vsort++,
+                                    FCreateTime = now,
+                                    FUpdateTime = now,
+                                    // 如果模型有 ProductVariant 導航屬性，設定它：
+                                    ProductVariant = variant
+                                });
+                            }
+                        }
+                    }
+                }
+
+                _db.TProducts.Add(product);
+                var affected = _db.SaveChanges();
+                if (affected <= 0)
+                    return (false, "SaveChanges() 回傳 0，請檢查連線或交易設定", null);
+
+                return (true, "產品新增成功", product.FProductId);
+            }
+            catch (DbUpdateException ex)
+            {
+                return (false, $"DB 更新失敗：{ex.GetBaseException().Message}", null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "CreateProduct failed");
+                return (false, $"新增失敗：{ex.Message}", null);
+            }
+
+        }
+        // 儲存圖片的輔助方法 (同步版本)
+        private (bool Success, string FileName, string ErrorMessage) SaveImage(IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                    return (false, null, "檔案為空");
+
+                // 驗證檔案類型
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+                var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+                if (!allowedExtensions.Contains(extension))
+                    return (false, null, "不支援的檔案格式");
+
+                // 驗證檔案大小 (例如：5MB)
+                if (file.Length > 5 * 1024 * 1024)
+                    return (false, null, "檔案大小不可超過 5MB");
+
+                // 產生唯一檔名
+                var fileName = $"{Guid.NewGuid():N}{extension}";
+                var uploadPath = Path.Combine(_env.WebRootPath, "ProductImages");
+
+                // 確保資料夾存在
+                if (!Directory.Exists(uploadPath))
+                    Directory.CreateDirectory(uploadPath);
+
+                var filePath = Path.Combine(uploadPath, fileName);
+
+                // 儲存檔案 (同步)
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    file.CopyTo(stream);
+                }
+
+                return (true, fileName, null);
+            }
+            catch (Exception ex)
+            {
+                return (false, null, $"儲存圖片失敗：{ex.Message}");
             }
         }
+
+
 
 
         public bool Delete(int id)
@@ -454,6 +622,11 @@ namespace GraduationProject.Services
                 return true;
             }
         }
+
+
+
+
+
 
     }
 

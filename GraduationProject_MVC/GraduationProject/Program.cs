@@ -3,6 +3,7 @@ using GraduationProject.Interfaces;
 using GraduationProject.Models;
 using GraduationProject.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,10 +31,18 @@ builder.Services.AddScoped<IOrderService, COrderService>();
 builder.Services.AddScoped<IOrderDetailService, COrderDetailService>();
 // Application services
 builder.Services.AddScoped<IMemberService, CMemberService>();
+
+// ���U SKU �ͦ����A��
+builder.Services.AddScoped<SkuGenerator>();
 // Application services
 builder.Services.AddScoped<IProductService, CProductService>();
 
 var app = builder.Build();
+
+var provider = new FileExtensionContentTypeProvider();
+provider.Mappings[".webp"] = "image/webp";
+app.UseStaticFiles(new StaticFileOptions { ContentTypeProvider = provider });
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

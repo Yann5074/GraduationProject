@@ -1,6 +1,6 @@
 ﻿namespace GraduationProject.DTOs
 {
-    public class CProductAssetDto
+    public class CProductAssetDTO
     {
         public IFormFile Upload { get; set; }
 
