@@ -31,6 +31,15 @@ namespace ApiProject.Services
                     OrderTime = o.FOrderTime.ToString(),
                     OrderStatusId = o.FOrderStatus,
                     OrderStatus = o.OrderStatus.FStatusName,
+                    TotalPrice = o.FTotalPrice,
+                    OrderDetail = o.OrderDetail.Select(od => new ResOrderDetailDTO
+                    {
+                        ProductName = od.ProductVariant.Product.FName,
+                        ProductInfo = od.ProductVariant.FLength.ToString() + " x" + od.ProductVariant.FWidth.ToString() + " x" + od.ProductVariant.FHeight.ToString() + " / " + od.ProductVariant.FWeight.ToString() + "Kg",
+                        UnitPrice = od.FUnitPrice,
+                        Quantity = od.FQuantity,
+                        ImageUrl = od.ProductVariant.ProductAsset.FUrl,
+                    })
                 });
             return await query.ToListAsync();
         }
@@ -69,8 +78,7 @@ namespace ApiProject.Services
                     UnitPrice = od.FUnitPrice,
                     Quantity = od.FQuantity,
                     ImageUrl = od.ProductVariant.ProductAsset.FUrl,
-                    
-                }).ToList()
+                })
 
             }).OrderByDescending(o => o.OrderTime)
             .ToListAsync();
@@ -95,6 +103,31 @@ namespace ApiProject.Services
             {
                 Ok = true,
                 Code = StatusCodes.Status204NoContent
+            };
+        }
+
+        // 修改訂單配送地址
+        public async Task<ResultDTO> EditDeliveryAddressAsync(int orderId, ReqDeliveryAddressDTO reqDTO)
+        {
+            if (orderId != reqDTO.OrderId)
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status400BadRequest
+                };
+            var od = await _context.TOrders.FirstOrDefaultAsync(o => o.FOrderId == orderId);
+            if (od == null)
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status404NotFound
+                };
+            od.FDeliveryAddress = reqDTO.Address;
+            await _context.SaveChangesAsync();
+            return new ResultDTO
+            {
+                Ok = true,
+                Code = StatusCodes.Status200OK
             };
         }
     }

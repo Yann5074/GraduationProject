@@ -53,5 +53,25 @@ namespace ApiProject.Controllers
             }
             return NoContent();
         }
+
+        // Patch:api/Order/id
+        [HttpPatch("id")]
+        public async Task<IActionResult> EditDeliveryAddress(int orderId, ReqDeliveryAddressDTO reqDTO)
+        {
+            var result = await _orderService.EditDeliveryAddressAsync(orderId, reqDTO);
+            if (!result.Ok)
+            {
+                switch (result.Code)
+                {
+                    case StatusCodes.Status400BadRequest:
+                        return BadRequest();
+                    case StatusCodes.Status404NotFound:
+                        return NotFound();
+                    default:
+                        return StatusCode(StatusCodes.Status500InternalServerError);
+                }
+            }
+            return Ok();
+        }
     }
 }

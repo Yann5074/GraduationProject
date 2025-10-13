@@ -12,4 +12,6 @@ public partial class TLevel
     public string FLevelName { get; set; }
 
     public string FUpgradeRules { get; set; }
+
+    public decimal? FDiscount { get; set; }
 }

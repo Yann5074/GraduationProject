@@ -112,6 +112,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[TOrderStatusHistory]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[tPaymentMethod]",
          "ObjectType": 0
       },

@@ -13,7 +13,7 @@ namespace ApiProject.DTOs
         public string OrderStatus { get; set; }
         public decimal TotalPrice { get; set; }
 
-        public List<ResOrderDetailDTO> OrderDetail { get; set; } = new();
+        public IEnumerable<ResOrderDetailDTO> OrderDetail { get; set; } = new List<ResOrderDetailDTO>();
 
     }
 }
