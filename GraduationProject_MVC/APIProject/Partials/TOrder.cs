@@ -6,7 +6,7 @@ namespace ApiProject.Models
     {
         //用於 Navigation Property 與宣告外鍵
         [ForeignKey(nameof(FOrderId))]
-        public TOrderDetail OrderDetail { get; set; }
+        public ICollection<TOrderDetail> OrderDetail { get; set; }
 
         [ForeignKey(nameof(FMemberId))]
         public TMember Member { get; set; }
