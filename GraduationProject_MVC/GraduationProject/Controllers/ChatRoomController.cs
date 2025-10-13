@@ -1,6 +1,7 @@
 ﻿using GraduationProject.Models;
 using GraduationProject.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace GraduationProject.Controllers
 {
@@ -34,7 +35,7 @@ namespace GraduationProject.Controllers
                 FFirstMessageAt = DateTime.Now,
                 FLastMessageAt = DateTime.Now,
                 FCreatedAt = DateTime.Now,
-                FStatus = "open"
+                FStatus = 1
             });
             _context.SaveChanges();
             var ChatRoomid = a.Entity.FChatRoomId;
@@ -68,7 +69,7 @@ namespace GraduationProject.Controllers
             //如果存在 就狀態改為關閉
             if (chatRoom != null)
             {
-                chatRoom.FStatus = "closed";
+                chatRoom.FStatus = 0;
                 chatRoom.FClosedAt = DateTime.Now;
                 _context.SaveChanges();
             }
@@ -80,25 +81,60 @@ namespace GraduationProject.Controllers
             return View();
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             //我要輸入的employeeid 來查詢所有開啟的聊天室 P.S.這邊要判斷是否為會員
 
             //output 聊天室的 chatroomid 以及 會員id 或 訪客id 訊息 建立時間 與 關閉時間
-            _context.TChatRooms
-                
+
+            // 開啟中的定義（依您資料表，這裡用字串範例：open/pending；若您改成 TINYINT 請自行調整）
+            
+
+            var chatRooms = await _context.TChatRooms
+                .Where(c =>c.FStatus == 1)
                 .Select(c => new ChatRoomLlistVM
                 {
                     FChatRoomId = c.FChatRoomId,
-                    FMemberId = c.FMemberId,
-                    FVisitorKey = c.FVisitorKey,
-                    FCreatedAt= c.FCreatedAt,
-                    FClosedAt=c.FClosedAt,
-                    FStatus=c.FStatus
-                })
-                .ToList();
 
-            return View();
+                    // 會員頭像（左連接語意：找不到會員就回傳 null）
+                    image = _context.TMembers
+                        .Where(m => m.FMemberId == c.FMemberId)
+                        .Select(m => m.FMemberImage)
+                        .FirstOrDefault(),
+
+                    // 顯示名稱：若是會員用 FDisplayName；否則退回訪客識別（您有需要可換成固定字樣）
+                    FName = _context.TMembers
+                        .Where(m => m.FMemberId == c.FMemberId)
+                        .Select(m => m.FDisplayName)
+                        .FirstOrDefault() ?? ("訪客#" + c.FVisitorKey),
+
+                    // 最新一則訊息的內容（以 FCreatedAt 由新到舊取第一筆）
+                    FLastMessage = _context.TMessages
+                        .Where(msg => msg.FChatRoomId == c.FChatRoomId)
+                        .OrderByDescending(msg => msg.FCreatedAt)
+                        .Select(msg => msg.FContent)
+                        .FirstOrDefault(),
+
+                    // 最新一則訊息的時間（也可以用上面 FirstOrDefault().FCreatedAt；這裡示範 Max 寫法）
+                    FLastMessageTime = _context.TMessages
+                        .Where(msg => msg.FChatRoomId == c.FChatRoomId)
+                        .Max(msg => (DateTime?)msg.FCreatedAt)
+                })
+                .OrderByDescending(vm => vm.FLastMessageTime) // 讓最近有互動的聊天室排最前面
+                .ToListAsync();
+
+            return View(chatRooms);
+       }
+
+        public async Task<List<TMessage>> GetMessageList(int chatRoomId)
+        {
+            var message = await _context.TMessages
+                .Where(m => m.FChatRoomId == chatRoomId)
+                .OrderBy(m => m.FCreatedAt)
+                .ToListAsync();
+
+
+            return message;
         }
     }
 }
