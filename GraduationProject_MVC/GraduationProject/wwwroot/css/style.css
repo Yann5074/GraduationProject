@@ -1,0 +1,1232 @@
+@import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Poppins:wght@400;500;600;700&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+a {
+  text-decoration: none;
+}
+
+li {
+  list-style: none;
+}
+
+:root {
+  --poppins: "Poppins", sans-serif;
+  --lato: "Lato", sans-serif;
+
+  --light: #f9f9f9;
+  --blue: #3c91e6;
+  --light-blue: #cfe8ff;
+  --grey: #eee;
+  --dark-grey: #aaaaaa;
+  --dark: #342e37;
+  --red: #db504a;
+  --yellow: #ffce26;
+  --light-yellow: #fff2c6;
+  --orange: #fd7238;
+  --light-orange: #ffe0d3;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+html.dark, body.dark {
+        --light: #0c0c1e;
+        --grey: #060714;
+        --dark: #fbfbfb;
+}
+
+body {
+  background: var(--grey);
+  overflow-x: hidden;
+}
+
+/* SIDEBAR */
+#sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 220px;
+  height: 100%;
+  background: var(--light);
+  z-index: 2000;
+  font-family: var(--lato);
+  transition: 0.3s ease;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+#sidebar::--webkit-scrollbar {
+  display: none;
+}
+
+#sidebar.hide {
+  width: 60px;
+}
+
+#sidebar .brand {
+  font-size: 24px;
+  font-weight: 700;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  color: var(--blue);
+  position: sticky;
+  top: 0;
+  left: 0;
+  background: var(--light);
+  z-index: 500;
+  padding-bottom: 20px;
+  box-sizing: content-box;
+}
+
+#sidebar .brand .bx {
+  min-width: 60px;
+  display: flex;
+  justify-content: center;
+}
+
+#sidebar .side-menu {
+  width: 100%;
+  margin-top: 48px;
+  padding: 0px;
+}
+
+#sidebar .side-menu li {
+  height: 48px;
+  background: transparent;
+  margin-left: 6px;
+  border-radius: 48px 0 0 48px;
+  padding: 4px;
+}
+
+#sidebar .side-menu li.active {
+  background: var(--grey);
+  position: relative;
+}
+
+#sidebar .side-menu li.active::before {
+  content: "";
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  top: -40px;
+  right: 0;
+  box-shadow: 20px 20px 0 var(--grey);
+  z-index: -1;
+}
+
+#sidebar .side-menu li.active::after {
+  content: "";
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  bottom: -40px;
+  right: 0;
+  box-shadow: 20px -20px 0 var(--grey);
+  z-index: -1;
+}
+
+#sidebar .side-menu li a {
+  width: 100%;
+  height: 100%;
+  background: var(--light);
+  display: flex;
+  align-items: center;
+  border-radius: 48px;
+  font-size: 16px;
+  color: var(--dark);
+  white-space: nowrap;
+  overflow-x: hidden;
+}
+
+#sidebar .side-menu.top li.active a {
+  color: var(--blue);
+}
+
+#sidebar.hide .side-menu li a {
+  width: calc(48px - (4px * 2));
+  transition: width 0.3s ease;
+}
+
+#sidebar .side-menu li a.logout {
+  color: var(--red);
+}
+
+#sidebar .side-menu.top li a:hover {
+  color: var(--blue);
+}
+
+#sidebar .side-menu li a .bx {
+  min-width: calc(60px - ((4px + 6px) * 2));
+  display: flex;
+  justify-content: center;
+}
+
+#sidebar .side-menu.bottom li:nth-last-of-type(-n + 2) {
+  /* Son iki <li>'yi seç */
+  position: absolute;
+  /* Ebeveynine göre konumlandır */
+  bottom: 0;
+  /* En alt */
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+
+/* Birbirinin üzerine binmesini engellemek için */
+#sidebar .side-menu.bottom li:nth-last-of-type(2) {
+  bottom: 40px;
+  /* İkinci son öğeyi yukarı kaydır */
+}
+
+/* SIDEBAR */
+
+/* CONTENT */
+#content {
+  position: relative;
+  width: calc(100% - 220px);
+  left: 220px;
+  transition: 0.3s ease;
+}
+
+#sidebar.hide ~ #content {
+  width: calc(100% - 60px);
+  left: 60px;
+}
+
+/* NAVBAR */
+#content nav {
+  height: 56px;
+  /*  background: var(--light);*/
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  grid-gap: 24px;
+  font-family: var(--lato);
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+#content nav::before {
+  /*  content: "";*/
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  bottom: -40px;
+  left: 0;
+  border-radius: 50%;
+  box-shadow: -20px -20px 0 var(--light);
+}
+
+#content nav a {
+  color: var(--dark);
+}
+
+#content nav .bx.bx-menu {
+  cursor: pointer;
+  color: var(--dark);
+}
+
+#content nav .nav-link {
+  font-size: 16px;
+  transition: 0.3s ease;
+}
+
+#content nav .nav-link:hover {
+  color: var(--blue);
+}
+
+#content nav form {
+  max-width: 400px;
+  width: 100%;
+  margin-right: auto;
+}
+
+#content nav form .form-input {
+  display: flex;
+  align-items: center;
+  height: 36px;
+}
+
+#content nav form .form-input input {
+  flex-grow: 1;
+  padding: 0 16px;
+  height: 100%;
+  border: none;
+  background: var(--grey);
+  border-radius: 36px 0 0 36px;
+  outline: none;
+  width: 100%;
+  color: var(--dark);
+}
+
+#content nav form .form-input button {
+  width: 36px;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--blue);
+  color: var(--light);
+  font-size: 18px;
+  border: none;
+  outline: none;
+  border-radius: 0 36px 36px 0;
+  cursor: pointer;
+}
+
+#content nav .notification {
+  font-size: 20px;
+  position: relative;
+}
+
+#content nav .notification .num {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--light);
+  background: var(--red);
+  color: var(--light);
+  font-weight: 700;
+  font-size: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Notification Dropdown */
+#content nav .notification-menu {
+  display: none;
+  position: absolute;
+  top: 56px;
+  right: 0;
+  background: var(--light);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
+  width: 250px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 9999;
+  font-family: var(--lato);
+}
+
+#content nav .notification-menu ul {
+  list-style: none;
+  padding: 10px;
+  margin: 0;
+}
+
+#content nav .notification-menu li {
+  padding: 10px;
+  border-bottom: 1px solid var(--grey);
+  color: var(--dark);
+}
+
+#content nav .notification-menu li:hover {
+  background-color: var(--light-blue);
+  color: var(--dark);
+}
+
+#content nav .notification-menu li:hover a {
+  background-color: var(--dark-grey);
+  color: var(--light);
+}
+
+body.dark #content nav .notification-menu li:hover {
+  background-color: var(--light-blue);
+  color: var(--light);
+}
+
+body.dark #content nav .notification-menu li a {
+  background-color: var(--dark-grey);
+  color: var(--light);
+}
+
+#content nav .profile img {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+#content nav .profile-menu {
+  display: none;
+  position: absolute;
+  top: 56px;
+  right: 0;
+  background: var(--light);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
+  width: 200px;
+  z-index: 9999;
+  font-family: var(--lato);
+}
+
+#content nav .profile-menu ul {
+  list-style: none;
+  padding: 10px;
+  margin: 0;
+}
+
+#content nav .profile-menu li {
+  padding: 10px;
+  border-bottom: 1px solid var(--grey);
+}
+
+#content nav .profile-menu li:hover {
+  background-color: var(--light-blue);
+  color: var(--dark);
+}
+
+#content nav .profile-menu li a {
+  color: var(--dark);
+  font-size: 16px;
+}
+
+body.dark #content nav .profile-menu li:hover a {
+  color: var(--light);
+}
+
+body.dark #content nav .profile-menu li a {
+  color: var(--dark);
+}
+
+#content nav .profile-menu li:hover a {
+  color: var(--dark);
+}
+
+/* Active State for Menus */
+#content nav .notification-menu.show,
+#content nav .profile-menu.show {
+  display: block;
+}
+
+#content nav .switch-mode {
+  display: block;
+  min-width: 50px;
+  height: 25px;
+  border-radius: 25px;
+  background: var(--grey);
+  cursor: pointer;
+  position: relative;
+}
+
+#content nav .switch-mode::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  bottom: 2px;
+  width: calc(25px - 4px);
+  background: var(--blue);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+#content nav #switch-mode:checked + .switch-mode::before {
+  left: calc(100% - (25px - 4px) - 2px);
+}
+
+#content nav .swith-lm {
+  background-color: var(--grey);
+  border-radius: 50px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px;
+  position: relative;
+  height: 21px;
+  width: 45px;
+  transform: scale(1.5);
+}
+
+#content nav .swith-lm .ball {
+  background-color: var(--blue);
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  height: 20px;
+  width: 20px;
+  transform: translateX(0px);
+  transition: transform 0.2s linear;
+}
+
+#content nav .checkbox:checked + .swith-lm .ball {
+  transform: translateX(22px);
+}
+
+.bxs-moon {
+  color: var(--yellow);
+}
+
+.bx-sun {
+  color: var(--orange);
+  animation: shakeOn 0.7s;
+}
+
+/* NAVBAR */
+
+/* MAIN */
+#content main {
+  width: 100%;
+  padding: 36px 24px;
+  font-family: var(--poppins);
+  max-height: calc(100vh - 56px);
+  overflow-y: auto;
+}
+
+#content main .head-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  grid-gap: 16px;
+  flex-wrap: wrap;
+}
+
+#content main .head-title .left h1 {
+  font-size: 36px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--dark);
+}
+
+#content main .head-title .left .breadcrumb {
+  display: flex;
+  align-items: center;
+  grid-gap: 16px;
+}
+
+#content main .head-title .left .breadcrumb li {
+  color: var(--dark);
+}
+
+#content main .head-title .left .breadcrumb li a {
+  color: var(--dark-grey);
+  pointer-events: none;
+}
+
+#content main .head-title .left .breadcrumb li a.active {
+  color: var(--blue);
+  pointer-events: unset;
+}
+
+#content main .head-title .btn-download {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 36px;
+  background: var(--blue);
+  color: var(--light);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  grid-gap: 10px;
+  font-weight: 500;
+}
+
+#content main .box-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-gap: 24px;
+  margin-top: 36px;
+}
+
+#content main .box-info li {
+  padding: 24px;
+  background: var(--light);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  grid-gap: 24px;
+}
+
+#content main .box-info li .bx {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  font-size: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#content main .box-info li:nth-child(1) .bx {
+  background: var(--light-blue);
+  color: var(--blue);
+}
+
+#content main .box-info li:nth-child(2) .bx {
+  background: var(--light-yellow);
+  color: var(--yellow);
+}
+
+#content main .box-info li:nth-child(3) .bx {
+  background: var(--light-orange);
+  color: var(--orange);
+}
+
+#content main .box-info li .text h3 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+#content main .box-info li .text p {
+  color: var(--dark);
+}
+
+#content main .table-data {
+  display: flex;
+  flex-wrap: wrap;
+  grid-gap: 24px;
+  margin-top: 24px;
+  width: 100%;
+  color: var(--dark);
+}
+
+#content main .table-data > div {
+  border-radius: 20px;
+  background: var(--light);
+  padding: 24px;
+  overflow-x: auto;
+}
+
+#content main .table-data .head {
+  display: flex;
+  align-items: center;
+  grid-gap: 16px;
+  margin-bottom: 24px;
+}
+
+#content main .table-data .head h3 {
+  margin-right: auto;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+#content main .table-data .head .bx {
+  cursor: pointer;
+}
+
+#content main .table-data .order {
+  flex-grow: 1;
+  flex-basis: 500px;
+}
+
+#content main .table-data .order table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#content main .table-data .order table th {
+  padding-bottom: 12px;
+  font-size: 13px;
+  text-align: left;
+  border-bottom: 1px solid var(--grey);
+}
+
+#content main .table-data .order table td {
+  padding: 16px 0;
+}
+
+#content main .table-data .order table tr td:first-child {
+  display: flex;
+  align-items: center;
+  grid-gap: 12px;
+  padding-left: 6px;
+}
+
+#content main .table-data .order table td img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+#content main .table-data .order table tbody tr:hover {
+  background: var(--grey);
+}
+
+#content main .table-data .order table tr td .status {
+  font-size: 10px;
+  padding: 6px 16px;
+  color: var(--light);
+  border-radius: 20px;
+  font-weight: 700;
+}
+
+#content main .table-data .order table tr td .status.completed {
+  background: var(--blue);
+}
+
+#content main .table-data .order table tr td .status.process {
+  background: var(--yellow);
+}
+
+#content main .table-data .order table tr td .status.pending {
+  background: var(--orange);
+}
+
+#content main .table-data .todo {
+  flex-grow: 1;
+  flex-basis: 300px;
+}
+
+#content main .table-data .todo .todo-list {
+  width: 100%;
+}
+
+#content main .table-data .todo .todo-list li {
+  width: 100%;
+  margin-bottom: 16px;
+  background: var(--grey);
+  border-radius: 10px;
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#content main .table-data .todo .todo-list li .bx {
+  cursor: pointer;
+}
+
+#content main .table-data .todo .todo-list li.completed {
+  border-left: 10px solid var(--blue);
+}
+
+#content main .table-data .todo .todo-list li.not-completed {
+  border-left: 10px solid var(--orange);
+}
+
+#content main .table-data .todo .todo-list li:last-child {
+  margin-bottom: 0;
+}
+
+/* MAIN */
+/* CONTENT */
+#content main .menu,
+#content nav .menu {
+  display: none;
+  list-style-type: none;
+  padding-left: 20px;
+  margin-top: 5px;
+  position: absolute;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  width: 200px;
+}
+
+#content main .menu a,
+#content nav .menu a {
+  color: white;
+  text-decoration: none;
+  display: block;
+  padding: 8px 16px;
+}
+
+#content main .menu a:hover,
+#content nav .menu a:hover {
+  background-color: #444;
+}
+
+#content main .menu-link,
+#content nav .menu-link {
+  margin: 5px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  text-decoration: none;
+  color: #007bff;
+}
+
+#content main .menu-link:hover,
+#content nav .menu-link:hover {
+  text-decoration: underline;
+}
+
+/* Media Query for Smaller Screens */
+@media screen and (max-width: 768px) {
+  /* Reduce width of notification and profile menu */
+  #content nav .notification-menu,
+  #content nav .profile-menu {
+    width: 180px;
+  }
+
+  #sidebar {
+    width: 200px;
+  }
+
+  #content {
+    width: calc(100% - 60px);
+    left: 200px;
+  }
+
+  #content nav .nav-link {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  #content nav .notification-menu,
+  #content nav .profile-menu {
+    width: 150px;
+  }
+
+  #content nav form .form-input input {
+    display: none;
+  }
+
+  #content nav form .form-input button {
+    width: auto;
+    height: auto;
+    background: transparent;
+    border-radius: none;
+    color: var(--dark);
+  }
+
+  #content nav form.show .form-input input {
+    display: block;
+    width: 100%;
+  }
+
+  #content nav form.show .form-input button {
+    width: 36px;
+    height: 100%;
+    border-radius: 0 36px 36px 0;
+    color: var(--light);
+    background: var(--red);
+  }
+
+  #content nav form.show ~ .notification,
+  #content nav form.show ~ .profile {
+    display: none;
+  }
+
+  #content main .box-info {
+    grid-template-columns: 1fr;
+  }
+
+  #content main .table-data .head {
+    min-width: 420px;
+  }
+
+  #content main .table-data .order table {
+    min-width: 420px;
+  }
+
+  #content main .table-data .todo .todo-list {
+    min-width: 420px;
+  }
+
+  .headshot {
+    width: 68px;
+    /* 固定顯示大小 */
+    height: 68px;
+    object-fit: cover;
+    /* 保持比例、裁切填滿 */
+    border-radius: 0.5rem;
+    /* 圓角，可選 */
+  }
+
+  /*    .pagination 
+    {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+   .pagination li 
+   {
+       margin: 0 5px;
+   }*/
+  footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #f8f9fa;
+    padding: 10px 0;
+    text-align: center;
+    z-index: 1000;
+  }
+}
+
+/* ==== Dark theme bridge for Bootstrap components ==== */
+/* 通用底色與文字 */
+.container-xxl,
+.container-xl,
+.container-lg,
+.container-md,
+.container-sm {
+  color: var(--dark);
+  background: transparent;
+}
+
+/* 卡片 */
+.card {
+  background-color: var(--light) !important;
+  color: var(--dark) !important;
+  border: 1px solid var(--grey) !important;
+}
+
+.card .card-body,
+.card .card-header,
+.card .card-footer {
+  background-color: var(--light) !important;
+  color: var(--dark) !important;
+  border-color: var(--grey) !important;
+}
+
+/* 表格 */
+.table {
+  color: var(--dark) !important;
+  background-color: var(--light) !important;
+  border-color: var(--grey) !important;
+}
+
+.table > :not(caption) > * > * {
+  background-color: transparent !important;
+  /* 讓底色走父層 */
+  color: var(--dark) !important;
+  border-color: var(--grey) !important;
+}
+
+/* 表頭（table-light 會很亮，改成用變數的灰） */
+.table thead,
+.table-light {
+  --bs-table-bg: var(--grey) !important;
+  --bs-table-color: var(--dark) !important;
+  background-color: var(--grey) !important;
+  color: var(--dark) !important;
+}
+
+/* 斑馬紋 */
+.table-striped > tbody > tr:nth-of-type(odd) {
+  --bs-table-accent-bg: var(--grey) !important;
+  background-color: var(--grey) !important;
+}
+
+.table-hover > tbody > tr:hover {
+  --bs-table-accent-bg: var(--grey) !important;
+  background-color: var(--grey) !important;
+  filter: brightness(0.98);
+}
+
+/* 按鈕（沿用你的色票） */
+.btn-primary {
+  background-color: var(--blue) !important;
+  border-color: var(--blue) !important;
+  color: var(--light) !important;
+}
+
+.btn-outline-primary {
+  color: var(--blue) !important;
+  border-color: var(--blue) !important;
+}
+
+.btn-outline-success {
+  color: #198754 !important;
+  border-color: #198754 !important;
+}
+
+.btn-outline-danger {
+  color: var(--red) !important;
+  border-color: var(--red) !important;
+}
+
+.btn-outline-secondary {
+  color: var(--dark) !important;
+  border-color: var(--dark-grey) !important;
+}
+
+/* Badge/狀態色如果有需要也可比照辦理 */
+
+/* 表格內「次要文字」的可讀性 */
+.text-muted {
+  color: var(--dark-grey) !important;
+}
+
+/* 讓 .text-truncate 的最大寬度在卡片內也能正常 */
+.text-truncate {
+  max-width: 100%;
+}
+
+/* Delete view 補強: dl/dt/dd 顏色跟隨 dark mode */
+dl,
+dt,
+dd {
+  color: var(--dark) !important;
+}
+
+body.dark dl,
+body.dark dt,
+body.dark dd {
+  color: var(--dark) !important;
+  /* 在 dark 模式下 --dark = 淺色字 */
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--dark) !important;
+}
+
+/* 按鈕顏色覆蓋已經在前面做過，如果需要可以再強化 */
+.btn-secondary {
+  background-color: var(--grey) !important;
+  border-color: var(--dark-grey) !important;
+  color: var(--dark) !important;
+}
+
+/* ==== Dark mode overrides for Edit view ==== */
+
+/* 卡片 */
+.card {
+  background-color: var(--light) !important;
+  color: var(--dark) !important;
+  border: 1px solid var(--grey) !important;
+}
+
+/* 標題 */
+.card-header {
+  background-color: var(--blue) !important;
+  color: var(--light) !important;
+}
+
+/* 表單區域 */
+.form-label {
+  color: var(--dark) !important;
+}
+
+.form-control {
+  background-color: var(--light) !important;
+  color: var(--dark) !important;
+  border-color: var(--grey) !important;
+}
+
+/* 表單錯誤訊息 */
+.text-danger {
+  color: var(--red) !important;
+}
+
+/* 按鈕 */
+.btn-primary {
+  background-color: var(--blue) !important;
+  border-color: var(--blue) !important;
+  color: var(--light) !important;
+}
+
+.btn-outline-secondary {
+  background-color: transparent !important;
+  border-color: var(--dark-grey) !important;
+  color: var(--dark) !important;
+}
+
+/* 按鈕的深色模式 */
+body.dark .btn-primary {
+  background-color: var(--blue) !important;
+  border-color: var(--blue) !important;
+  color: var(--light) !important;
+}
+
+body.dark .btn-outline-secondary {
+  background-color: var(--dark-grey) !important;
+  border-color: var(--dark) !important;
+  color: var(--light) !important;
+}
+
+/* 文字顏色 */
+body.dark .form-label,
+body.dark .form-control {
+    color: var(--light) !important;
+}
+
+/* 輸入框（form-control） */
+body.dark .form-control {
+  background-color: var(--dark-grey) !important;
+  color: var(--light) !important;
+  border-color: var(--grey) !important;
+}
+
+/* ==== Dark mode overrides for Create view ==== */
+
+/* 卡片 */
+.card {
+  background-color: var(--light) !important;
+  color: var(--dark) !important;
+  border: 1px solid var(--grey) !important;
+}
+
+/* 標題 */
+.card-header {
+  background-color: var(--blue) !important;
+  color: var(--light) !important;
+}
+
+/* 表單區域 */
+.form-label {
+  color: var(--dark) !important;
+}
+
+.form-control {
+  background-color: var(--light) !important;
+  color: var(--dark) !important;
+  border-color: var(--grey) !important;
+}
+
+/* 表單錯誤訊息 */
+.text-danger {
+  color: var(--red) !important;
+}
+
+/* 按鈕 */
+.btn-primary {
+  background-color: var(--blue) !important;
+  border-color: var(--blue) !important;
+  color: var(--light) !important;
+}
+
+.btn-outline-secondary {
+  background-color: transparent !important;
+  border-color: var(--dark-grey) !important;
+  color: var(--dark) !important;
+}
+
+/* 按鈕的深色模式 */
+body.dark .btn-primary {
+  background-color: var(--blue) !important;
+  border-color: var(--blue) !important;
+  color: var(--light) !important;
+}
+
+body.dark .btn-outline-secondary {
+  background-color: var(--dark-grey) !important;
+  border-color: var(--dark) !important;
+  color: var(--light) !important;
+}
+
+/* 文字顏色 */
+body.dark .form-label,
+body.dark .form-control {
+  color: var(--dark) !important;
+}
+
+/* 輸入框（form-control） */
+body.dark .form-control {
+  background-color: var(--dark-grey) !important;
+  color: var(--light) !important;
+  border-color: var(--grey) !important;
+}
+
+/* ====Dark theme overrides for labels==== */
+body.dark .form-label {
+    color: var(--dark) !important;
+    /* 確保 label 文字為淺色 */
+}
+
+/* 確保表單控件在深色模式下能正確顯示 */
+body.dark .form-control {
+  /* 背景設為深灰 */
+  background-color: var(--dark-grey) !important;
+  /* 文字設為淺色 */
+  color: var(--light) !important;
+  /* 邊框設為灰色 */
+  border-color: var(--grey) !important;
+}
+
+/* 強制讓輸入框與錯誤提示顯示正確顏色 */
+body.dark .form-control:focus {
+  background-color: var(--dark-grey) !important;
+  color: var(--light) !important;
+  border-color: var(--blue) !important;
+  /* 設定聚焦時的邊框顏色 */
+}
+
+/* 表單錯誤訊息的顏色 */
+body.dark .text-danger {
+  color: var(--red) !important;
+  /* 設置錯誤訊息為紅色 */
+}
+
+
+.table thead tr th {
+    border-top: none !important; /* 去掉表頭上方 */
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none !important; /* 去掉最後一列下方 */
+}
+
+.custom-table thead tr th {
+    border-top: none !important;
+}
+
+/* 去掉最後一列下方邊框 */
+.custom-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+
+
+/* ==== 分頁元件 (pagination) ==== */
+
+/* 預設 (亮色模式) */
+.pagination .page-link {
+    color: var(--dark) !important;
+    background-color: var(--light) !important;
+    border: 1px solid var(--grey) !important;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--blue) !important;
+    border-color: var(--blue) !important;
+    color: var(--light) !important;
+}
+
+.pagination .page-item.disabled .page-link {
+    background-color: var(--grey) !important;
+    color: var(--dark-grey) !important;
+    border-color: var(--grey) !important;
+}
+
+/* ==== 深色模式 ==== */
+body.dark .pagination .page-link {
+    color: var(--light) !important;
+    background-color: var(--dark-grey) !important;
+    border: 1px solid var(--grey) !important;
+}
+
+body.dark .pagination .page-item.active .page-link {
+    background-color: var(--blue) !important;
+    border-color: var(--blue) !important;
+    color: var(--light) !important;
+}
+
+body.dark .pagination .page-item.disabled .page-link {
+    background-color: var(--grey) !important;
+    color: var(--dark) !important;
+    border-color: var(--grey) !important;
+}
+
+html, body, .card, .form-control, .table, .pagination .page-link {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
