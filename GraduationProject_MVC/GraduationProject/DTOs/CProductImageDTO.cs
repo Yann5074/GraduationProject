@@ -5,5 +5,7 @@
         public string? Url { get; set; }
         public bool? IsPrimary { get; set; }
         public int? SortOrder { get; set; }
+
+        public string DisplayUrl { get; set; }
     }
 }

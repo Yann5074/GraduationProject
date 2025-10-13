@@ -9,5 +9,9 @@ namespace GraduationProject.Models
         
         [ForeignKey(nameof(FProductId))]
         public virtual TProduct Product { get; set; }
+
+        [ForeignKey(nameof(FProductVariantId))] 
+        public TProductVariant ProductVariant { get; set; }
     }
+
 }

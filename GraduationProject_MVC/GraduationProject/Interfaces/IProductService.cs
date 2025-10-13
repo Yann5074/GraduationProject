@@ -13,7 +13,7 @@ namespace GraduationProject.Interfaces
         CProductEditViewModel GetProductForEdit(int id); // 讀取資料進編輯頁
         bool UpdateProduct(CProductEditViewModel vm);    // 寫回資料庫
 
-        int Create(CProductCreateDto dto); // 同步回傳新商品ID
+        (bool Success, string Message, int? ProductId) CreateProduct(CProductCreateDTO dto);
         bool Delete(int id); 
     }
 

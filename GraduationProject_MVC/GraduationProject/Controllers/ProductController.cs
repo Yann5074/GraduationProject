@@ -6,6 +6,7 @@ using GraduationProject.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace GraduationProject.Controllers
@@ -13,6 +14,7 @@ namespace GraduationProject.Controllers
 
     public class ProductsController : Controller
     {
+        
         private readonly IProductService _ProductService;
         private readonly IWebHostEnvironment _env; // 為了存圖片
         private readonly dbFurniMartContext _db;
@@ -22,6 +24,7 @@ namespace GraduationProject.Controllers
             _ProductService = ProductService;
             _env = env;
             _db = db;
+            
         }
 
         [HttpGet]
@@ -58,11 +61,11 @@ namespace GraduationProject.Controllers
         {
             if (!ModelState.IsValid)
             {
-                // 回填下拉與子項選單（避免回傳變空）
+                // 回填下拉與子項選單
                 var src = _ProductService.GetProductForEdit(vm.ProductId);
                 vm.CategoryOptions = src?.CategoryOptions ?? Enumerable.Empty<SelectListItem>();
                 vm.PStatusOptions = src?.PStatusOptions ?? Enumerable.Empty<SelectListItem>();
-                // 每個 Variant 的 PStatusOptions 也補回
+                // 每個 Variant 的 PStatusOptions
                 var vOptions = src?.PStatusOptions ?? Enumerable.Empty<SelectListItem>();
                 vm.Variants?.ForEach(v => v.PStatusOptions = vOptions);
                 return View(vm);
@@ -87,43 +90,94 @@ namespace GraduationProject.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            var vm = new CProductCreateViewModel
-            {
-                CategoryOptions = _db.TCategories
-                    .OrderBy(c => c.FSortOrder)
-                    .Select(c => new SelectListItem { Value = c.FCategoryId.ToString(), Text = c.FName }).ToList(),
-                PStatusOptions = _db.TPstatuses
-                    .Select(s => new SelectListItem { Value = s.FPstatus.ToString(), Text = s.FPstatusName }).ToList(),
-                ColorOptions = _db.TColors
-                    .Select(c => new SelectListItem { Value = c.FColorId.ToString(), Text = c.FColorName }).ToList()
-            };
+            // 準備下拉選單資料
+            ViewBag.Categories = GetCategorySelectList();
+            ViewBag.Colors = GetColorSelectList();
+            ViewBag.PStatus = GetPStatusSelectList();
 
-            vm.Product.Variants.Add(new CProductVariantDto { PStatus = 1 });
-            vm.Product.Assets.Add(new CProductAssetDto { IsPrimary = true });
-
-            return View(vm);
+            return View(new CProductCreateDTO());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(CProductCreateViewModel vm)
+        public IActionResult Create(CProductCreateDTO dto)
         {
-            if (!ModelState.IsValid)
+            if (dto.AssemblyRequired && string.IsNullOrWhiteSpace(dto.AssemblyPart))
+                ModelState.AddModelError(nameof(dto.AssemblyPart), "勾選需要組裝時，組裝部件為必填");
+
+            // ❶ 額外檢查常見必填（避免進入 Service 後才整筆回滾）
+            if (dto.Variants != null)
             {
-                vm.CategoryOptions = _db.TCategories.OrderBy(c => c.FSortOrder)
-                    .Select(c => new SelectListItem { Value = c.FCategoryId.ToString(), Text = c.FName }).ToList();
-                vm.PStatusOptions = _db.TPstatuses
-                    .Select(s => new SelectListItem { Value = s.FPstatus.ToString(), Text = s.FPstatusName }).ToList();
-                vm.ColorOptions = _db.TColors
-                    .Select(c => new SelectListItem { Value = c.FColorId.ToString(), Text = c.FColorName }).ToList();
-                return View(vm);
+                for (int i = 0; i < dto.Variants.Count; i++)
+                {
+                    var v = dto.Variants[i];
+                    if (v.PStatusId == null)
+                        ModelState.AddModelError($"Variants[{i}].PStatusId", "變體狀態為必填");
+                    if (string.IsNullOrWhiteSpace(v.SizeLabel))
+                        v.SizeLabel = $"{v.Length}x{v.Width}x{v.Height}";
+                }
             }
 
-            var id = _ProductService.Create(vm.Product);
-            TempData["Msg"] = $"已新增商品（ID={id}）。";
-            return RedirectToAction(nameof(Detail), new { id });
+            // 把所有錯誤打到日誌（或暫時顯示）
+            if (!ModelState.IsValid)
+            {
+                
+                ViewBag.Categories = GetCategorySelectList();
+                ViewBag.Colors = GetColorSelectList();
+                ViewBag.PStatus = GetPStatusSelectList();
+                return View(dto);
+            }
+        
+
+            // 呼叫服務
+            var (success, message, productId) = _ProductService.CreateProduct(dto);
+            if (success)
+            {
+                TempData["SuccessMessage"] = message;
+                return RedirectToAction("Detail", new { id = productId }); // 確認你的 Action 名稱是否叫 Detail 或 Details
+            }
+
+            // 服務失敗 → 顯示錯誤
+            ModelState.AddModelError(string.Empty, message);
+            ViewBag.Categories = GetCategorySelectList();
+            ViewBag.Colors = GetColorSelectList();
+            ViewBag.PStatus = GetPStatusSelectList();
+            return View(dto);
         }
 
+
+        //取得分類下拉選單
+        private SelectList GetCategorySelectList()
+        {
+            var categories = _db.TCategories
+                .Where(c => c.FIsActive == true)
+                .OrderBy(c => c.FSortOrder)
+                .Select(c => new { c.FCategoryId, c.FName })
+                .ToList();
+
+            return new SelectList(categories, "FCategoryId", "FName");
+        }
+
+        //取得顏色下拉選單
+        private SelectList GetColorSelectList()
+        {
+            var colors = _db.TColors
+                .OrderBy(c => c.FColorName)
+                .Select(c => new { c.FColorId, c.FColorName })
+                .ToList();
+
+            return new SelectList(colors, "FColorId", "FColorName");
+        }
+
+        //取得產品狀態下拉選單
+        private SelectList GetPStatusSelectList()
+        {
+            var statuses = _db.TPstatuses
+                .Select(s => new { s.FPstatus, s.FPStatusName })
+                .ToList();
+
+            return new SelectList(statuses, "FPstatus", "FPStatusName");
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -135,7 +189,7 @@ namespace GraduationProject.Controllers
             if (prod == null) return RedirectToAction("List");
 
             // 軟刪除
-            prod.FPstatus = 4;                   // 4 = 刪除/下架（依你的定義）
+            prod.FPstatus = 4;                   // 4 = 刪除
             prod.FUpdateTime = DateTime.Now;
 
             _db.SaveChanges();
@@ -143,6 +197,7 @@ namespace GraduationProject.Controllers
             TempData["Msg"] = "商品已刪除（軟刪除）。";
             return RedirectToAction("List");
         }
+
     }
 
 }
