@@ -10,5 +10,7 @@ namespace ApiProject.Interfaces
 
         public Task<ResultDTO> DeleteOrderAsync(int orderId);
 
+        public Task<ResultDTO> EditDeliveryAddressAsync(int orderId, ReqDeliveryAddressDTO reqDTO);
+
     }
 }
