@@ -15,7 +15,7 @@ public partial class TChatRoom
 
     public string FChannel { get; set; }
 
-    public string FStatus { get; set; }
+    public int FStatus { get; set; }
 
     public int? FEmployeeId { get; set; }
 
