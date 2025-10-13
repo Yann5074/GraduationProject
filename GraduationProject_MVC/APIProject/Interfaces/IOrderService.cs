@@ -8,7 +8,7 @@ namespace ApiProject.Interfaces
 
         public Task<List<ResOrderDTO>> GetOrdersByIdAndProdNameAsync(string? keyword);
 
-
+        public Task<ResultDTO> DeleteOrderAsync(int orderId);
 
     }
 }

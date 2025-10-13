@@ -1,5 +1,4 @@
 using ApiProject.Interfaces;
-using ApiProject.Middleware;
 using ApiProject.Models;
 using ApiProject.Services;
 using Microsoft.EntityFrameworkCore;
@@ -38,8 +37,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-//設定例外錯誤的中介層
-app.UseMiddleware<ExceptionMiddleware>();
+
 
 app.UseHttpsRedirection();
 app.UseCors("VueClient");

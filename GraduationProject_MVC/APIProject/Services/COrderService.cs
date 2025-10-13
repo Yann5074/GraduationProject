@@ -12,7 +12,7 @@ namespace ApiProject.Services
         {
             _context = context;
         }
-
+        //列出訂單
         public async Task<List<ResOrderDTO>> GetAllOrdersAsync()
         {
             var query = _context.TOrders
@@ -26,6 +26,7 @@ namespace ApiProject.Services
                 {
                     OrderId = o.FOrderId.ToString(),
                     EmployeeId = o.FEmployeeId,
+                    //EmployeeName = o.Employee == null? "未指定員工": o.Employee.FName,
                     EmployeeName = o.Employee.FName,
                     OrderTime = o.FOrderTime.ToString(),
                     OrderStatusId = o.FOrderStatus,
@@ -34,6 +35,7 @@ namespace ApiProject.Services
             return await query.ToListAsync();
         }
 
+        //搜尋訂單
         public async Task<List<ResOrderDTO>> GetOrdersByIdAndProdNameAsync(string? keyword)
         {
             var query = _context.TOrders
@@ -74,6 +76,26 @@ namespace ApiProject.Services
             .ToListAsync();
 
             return result;
+        }
+
+        // 刪除訂單
+        public async Task<ResultDTO> DeleteOrderAsync(int orderId)
+        {
+            TOrder order =  await _context.TOrders.FirstOrDefaultAsync(o => o.FOrderId == orderId);
+            if (order == null)
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status404NotFound //ASP.NET Core 常數
+                };
+            //_context.TOrders.Remove(query); //硬刪寫法
+            order.FIsDeleted = 1;
+            await _context.SaveChangesAsync();
+            return new ResultDTO
+            {
+                Ok = true,
+                Code = StatusCodes.Status204NoContent
+            };
         }
     }
 }
