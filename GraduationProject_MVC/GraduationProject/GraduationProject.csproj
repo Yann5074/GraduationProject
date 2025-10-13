@@ -28,8 +28,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Api\" />
-    <Folder Include="Api\" />
     <Folder Include="Wraps\" />
     <Folder Include="Tools\" />
     <Folder Include="Wraps\" />
