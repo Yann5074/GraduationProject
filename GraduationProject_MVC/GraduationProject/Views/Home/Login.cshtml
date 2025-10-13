@@ -1,0 +1,35 @@
+﻿@{
+    ViewData["Title"] = "Login";
+}
+
+<h1 class="text-center my-4">後台登入</h1>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="container">
+        <h4 class="text-center mb-4">請輸入帳號與密碼</h4>
+
+        <!-- 顯示表單驗證錯誤訊息 -->
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="txtAccount" class="form-label">員工帳號</label>
+                    @Html.TextBox("txtAccount", "", new { @class = "form-control", id = "txtAccount", placeholder = "請輸入您的帳號" })
+                </div>
+
+                <div class="mb-3">
+                    <label for="txtPassword" class="form-label">員工密碼</label>
+                    @Html.TextBox("txtPassword", "", new { @class = "form-control", id = "txtPassword", type = "password", placeholder = "請輸入您的密碼" })
+                </div>
+
+                <div class="d-grid gap-2">
+                    <input type="submit" value="登入" class="btn btn-primary" />
+                </div>
+            </div>
+        </div>
+    </div>
+}

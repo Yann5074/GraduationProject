@@ -15,10 +15,14 @@
                  onerror="this.onerror=null;this.src='@Url.Content("~/HeadShotImages/default.png")';" />
             <div>
                 <h4 class="mb-1">@Model.FName</h4>
-                @* @if (!string.IsNullOrEmpty(Model.FStatus))
+                @if (!string.IsNullOrWhiteSpace(Model.FRoleClass))
                 {
-                    <span class="badge @Model.StatusBadgeClass">@Model.Status</span>
-                } *@
+                    <span class="badge @Model.FRoleBadgeClass">@Model.FRoleClass</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.FStatus))
+                {
+                    <span class="badge @Model.FStatusBadgeClass">@Model.FStatus</span>
+                }
             </div>
         </div>
 
@@ -33,13 +37,13 @@
             <dd class="col-sm-9">@Model.FGenderName</dd>
             <dt class="col-sm-3">血型</dt>
             <dd class="col-sm-9">@Model.FBloodType</dd>
-            <dt class="col-sm-3">職稱/權限</dt>
-            <dd class="col-sm-9">@Model.FRoleClass</dd>
+            @* <dt class="col-sm-3">職稱/權限</dt>
+            <dd class="col-sm-9">@Model.FRoleClass</dd> *@
             <dt class="col-sm-3">到職日</dt>
             <dd class="col-sm-9">@Model.FHireDate</dd>
-            <dt class="col-sm-3">上次登入</dt>
+            <dt class="col-sm-3">註冊時間</dt>
             <dd class="col-sm-9">@Model.FLoginTime</dd>
-            <dt class="col-sm-3">密碼變更</dt>
+            <dt class="col-sm-3">最近密碼變更時間</dt>
             <dd class="col-sm-9">@Model.FChangePasswordTime</dd>
         </dl>
 

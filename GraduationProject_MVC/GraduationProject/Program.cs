@@ -22,8 +22,21 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 // 介面對應實作（關鍵一行）
 builder.Services.AddScoped<IEmployeeService, CEmployeeService>();
 builder.Services.AddScoped<IPasswordHasher<TEmployee>, PasswordHasher<TEmployee>>();
+builder.Services.AddScoped<IAuthService, CAuthService>();
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddSession(o =>
+{
+    // Session 過期時間 → 4 小時沒動作就失效
+    o.IdleTimeout = TimeSpan.FromHours(4);
+
+    // Cookie 只能透過 HTTP 存取（瀏覽器 JS 讀不到）
+    // 防止 XSS 攻擊
+    o.Cookie.HttpOnly = true;
+
+    // 告訴 GDPR / Cookie 同意機制：這顆 Cookie 是「必須要有」的
+    o.Cookie.IsEssential = true;
+});
 
 //嚙窯嚙皚嚙踝蕭おw嚙編嚙線
 //嚙踝蕭嚙磊 (嚙窯嚙皚)
@@ -66,6 +79,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseSession();
 
 app.UseAuthorization();
 
