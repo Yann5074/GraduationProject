@@ -19,7 +19,7 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// ¤¶­±¹ïÀ³¹ê§@¡]ÃöÁä¤@¦æ¡^
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½@ï¿½]ï¿½ï¿½ï¿½ï¿½@ï¿½ï¿½^
 builder.Services.AddScoped<IEmployeeService, CEmployeeService>();
 builder.Services.AddScoped<IPasswordHasher<TEmployee>, PasswordHasher<TEmployee>>();
 builder.Services.AddScoped<IAuthService, CAuthService>();
@@ -27,20 +27,20 @@ builder.Services.AddScoped<IAuthService, CAuthService>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession(o =>
 {
-    // Session ¹L´Á®É¶¡ ¡÷ 4 ¤p®É¨S°Ê§@´N¥¢®Ä
+    // Session ï¿½Lï¿½ï¿½ï¿½É¶ï¿½ ï¿½ï¿½ 4 ï¿½pï¿½É¨Sï¿½Ê§@ï¿½Nï¿½ï¿½ï¿½ï¿½
     o.IdleTimeout = TimeSpan.FromHours(4);
 
-    // Cookie ¥u¯à³z¹L HTTP ¦s¨ú¡]ÂsÄý¾¹ JS Åª¤£¨ì¡^
-    // ¨¾¤î XSS §ðÀ»
+    // Cookie ï¿½uï¿½ï¿½zï¿½L HTTP ï¿½sï¿½ï¿½ï¿½]ï¿½sï¿½ï¿½ï¿½ï¿½ JS Åªï¿½ï¿½ï¿½ï¿½^
+    // ï¿½ï¿½ï¿½ï¿½ XSS ï¿½ï¿½ï¿½ï¿½
     o.Cookie.HttpOnly = true;
 
-    // §i¶D GDPR / Cookie ¦P·N¾÷¨î¡G³oÁû Cookie ¬O¡u¥²¶·­n¦³¡vªº
+    // ï¿½iï¿½D GDPR / Cookie ï¿½Pï¿½Nï¿½ï¿½ï¿½ï¿½Gï¿½oï¿½ï¿½ Cookie ï¿½Oï¿½uï¿½ï¿½ï¿½ï¿½ï¿½nï¿½ï¿½ï¿½vï¿½ï¿½
     o.Cookie.IsEssential = true;
 });
 
 //ï¿½`ï¿½Jï¿½ï¿½Æ®wï¿½sï¿½u
 //ï¿½ï¿½ï¿½U (ï¿½`ï¿½J)
-builder.Services.AddDbContext<dbFurniMartContext>(options =>
+builder.Services.AddDbContext<DbFurniMartContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart"));
 });
