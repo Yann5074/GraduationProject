@@ -51,7 +51,7 @@ builder.Services.AddScoped<IOrderDetailService, COrderDetailService>();
 // Application services
 builder.Services.AddScoped<IMemberService, CMemberService>();
 
-// ���U SKU �ͦ����A��
+
 builder.Services.AddScoped<SkuGenerator>();
 // Application services
 builder.Services.AddScoped<IProductService, CProductService>();
@@ -89,6 +89,6 @@ app.MapControllerRoute(
     pattern: "{controller=Order}/{action=List}/{id?}");
 app.MapRazorPages();
 
-app.MapControllers(); // �� [ApiController] ���ѥͮ�
+app.MapControllers(); 
 
 app.Run();
