@@ -16,7 +16,7 @@ namespace ApiProject.Controllers
         }
 
         // 1) 註冊
-        // POST /api/members/register
+        // POST /api/members/create
         [HttpPost("create")]
         public async Task<IActionResult> Create([FromBody] ReqMemberCreateDTO req, CancellationToken ct)
         {
@@ -37,6 +37,23 @@ namespace ApiProject.Controllers
             {
                 // Service 主動丟出的業務錯誤（像「手機/帳號已存在」、「格式不正確」）
                 // 轉成 400 Bad Request，訊息給前端顯示
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // 2) 登入
+        // POST /api/members/login
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] ReqMemberLoginDTO req, CancellationToken ct)
+        {
+            try
+            {
+                var result = await _memberService.MemberLoginAsync(req, ct);
+                return StatusCode(result.Code, result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                // 回傳 400 給前端
                 return BadRequest(new { message = ex.Message });
             }
         }

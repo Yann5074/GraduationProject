@@ -75,6 +75,38 @@ namespace ApiProject.Services
             };
         }
 
+        public async Task<ResultDTO> MemberLoginAsync(ReqMemberLoginDTO reqdto, CancellationToken ct = default)
+        {
+            // 1 檢查帳號是否存在
+            var member = await _context.TMembers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.FAccount == reqdto.Account, ct);
+
+            if (member == null)
+                throw new InvalidOperationException("帳號不存在，請重新輸入");
+
+            // 2️ 驗證密碼（比對雜湊）
+            var result = _hasher.VerifyHashedPassword(member, member.FPasswords, reqdto.Password);
+            if (result == PasswordVerificationResult.Failed)
+                throw new InvalidOperationException("密碼錯誤，請重新輸入");
+
+            // 3️ 若演算法升級，重新雜湊（可選）
+            if (result == PasswordVerificationResult.SuccessRehashNeeded)
+            {
+                var tracked = await _context.TMembers.FirstAsync(m => m.FMemberId == member.FMemberId, ct);
+                tracked.FPasswords = _hasher.HashPassword(tracked, reqdto.Password);
+                await _context.SaveChangesAsync(ct);
+            }
+
+            // 4️ 回傳結果
+            return new ResultDTO
+            {
+                Ok = true,
+                Code = StatusCodes.Status200OK,
+            };
+        }
+
+
 
     }
 }
