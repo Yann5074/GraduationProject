@@ -75,6 +75,8 @@ builder.Services.AddDbContext<dbFurniMartContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart"));
 });
 
+builder.Services.AddScoped<IProductService, CProductService>();
+
 var app = builder.Build();
 
 // Swagger（開發用）

@@ -1,11 +1,15 @@
-﻿using GraduationProject.Models;
+﻿using ApiProject.Models;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace GraduationProject.Partials
+namespace ApiProject.Models
 {
     public partial class TColor
     {
-        public int FColorId { get; set; }
-        public string FColorName { get; set; }
-        public virtual ICollection<TProductVariant> ProductVariants { get; set; } = new List<TProductVariant>();
+        [Column("fColorId")] 
+        public int ColorId { get; set; }
+        [Column("fColorName")] 
+        public string? ColorName { get; set; }
+        [Column("fColorCode")] 
+        public string? ColorCode { get; set; }      // HEX（例如 FFFFFF）
     }
 }

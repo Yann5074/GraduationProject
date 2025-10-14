@@ -1,6 +1,9 @@
-﻿namespace ApiProject.Interfaces
+﻿using ApiProject.DTOs;
+
+namespace ApiProject.Interfaces
 {
-    public class IProductService
+    public interface IProductService
     {
+        Task<ResultPagedDTO<ResProductDTO>> GetProductsAsync(ReqProductQueryDTO query, CancellationToken ct = default);
     }
 }

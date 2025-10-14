@@ -1,6 +1,6 @@
-﻿using GraduationProject.Models;
+﻿using ApiProject.Models;
 
-namespace GraduationProject.Models
+namespace ApiProject.Models
 {
     public partial class TPstatus
     {
