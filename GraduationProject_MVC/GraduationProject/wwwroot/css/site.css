@@ -20,3 +20,18 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/* site.css */
+.headshot-preview--sm {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+}
+
+@media (max-width: 575.98px) {
+    .headshot-preview--sm {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 8px;
+    }
+}
