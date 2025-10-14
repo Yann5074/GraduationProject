@@ -90,6 +90,8 @@ namespace GraduationProject.Controllers
         [HttpGet]
         public IActionResult Create()
         {
+
+
             // 準備下拉選單資料
             ViewBag.Categories = GetCategorySelectList();
             ViewBag.Colors = GetColorSelectList();
@@ -105,23 +107,33 @@ namespace GraduationProject.Controllers
             if (dto.AssemblyRequired && string.IsNullOrWhiteSpace(dto.AssemblyPart))
                 ModelState.AddModelError(nameof(dto.AssemblyPart), "勾選需要組裝時，組裝部件為必填");
 
-            // ❶ 額外檢查常見必填（避免進入 Service 後才整筆回滾）
+            // 先處理變體：移除 SKU 的必填、並給 SizeLabel 預設
             if (dto.Variants != null)
             {
                 for (int i = 0; i < dto.Variants.Count; i++)
                 {
+                    // 1) SKU 由後端產生，不要讓前端驗證擋住
+                    ModelState.Remove($"Variants[{i}].Sku");
+
+                    // 2) 尺寸標籤若沒填，就用長寬高組字串，並移除必填錯誤
                     var v = dto.Variants[i];
-                    if (v.PStatusId == null)
-                        ModelState.AddModelError($"Variants[{i}].PStatusId", "變體狀態為必填");
                     if (string.IsNullOrWhiteSpace(v.SizeLabel))
+                    {
                         v.SizeLabel = $"{v.Length}x{v.Width}x{v.Height}";
+                        ModelState.Remove($"Variants[{i}].SizeLabel");
+                    }
                 }
             }
 
             // 把所有錯誤打到日誌（或暫時顯示）
             if (!ModelState.IsValid)
             {
-                
+                ViewBag.DebugErrors = ModelState
+                   .Where(kv => kv.Value.Errors.Count > 0)
+                   .Select(kv => $"{kv.Key}: {string.Join(" | ", kv.Value.Errors.Select(e => e.ErrorMessage))}")
+                   .ToList();
+
+
                 ViewBag.Categories = GetCategorySelectList();
                 ViewBag.Colors = GetColorSelectList();
                 ViewBag.PStatus = GetPStatusSelectList();

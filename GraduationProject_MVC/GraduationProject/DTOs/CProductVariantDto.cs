@@ -6,7 +6,6 @@ namespace GraduationProject.DTOs
     {
         public string SKU { get; set; }
 
-        [Required(ErrorMessage = "售價為必填")]
         [Range(0.01, 9999999.99, ErrorMessage = "售價必須大於0")]
         [Display(Name = "售價")]
         public decimal Price { get; set; }
@@ -35,7 +34,7 @@ namespace GraduationProject.DTOs
         [Display(Name = "高度(cm)")]
         public decimal? Height { get; set; }
 
-        [StringLength(50)]
+    
         [Display(Name = "尺寸標籤")]
         public string SizeLabel { get; set; }
 
