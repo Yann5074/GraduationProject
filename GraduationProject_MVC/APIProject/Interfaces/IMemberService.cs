@@ -5,8 +5,11 @@ namespace ApiProject.Interfaces
 {
     public interface IMemberService
     {
+        //註冊
         public Task<ResultDTO> MemberCreateAsync(ReqMemberCreateDTO reqdto, CancellationToken ct = default);
-        //public Task<ResMemberDTO?> ValidateUserAsync(string account, string password);
+        //登入
+        public Task<ResultDTO> MemberLoginAsync(ReqMemberLoginDTO reqdto, CancellationToken ct = default);
+
         //public Task<ResMemberDTO> GetMeAsync(int memberId);
         //public Task UpdateMeAsync(int memberId, ReqMemberUpdateDTO req);
         //public Task ChangePasswordAsync(int memberId, ReqMemberChangePasswordDTO req);
