@@ -1,5 +1,7 @@
 using GraduationProject.Data;
+using GraduationProject.Interfaces;
 using GraduationProject.Models;
+using GraduationProject.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,10 +17,15 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
 
+//注入資料庫連線
 builder.Services.AddDbContext<dbFurniMartContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart"));
 });
+
+//注入OrderService
+builder.Services.AddScoped<IOrderService, COrderService>();
+builder.Services.AddScoped<IOrderDetailService, COrderDetailService>();
 
 var app = builder.Build();
 
@@ -43,7 +50,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Order}/{action=List}/{id?}");
 app.MapRazorPages();
 
 app.Run();

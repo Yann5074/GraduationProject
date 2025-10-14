@@ -95,6 +95,8 @@ public partial class dbFurniMartContext : DbContext
 
     public virtual DbSet<TWorkDaily> TWorkDailies { get; set; }
 
+    public virtual DbSet<TorderStatusHistory> TorderStatusHistories { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<TAccount>(entity =>
@@ -445,6 +447,9 @@ public partial class dbFurniMartContext : DbContext
             entity.ToTable("tLevel");
 
             entity.Property(e => e.FLevelId).HasColumnName("fLevelId");
+            entity.Property(e => e.FDiscount)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("fDiscount");
             entity.Property(e => e.FLevelName)
                 .HasMaxLength(50)
                 .HasColumnName("fLevelName");
@@ -594,6 +599,7 @@ public partial class dbFurniMartContext : DbContext
                 .HasColumnType("decimal(4, 2)")
                 .HasColumnName("fDiscount");
             entity.Property(e => e.FEmployeeId).HasColumnName("fEmployeeId");
+            entity.Property(e => e.FIsDeleted).HasColumnName("fIsDeleted");
             entity.Property(e => e.FLogisticsProvider).HasColumnName("fLogisticsProvider");
             entity.Property(e => e.FMemberId).HasColumnName("fMemberId");
             entity.Property(e => e.FNote)
@@ -630,8 +636,11 @@ public partial class dbFurniMartContext : DbContext
 
             entity.Property(e => e.FOrderId).HasColumnName("fOrderId");
             entity.Property(e => e.FProductVariantId).HasColumnName("fProductVariantId");
+            entity.Property(e => e.FIsDeleted).HasColumnName("fIsDeleted");
             entity.Property(e => e.FQuantity).HasColumnName("fQuantity");
-            entity.Property(e => e.FUnitPrice).HasColumnName("fUnitPrice");
+            entity.Property(e => e.FUnitPrice)
+                .HasColumnType("decimal(8, 2)")
+                .HasColumnName("fUnitPrice");
         });
 
         modelBuilder.Entity<TOrderStatus>(entity =>
@@ -985,6 +994,21 @@ public partial class dbFurniMartContext : DbContext
             entity.Property(e => e.FWorkDate)
                 .HasColumnType("datetime")
                 .HasColumnName("fWorkDate");
+        });
+
+        modelBuilder.Entity<TorderStatusHistory>(entity =>
+        {
+            entity.HasKey(e => e.FHistoryId);
+
+            entity.ToTable("TOrderStatusHistory");
+
+            entity.Property(e => e.FHistoryId).HasColumnName("fHistoryId");
+            entity.Property(e => e.FChangeTime)
+                .HasColumnType("datetime")
+                .HasColumnName("fChangeTime");
+            entity.Property(e => e.FEmployeeId).HasColumnName("fEmployeeId");
+            entity.Property(e => e.FOrderId).HasColumnName("fOrderId");
+            entity.Property(e => e.FStatusId).HasColumnName("fStatusId");
         });
 
         OnModelCreatingPartial(modelBuilder);

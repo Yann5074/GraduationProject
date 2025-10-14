@@ -1,0 +1,168 @@
+﻿@model GraduationProject.ViewModels.COrderCreateViewModel
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>訂單建立</h1>
+
+<h4>編輯訂單資訊</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" value="@Model.MemberId" name="MemberId" />
+            <div class="form-group">
+                <label asp-for="MemberName" class="control-label"></label>
+                <label asp-for="MemberName" class="form-control">@Model.MemberName</label>
+                <span asp-validation-for="MemberName" class="text-danger"></span>
+            </div>
+            <input type="hidden" value="@Model.EmployeeId" name="EmployeeId" />
+            <div class="form-group">
+                <label asp-for="EmployeeName" class="control-label"></label>
+                <label asp-for="EmployeeName" class="form-control" >@Model.EmployeeName</label>
+                <span asp-validation-for="EmployeeName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="TotalPrice" class="control-label"></label>
+                <label asp-for="TotalPrice" class="form-control">0</label>
+                <input type="hidden" value="0" name="TotalPrice" />
+                <span asp-validation-for="TotalPrice" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Discount" class="control-label"></label>
+                <label asp-for="Discount" class="form-control">@Model.Discount</label>
+                <input type="hidden" value="@Model.Discount" name="Discount" />
+                <span asp-validation-for="Discount" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="TaxNo" class="control-label"></label>
+                <input asp-for="TaxNo" class="form-control" />
+                <span asp-validation-for="TaxNo" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="OrderTime" class="control-label"></label>
+                <label asp-for="OrderTime" class="form-control">@Model.OrderTime</label>
+                <input type="hidden" asp-for="OrderTime" />
+                <span asp-validation-for="OrderTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="OrderStatus" class="control-label"></label>
+                @* <input asp-for="OrderStatus" class="form-control" /> *@
+                <select asp-for="OrderStatus" class="form-control">
+                    <option value="">--請選擇訂單狀態--</option>
+                    <option value="1">處理中</option>
+                    <option value="2">訂單成立</option>
+                    <option value="3">付款資訊確認</option>
+                    <option value="4">訂單出貨</option>
+                    <option value="5">完成訂單</option>
+                    <option value="6">訂單取消</option>
+                </select>
+                <span asp-validation-for="OrderStatus" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PaymentMethod" class="control-label"></label>
+                @* <input asp-for="PaymentMethod" class="form-control" /> *@
+                <select asp-for="PaymentMethod" class="form-control">
+                    <option value="">--請選擇付款方式--</option>
+                    <option value="1">現金</option>
+                    <option value="2">刷卡</option>
+                    <option value="3">行動支付</option>
+                </select>
+                <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PaymentStatus" class="control-label"></label>
+                @* <input asp-for="PaymentStatus" class="form-control" /> *@
+                <select asp-for="PaymentStatus" class="form-control">
+                    <option value="">--請選擇付款狀態--</option>
+                    <option value="1">未付款</option>
+                    <option value="2">付款失敗</option>
+                    <option value="3">超過付款時間</option>
+                    <option value="4">已付款</option>
+                    <option value="5">退款中</option>
+                    <option value="6">已退款</option>
+                </select>
+                <span asp-validation-for="PaymentStatus" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PaymentTime" class="control-label"></label>
+                <input asp-for="PaymentTime" class="form-control" />
+                <span asp-validation-for="PaymentTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PickupMethod" class="control-label"></label>
+                @* <input asp-for="PickupMethod" class="form-control" /> *@
+                <select asp-for="PickupMethod" class="form-control">
+                    <option value="">--請選擇取貨方式--</option>
+                    <option value="1">店取</option>
+                    <option value="2">宅配</option>
+                </select>
+                <span asp-validation-for="PickupMethod" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DeliveryStatus" class="control-label"></label>
+                @* <input asp-for="DeliveryStatus" class="form-control" /> *@
+                <select asp-for="DeliveryStatus" class="form-control">
+                    <option value="">--請選擇運送狀態--</option>
+                    <option value="1">備貨中</option>
+                    <option value="2">運送中</option>
+                    <option value="3">已送達</option>
+                    <option value="4">已取貨</option>
+                    <option value="5">退貨中</option>
+                    <option value="6">已退貨</option>
+                </select>
+                <span asp-validation-for="DeliveryStatus" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DeliveryAddress" class="control-label"></label>
+                <input asp-for="DeliveryAddress" class="form-control" />
+                <span asp-validation-for="DeliveryAddress" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ShippingCost" class="control-label"></label>
+                <input asp-for="ShippingCost" class="form-control" />
+                <span asp-validation-for="ShippingCost" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DeliveryTime" class="control-label"></label>
+                <input asp-for="DeliveryTime" class="form-control" />
+                <span asp-validation-for="DeliveryTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="LogisticsProvider" class="control-label"></label>
+                @* <input asp-for="LogisticsProvider" class="form-control" /> *@
+                <select asp-for="LogisticsProvider" class="form-control">
+                    <option value="">--請選擇物流商--</option>
+                    <option value="1">郵局</option>
+                    <option value="2">黑貓宅急便</option>
+                    <option value="3">新竹貨運</option>
+                    <option value="4">大榮貨運</option>
+                </select>
+                <span asp-validation-for="LogisticsProvider" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="OrderCompletionTime" class="control-label"></label>
+                <input asp-for="OrderCompletionTime" class="form-control" />
+                <span asp-validation-for="OrderCompletionTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Note" class="control-label"></label>
+                <input asp-for="Note" class="form-control" />
+                <span asp-validation-for="Note" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="建立訂單" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="List">返回訂單總覽</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

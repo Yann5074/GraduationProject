@@ -1,0 +1,143 @@
+﻿@model IEnumerable<GraduationProject.DTOs.OrderSearchDTO>
+
+@{
+    ViewData["Title"] = "List";
+}
+
+@{
+    var deleteError = TempData["DeleteErrorMessage"] as string;
+    var deleteSuccess = TempData["DeleteSuccessMessage"] as string;
+    var searchUpdateError = TempData["SearchUpdateErrorMessage"] as string;
+    var updateError = TempData["UpdateErrorMessage"] as string;
+    var updateSuccess = TempData["UpdateSuccessMessage"] as string;
+    var createError = TempData["createErrorMessage"] as string;
+    var createSuccess = TempData["createSuccessMessage"] as string;
+}
+
+@if (!string.IsNullOrEmpty(deleteError))
+{
+    <div class="alert alert-danger">@deleteError</div>
+}
+
+@if (!string.IsNullOrEmpty(deleteSuccess))
+{
+    <div class="alert alert-success">@deleteSuccess</div>
+}
+
+@if (!string.IsNullOrEmpty(searchUpdateError))
+{
+    <div class="alert alert-danger">@searchUpdateError</div>
+}
+
+@if (!string.IsNullOrEmpty(updateError))
+{
+    <div class="alert alert-danger">@updateError</div>
+}
+
+@if (!string.IsNullOrEmpty(updateSuccess))
+{
+    <div class="alert alert-success">@updateSuccess</div>
+}
+
+@if (!string.IsNullOrEmpty(createError))
+{
+    <div class="alert alert-danger">@createError</div>
+}
+
+@if (!string.IsNullOrEmpty(createSuccess))
+{
+    <div class="alert alert-success">@createSuccess</div>
+}
+
+<h1>訂單總覽</h1>
+@using (Html.BeginForm())
+{
+    <div>
+        訂單編號 @Html.TextBox("txtKeywordOrderId") <br />
+        會員名稱 @Html.TextBox("txtKeywordMemberName") <br />
+        會員電話 @Html.TextBox("txtKeywordMemberPhone") <br />
+        <input type="submit" value="查詢" />
+    </div>
+}
+
+<p>
+    <a asp-action="FindMember">新增訂單</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.OrderId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MemberName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MemberPhone)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EmployeeName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.OrderTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.OrderStatus)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PaymentStatus)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DeliveryStatus)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LogisticsProvider)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Note)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.OrderId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.MemberName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.MemberPhone)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EmployeeName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.OrderTime)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.OrderStatus)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PaymentStatus)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DeliveryStatus)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.LogisticsProvider)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Note)
+            </td>
+            <td>
+                @Html.ActionLink("訂單詳情", "List", "OrderDetail", new { id = item.OrderId }, new { @class = "btn btn-success"}) |
+                @Html.ActionLink("修改訂單", "Edit", "Order", new { id = item.OrderId }, new { Class = "btn btn-primary" }) |
+                @Html.ActionLink("刪除", "Delete", "Order", new { id = item.OrderId }, new { onclick = "return confirm('確定要刪除訂單?')", Class= "btn btn-danger"})
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
