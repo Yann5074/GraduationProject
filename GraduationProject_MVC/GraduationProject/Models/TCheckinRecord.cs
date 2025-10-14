@@ -19,7 +19,7 @@ public partial class TCheckinRecord
 
     public DateTime? FCheckinTime { get; set; }
 
-    public string FIpAddress { get; set; }
+    public string FAddress { get; set; }
 
     public int? FRediusMeters { get; set; }
 
