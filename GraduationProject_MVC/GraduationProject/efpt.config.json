@@ -112,7 +112,7 @@
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[TOrderStatusHistory]",
+         "Name": "[dbo].[tOrderStatusHistory]",
          "ObjectType": 0
       },
       {
