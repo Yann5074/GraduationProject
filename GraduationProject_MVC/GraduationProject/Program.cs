@@ -29,6 +29,8 @@ builder.Services.AddScoped<IOrderDetailService, COrderDetailService>();
 // Application services
 builder.Services.AddScoped<IMemberService, CMemberService>();
 
+builder.Services.AddScoped<IPasswordHasher<TMember>, PasswordHasher<TMember>>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
