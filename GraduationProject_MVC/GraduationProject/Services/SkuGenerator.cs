@@ -4,10 +4,7 @@ namespace GraduationProject.Services
 {
     public class SkuGenerator
     {
-        /// <summary>
-        /// SKU 自動生成器服務
-        /// 根據產品分類、顏色、尺寸自動生成唯一的 SKU 編號
-        /// </summary>
+       
         
         
             private readonly dbFurniMartContext _db;
@@ -17,16 +14,7 @@ namespace GraduationProject.Services
                 _db = db;
             }
 
-            /// <summary>
-            /// 生成 SKU 編號
-            /// 格式：[分類代碼]-[顏色代碼]-[長]-[寬]-[高]
-            /// 例如：SOFA-BLUE-200-90-85
-            /// </summary>
-            /// <param name="categoryId">分類 ID</param>
-            /// <param name="colorId">顏色 ID</param>
-            /// <param name="length">長度 (cm)</param>
-            /// <param name="width">寬度 (cm)</param>
-            /// <param name="height">高度 (cm)</param>
+       
             /// <returns>唯一的 SKU 編號</returns>
             public string GenerateSku(int categoryId, int? colorId, decimal? length, decimal? width, decimal? height)
             {
@@ -52,9 +40,9 @@ namespace GraduationProject.Services
                 return EnsureUniqueSku(baseSku);
             }
 
-            /// <summary>
+     
             /// 取得分類代碼
-            /// </summary>
+           
             private string GetCategoryCode(string categoryName)
             {
                 if (string.IsNullOrWhiteSpace(categoryName))
@@ -146,9 +134,9 @@ namespace GraduationProject.Services
                     : colorName.Substring(0, 4).ToUpper();
             }
 
-            /// <summary>
+
             /// 取得尺寸代碼
-            /// </summary>
+
             private string GetSizeCode(decimal? length, decimal? width, decimal? height)
             {
                 var parts = new List<string>();
@@ -167,10 +155,9 @@ namespace GraduationProject.Services
                 return parts.Any() ? string.Join("-", parts) : "STD";
             }
 
-            /// <summary>
             /// 確保 SKU 的唯一性
             /// 如果已存在相同 SKU，則在後面加上流水號
-            /// </summary>
+
             private string EnsureUniqueSku(string baseSku)
             {
                 string finalSku = baseSku;
@@ -192,9 +179,9 @@ namespace GraduationProject.Services
                 return finalSku;
             }
 
-            /// <summary>
+
             /// 批次生成多個 SKU（用於匯入資料時）
-            /// </summary>
+
             public List<string> GenerateSkuBatch(List<(int CategoryId, int? ColorId, decimal? Length, decimal? Width, decimal? Height)> variants)
             {
                 var skus = new List<string>();
@@ -214,9 +201,8 @@ namespace GraduationProject.Services
                 return skus;
             }
 
-            /// <summary>
             /// 驗證 SKU 格式是否正確
-            /// </summary>
+
             public bool IsValidSkuFormat(string sku)
             {
                 if (string.IsNullOrWhiteSpace(sku))
@@ -227,9 +213,9 @@ namespace GraduationProject.Services
                 return parts.Length >= 2;
             }
 
-            /// <summary>
+
             /// 從 SKU 解析資訊（用於除錯或顯示）
-            /// </summary>
+
             public (string Category, string Color, string Size) ParseSku(string sku)
             {
                 if (string.IsNullOrWhiteSpace(sku))

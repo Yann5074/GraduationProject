@@ -1,16 +1,26 @@
-﻿namespace GraduationProject.DTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace GraduationProject.DTOs
 {
     public class CProductDetailDTO
     {
        
             public int? ProductId { get; set; }
+
+            [Display(Name = "產品名稱")]
             public string? Name { get; set; }
+
+            [Display(Name = "產品描述")]
             public string? Description { get; set; }
 
             public int? CategoryId { get; set; }
+
+            [Display(Name = "種類")]
             public string? CategoryName { get; set; }
 
             public int? PStatusId { get; set; }
+
+             [Display(Name = "狀態")]
             public string? PStatusName { get; set; }
 
             public decimal? PriceMin { get; set; }
