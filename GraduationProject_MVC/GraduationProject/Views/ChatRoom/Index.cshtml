@@ -1,59 +1,96 @@
-﻿@model IEnumerable<GraduationProject.ViewModels.ChatRoomLlistVM>
-
+﻿@model GraduationProject.ViewModels.ChatRoomsPageVm
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Chat Rooms";
+    var selectedId = Model?.SelectedId;
 }
 
-<h1>Index</h1>
+<style>
+    .page { display:grid; grid-template-columns: 360px 1fr; gap:16px; }
+    .sidebar { border:1px solid #e5e7eb; border-radius:8px; overflow:auto; max-height:calc(100vh - 180px); }
+    .room { display:grid; grid-template-columns: 44px 1fr; gap:10px; padding:10px 12px; text-decoration:none; color:inherit; }
+    .room:hover { background:#f8fafc; }
+    .room.active { background:#eef2ff; }
+    .room img { width:44px; height:44px; border-radius:50%; object-fit:cover; }
+    .room .name { font-weight:600; }
+    .room .last { font-size:12px; opacity:.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.image)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FChatRoomId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FLastMessageTime)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FLastMessage)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.image)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FChatRoomId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FLastMessageTime)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FLastMessage)
-            </td>
-            <td>
-                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
-            </td>
-        </tr>
+    .chat { border:1px solid #e5e7eb; border-radius:8px; display:flex; flex-direction:column; min-height:420px; }
+    .messages { padding:12px; overflow:auto; flex:1; max-height:calc(100vh - 220px); }
+    .msg-row { display:flex; margin-bottom:10px; }
+    .msg-row.from-member { justify-content:flex-end; }
+    .msg-row.from-others { justify-content:flex-start; }
+    .bubble { max-width:72%; padding:8px 12px; border-radius:12px; background:#f3f4f6; }
+    .from-member .bubble { background:#dbeafe; }
+    .meta { font-size:12px; opacity:.7; margin-top:4px; display:flex; gap:8px; }
+    .header { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid #e5e7eb; }
+    .header .title { font-weight:700; }
+</style>
+
+<div class="page">
+    <!-- 左側：聊天室列表 -->
+    <aside class="sidebar">
+        @if (Model?.Rooms != null && Model.Rooms.Any())
+        {
+            foreach (var r in Model.Rooms)
+            {
+                var isActive = selectedId.HasValue && selectedId.Value == r.FChatRoomId;
+                <a class="room @(isActive ? "active" : "")"
+                   href="@Url.Action("Index", "ChatRoom", new { chatRoomId = r.FChatRoomId })">
+                    <img src="@(string.IsNullOrEmpty(r.image) ? "https://placehold.co/44x44" : r.image)" alt="avatar" />
+                    <div>
+                        <div class="name">@r.FName</div>
+                        <div class="last">
+                            @r.FLastMessageTime?.ToString("MM/dd HH:mm") · @r.FLastMessage
+                        </div>
+                    </div>
+                </a>
+            }
+        }
+        else
+        {
+            <div style="padding:12px;">尚無聊天室</div>
+        }
+    </aside>
+
+    <!-- 右側：訊息區 -->
+    <section class="chat">
+        <div class="header">
+            <div class="title">
+                @(selectedId.HasValue ? $"ChatRoom #{selectedId.Value}" : "請從左側選擇一個聊天室…")
+            </div>
+        </div>
+
+        <div id="messages" class="messages">
+            @if (Model?.Messages != null && Model.Messages.Any())
+            {
+                foreach (var m in Model.Messages)
+                {
+                    var isMember = (m.SenderType ?? "").ToLower() == "member";
+                    <div class="msg-row @(isMember ? "from-member" : "from-others")">
+                        <div class="bubble">
+                            <div class="content">@m.Content</div>
+                            <div class="meta">
+                                <span>@m.SenderType</span>
+                                <span>@m.CreatedAt?.ToString("yyyy/MM/dd HH:mm")</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div style="padding:12px;"><em>@(selectedId.HasValue ? "尚無訊息" : "未選擇聊天室")</em></div>
+            }
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script>
+        // 若有選到聊天室，自動把訊息滾到最底
+        (function () {
+            var box = document.getElementById('messages');
+            if (box) box.scrollTop = box.scrollHeight;
+        })();
+    </script>
 }
-    </tbody>
-</table>
