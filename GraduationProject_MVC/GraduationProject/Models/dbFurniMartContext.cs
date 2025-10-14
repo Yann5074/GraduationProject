@@ -275,9 +275,6 @@ public partial class dbFurniMartContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("fCheckinTime");
             entity.Property(e => e.FEmployeeId).HasColumnName("fEmployeeId");
-            entity.Property(e => e.FIpAddress)
-                .HasMaxLength(45)
-                .HasColumnName("fIpAddress");
             entity.Property(e => e.FItem)
                 .HasMaxLength(10)
                 .HasColumnName("fItem");
@@ -401,7 +398,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TEmployee>(entity =>
         {
-            entity.HasKey(e => e.FEmployeeId);
+            entity.HasKey(e => e.FEmployeeId).HasName("PK_tEmployees");
 
             entity.ToTable("tEmployee");
 
