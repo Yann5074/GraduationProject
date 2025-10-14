@@ -78,19 +78,28 @@
                         </div>
 
                         <!-- 會員頭貼 -->
-                        <div class="mb-3"> 
+                        <div class="mb-3">
                             <label class="form-label fw-semibold">會員頭貼</label>
-                            <!-- 關鍵：把舊檔名也隱藏帶回去 -->
-                            <input type="hidden" asp-for="MemberImage" />     
-                            <img id="headshotPreview"
-                                 src="@Url.Content($"~/MemberHeadImages/{Model.MemberImage ?? "default.png"}")"
-                                 class="rounded-circle border"
-                                 style="width:100px;height:100px;object-fit:cover"
-                                 alt="頭像預覽"
-                                 onerror="this.onerror=null;this.src='@Url.Content("~/MemberHeadImages/default.png")';" />
-                            <input asp-for="Photo" type="file" class="form-control" accept="image/*" />
-                            <small class="text-muted">支援 jpg/png/webp，照片檔案必須小於 2MB。</small>
+                            <input type="hidden" asp-for="MemberImage" />
+
+                            <div class="row align-items-center g-2">
+                                <!-- 左：頭貼預覽 -->
+                                <div class="col-12 col-sm-4 text-sm-start text-center">
+                                    <img id="headshotPreview"
+                                         src="@Url.Content($"~/MemberHeadImages/{Model.MemberImage ?? "default.png"}")"
+                                         class="rounded-circle border headshot-preview--sm"
+                                         alt="頭像預覽"
+                                         onerror="this.onerror=null;this.src='@Url.Content("~/MemberHeadImages/default.png")';" />
+                                </div>
+
+                                <!-- 右：檔案選擇 -->
+                                <div class="col-12 col-sm-8">
+                                    <input asp-for="Photo" type="file" class="form-control form-control-sm" accept="image/*" />
+                                    <small class="text-muted d-block mt-1">支援 jpg/png/webp，照片需小於 2MB。</small>
+                                </div>
+                            </div>
                         </div>
+
 
                         <!-- 等級 -->
                         <div class="mb-3">
@@ -158,6 +167,9 @@
         </div>
     </div>
 </div>
+
+
+
 
 @section Scripts {
     @{
