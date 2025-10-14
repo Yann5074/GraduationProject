@@ -5,8 +5,7 @@ namespace GraduationProject.Controllers
 {
     public class TestController : Controller
     {
-        //DI 測試
-        dbFurniMartContext _context;
+        private readonly dbFurniMartContext _context;
         public TestController(dbFurniMartContext context)
         {
             _context = context;
