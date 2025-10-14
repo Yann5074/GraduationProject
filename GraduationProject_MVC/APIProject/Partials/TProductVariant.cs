@@ -9,5 +9,16 @@ namespace ApiProject.Models
 
         [ForeignKey(nameof(FProductVariantId))]
         public TProductAsset ProductAsset { get; set; }
+
+
+        [ForeignKey(nameof(FPstatus))]
+        public virtual TPstatus PStatus { get; set; }
+
+
+
+        [ForeignKey(nameof(FColorId))]
+        public TColor Color { get; set; }
+
+        public ICollection<TProductAsset> TProductAssets { get; set; } = new List<TProductAsset>();
     }
 }
