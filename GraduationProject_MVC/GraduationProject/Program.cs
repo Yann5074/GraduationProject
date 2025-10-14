@@ -55,6 +55,7 @@ builder.Services.AddScoped<IMemberService, CMemberService>();
 builder.Services.AddScoped<SkuGenerator>();
 // Application services
 builder.Services.AddScoped<IProductService, CProductService>();
+builder.Services.AddScoped<IPasswordHasher<TMember>, PasswordHasher<TMember>>();
 
 var app = builder.Build();
 

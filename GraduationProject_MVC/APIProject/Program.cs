@@ -2,6 +2,7 @@ using ApiProject.Interfaces;
 using ApiProject.Models;
 using ApiProject.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,10 @@ builder.Services.AddDbContext<dbFurniMartContext>(options => options.UseSqlServe
 builder.Services.AddScoped<IOrderService, COrderService>();
 // 加入 CCartService
 builder.Services.AddScoped<ICartService, CCartService>();
+// CMemberServices
+builder.Services.AddScoped<IMemberService, CMemberServices>();
+
+builder.Services.AddScoped<IPasswordHasher<TMember>, PasswordHasher<TMember>>();
 
 builder.Services.AddDbContext<dbFurniMartContext>(options =>
 {
