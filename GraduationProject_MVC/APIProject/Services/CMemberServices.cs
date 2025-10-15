@@ -50,6 +50,8 @@ namespace ApiProject.Services
                 FAccount = reqdto.Account,
                 //預設
                 FMemberImage = "default.png",
+                FPhoneState = false,
+                FEmailState = false,
                 FLeveId = 1,
                 FMoneySum = 0,
                 FStatus = 1,
@@ -211,5 +213,47 @@ namespace ApiProject.Services
             };
         }
 
+        //修改密碼
+        public async Task<ResultDTO> MemberUpdatePasswordAsync(int memberId, ReqMemberUpdatePasswordDTO req, CancellationToken ct = default)
+        {
+            // 1) 基本驗證
+            if (string.IsNullOrWhiteSpace(req.OldPassword) || string.IsNullOrWhiteSpace(req.NewPassword))
+                throw new InvalidOperationException("密碼欄位不可空白");
+
+            if (!string.IsNullOrWhiteSpace(req.ConfirmNewPassword) &&
+                !string.Equals(req.NewPassword, req.ConfirmNewPassword))
+                throw new InvalidOperationException("兩次輸入的新密碼不一致");
+
+            if (req.NewPassword.Length < 6)
+                throw new InvalidOperationException("新密碼長度至少需 6 碼");
+
+            // 2) 取得會員（需追蹤）
+            var member = await _context.TMembers.FirstOrDefaultAsync(m => m.FMemberId == memberId, ct);
+            if (member == null)
+                throw new InvalidOperationException("找不到會員資料");
+
+            // 3) 驗證舊密碼
+            var verify = _hasher.VerifyHashedPassword(member, member.FPasswords, req.OldPassword);
+            if (verify == PasswordVerificationResult.Failed)
+                throw new InvalidOperationException("舊密碼不正確");
+
+            // 4) 新密碼不可與舊密碼相同
+            var sameAsOld = _hasher.VerifyHashedPassword(member, member.FPasswords, req.NewPassword);
+            if (sameAsOld == PasswordVerificationResult.Success)
+                throw new InvalidOperationException("新密碼不可與舊密碼相同");
+
+            // 5) 產生新雜湊並更新
+            member.FPasswords = _hasher.HashPassword(member, req.NewPassword);
+            member.FUpdateTime = DateTime.Now;
+
+            await _context.SaveChangesAsync(ct);
+
+            return new ResultDTO
+            {
+                Ok = true,
+                Code = StatusCodes.Status200OK,
+                Message = "密碼已更新"
+            };
+        }
     }
 }
