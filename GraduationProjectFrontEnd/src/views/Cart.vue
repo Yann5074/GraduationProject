@@ -1,10 +1,14 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 onMounted(() => { })
 const router = useRouter()
 const goCheckout = () => router.push({ name: 'checkout' })
+
+import QtyControl from '@/components/QtyControl.vue'
+const qtyA = ref(1)
+const qtyB = ref(1)
 </script>
 
 <template>
@@ -49,16 +53,7 @@ const goCheckout = () => router.push({ name: 'checkout' })
                   </td>
                   <td>$49.00</td>
                   <td>
-                    <div class="input-group mb-3 d-flex align-items-center quantity-container" style="max-width: 120px;">
-                      <div class="input-group-prepend">
-                        <button class="btn btn-outline-black decrease" type="button">&minus;</button>
-                      </div>
-                      <input type="text" class="form-control text-center quantity-amount" value="1" placeholder="" aria-label="Example text with button addon" aria-describedby="button-addon1">
-                      <div class="input-group-append">
-                        <button class="btn btn-outline-black increase" type="button">&plus;</button>
-                      </div>
-                    </div>
-
+                    <QtyControl v-model="qtyA" :min="1" :max="99" />
                   </td>
                   <td>$49.00</td>
                   <td><a href="#" class="btn btn-black btn-sm">X</a></td>
@@ -74,13 +69,7 @@ const goCheckout = () => router.push({ name: 'checkout' })
                   <td>$49.00</td>
                   <td>
                     <div class="input-group mb-3 d-flex align-items-center quantity-container" style="max-width: 120px;">
-                      <div class="input-group-prepend">
-                        <button class="btn btn-outline-black decrease" type="button">&minus;</button>
-                      </div>
-                      <input type="text" class="form-control text-center quantity-amount" value="1" placeholder="" aria-label="Example text with button addon" aria-describedby="button-addon1">
-                      <div class="input-group-append">
-                        <button class="btn btn-outline-black increase" type="button">&plus;</button>
-                      </div>
+                      <QtyControl v-model="qtyB" :min="1" :max="99" />
                     </div>
 
                   </td>
@@ -152,4 +141,5 @@ const goCheckout = () => router.push({ name: 'checkout' })
       </div>
     </div>
   </div>
+  <RouterView />
 </template>
