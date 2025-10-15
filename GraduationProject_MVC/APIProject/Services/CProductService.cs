@@ -2,6 +2,7 @@
 using ApiProject.Interfaces;
 using ApiProject.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.Eventing.Reader;
 
 namespace ApiProject.Services
 {
@@ -15,35 +16,35 @@ namespace ApiProject.Services
 
         // Services/CProductService.cs
 
-        public async Task<List<ResProductDTO>> AllProductAsync(CancellationToken ct = default)
+        //列出產品
+        public async Task<List<ResProductDTO>> GetAllProductAsync(CancellationToken ct = default)
         {
             var query = _db.TProducts
                 .AsNoTracking()
                 .Include(p => p.Category)
                 .Include(p => p.ProductVariants).ThenInclude(v => v.Color)
                 .Include(p => p.ProductAssets)
-                // 若你把「刪除」標成 PStatus=4，可解除註解以下一行過濾掉：
                 // .Where(p => p.PStatus != 4)
                 .OrderByDescending(p => p.ProductId)
                 .Select(p => new ResProductDTO
                 {
                     ProductId = p.FProductId,
                     Name = p.FName,
-                    CategoryId = p.FCategoryId,                         // 若你的 DTO 是 int，這裡是 int；若來源是 int? 請改用 ?? 0
+                    CategoryId = p.FCategoryId,                        
                     CategoryName = p.Category != null ? p.Category.FName : null,
 
-                    // 價格區間（無變體時為 null）
+
                     MinPrice = p.ProductVariants.Min(v => v.FPrice),
                     MaxPrice = p.ProductVariants.Max(v => v.FPrice),
 
-                    // 主圖（先 IsPrimary，再 SortOrder；沒有就 null）
+
                     PrimaryImageUrl = p.ProductAssets
                                         .OrderByDescending(a => a.FIsPrimary)
                                         .ThenBy(a => a.FSortOrder)
                                         .Select(a => a.FUrl)
                                         .FirstOrDefault(),
 
-                    // 變體清單（含顏色資訊）
+    
                     Variants = p.ProductVariants
                                 .OrderBy(v => v.FPrice ?? decimal.MaxValue)
                                 .Select(v => new ResProductVariantDTO
@@ -73,6 +74,69 @@ namespace ApiProject.Services
                 });
 
             return await query.ToListAsync(ct);
+        }
+
+
+        //搜尋產品
+        public async Task<List<ResProductDTO>> GetProductByProdNameAsync(string? keyword, CancellationToken ct = default)
+        {
+            var q = _db.TProducts
+        .AsNoTracking()
+        .Include(p => p.Category)
+        .Include(p => p.ProductVariants)      // + Color 如需：.ThenInclude(v => v.Color)
+        .Include(p => p.ProductAssets)
+        .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var kw = keyword.Trim();
+                q = q.Where(p => (p.FName ?? "").Contains(kw));  // 以產品名稱搜尋
+            }
+
+            var result = await q
+                .OrderByDescending(p => p.ProductId)
+                .Select(p => new ResProductDTO
+                {
+                    ProductId = p.FProductId,
+                    Name = p.FName,
+                    CategoryId = p.FCategoryId,
+                    CategoryName = p.Category != null ? p.Category.FName : null,
+                    MinPrice = p.ProductVariants.Min(v => v.FPrice),
+                    MaxPrice = p.ProductVariants.Max(v => v.FPrice),
+                    PrimaryImageUrl = p.ProductAssets
+                                        .OrderByDescending(a => a.FIsPrimary)
+                                        .ThenBy(a => a.FSortOrder)
+                                        .Select(a => a.FUrl)
+                                        .FirstOrDefault(),
+                    Variants = p.ProductVariants
+                                .OrderBy(v => v.FPrice ?? decimal.MaxValue)
+                                .Select(v => new ResProductVariantDTO
+                                {
+                                    ProductVariantId = v.FProductVariantId,
+                                    SKU = v.FSku,
+                                    Price = v.FPrice,
+                                    Stock = v.FStock,
+                                    // ColorId   = v.ColorId,
+                                    // ColorName = v.Color?.ColorName,
+                                    // ColorCode = v.Color?.ColorCode,
+                                    SizeLabel = v.FSizeLabel
+                                }).ToList(),
+                    Assets = p.ProductAssets
+                                .OrderByDescending(a => a.FIsPrimary)
+                                .ThenBy(a => a.FSortOrder)
+                                .Select(a => new ResProductAssetDTO
+                                {
+                                    AssetId = a.FAssetId,
+                                    Url = a.FUrl,
+                                    IsPrimary = a.FIsPrimary,
+                                    SortOrder = a.FSortOrder,
+                                    MimeType = a.FMimeType
+                                }).ToList()
+                })
+                .ToListAsync(ct);
+
+            return result;
+
         }
 
     }
