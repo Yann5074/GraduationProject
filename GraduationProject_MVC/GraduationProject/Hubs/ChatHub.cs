@@ -4,8 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 public class ChatHub : Hub
 {
-    private readonly DbFurniMartContext _ctx;
-    public ChatHub(DbFurniMartContext ctx) => _ctx = ctx;
+    private readonly dbFurniMartContext _ctx;
+    public ChatHub(dbFurniMartContext ctx) => _ctx = ctx;
 
     private static string RoomName(int chatRoomId) => $"room-{chatRoomId}";
 
@@ -16,7 +16,7 @@ public class ChatHub : Hub
         => Groups.RemoveFromGroupAsync(Context.ConnectionId, RoomName(chatRoomId));
 
     // 前端呼叫，寫入訊息並推播
-    public async Task SendMessage(int chatRoomId, string senderType, int? senderId, string content)
+    public async Task SendMessage(int chatRoomId, string senderType, string? senderId, string content)
     {
         if (string.IsNullOrWhiteSpace(content)) return;
 

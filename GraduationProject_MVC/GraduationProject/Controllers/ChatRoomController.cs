@@ -9,8 +9,8 @@ namespace GraduationProject.Controllers
     public class ChatRoomController : Controller
     {
         //建構子示範直接把 DbContext 注入控制器
-        DbFurniMartContext _context;
-        public ChatRoomController(DbFurniMartContext context)
+        dbFurniMartContext _context;
+        public ChatRoomController(dbFurniMartContext context)
         {
             _context = context;
         }
@@ -96,10 +96,14 @@ namespace GraduationProject.Controllers
                 select new ChatRoomLlistDTO
                 {
                     FChatRoomId = c.FChatRoomId,
-                    image = m != null && m.FMemberImage != null
-                        ? m.FMemberImage
-                        : "https://via.placeholder.com/50",
-                    FName = (m != null && m.FName != null) ? m.FName : (c.FVisitorKey ?? "(訪客)"),
+                    image = (m != null && !string.IsNullOrEmpty(m.FMemberImage))
+            ? m.FMemberImage
+            : "https://placehold.co/44x44",
+
+                    FName = (m != null && !string.IsNullOrEmpty(m.FName))
+           ? m.FName
+            : (c.FMemberId==null ? "訪客" : c.FMemberId.ToString()),
+
                     FLastMessageTime = last != null ? (DateTime?)last.FCreatedAt : null,
                     FLastMessage = last != null ? last.FContent : null
                 })

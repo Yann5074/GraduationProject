@@ -38,12 +38,11 @@ builder.Services.AddSession(o =>
     o.Cookie.IsEssential = true;
 });
 
-//�`�J��Ʈw�s�u
-//���U (�`�J)
-builder.Services.AddDbContext<DbFurniMartContext>(options =>
+builder.Services.AddDbContext<dbFurniMartContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart"));
 });
+
 
 //�`�JOrderService
 builder.Services.AddScoped<IOrderService, COrderService>();

@@ -8,11 +8,11 @@ namespace GraduationProject.Services
 {
     public class MessageService : IMessageService
     {
-        private readonly DbFurniMartContext _ctx;
-        public MessageService(DbFurniMartContext ctx) => _ctx = ctx;
+        private readonly dbFurniMartContext _ctx;
+        public MessageService(dbFurniMartContext ctx) => _ctx = ctx;
 
         public async Task<MessageDto> SaveMessageAsync(
-            int chatRoomId, string senderType, int? senderId, string content,
+            int chatRoomId, string senderType, string? senderId, string content,
             CancellationToken ct = default)
         {
             // 簡單防呆
