@@ -1,7 +1,10 @@
 <script setup>
 import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
 onMounted(() => { })
+const router = useRouter()
+const goCheckout = () => router.push({ name: 'checkout' })
 </script>
 
 <template>
@@ -140,7 +143,7 @@ onMounted(() => { })
 
               <div class="row">
                 <div class="col-md-12">
-                  <button class="btn btn-black btn-lg py-3 btn-block" onclick="window.location='checkout.html'">Proceed To Checkout</button>
+                  <button type="button" class="btn btn-black btn-lg py-3 btn-block" @click="goCheckout">Proceed To Checkout</button>
                 </div>
               </div>
             </div>
