@@ -9,7 +9,7 @@ namespace GraduationProject.Interfaces
     public interface IMessageService
     {
         Task<MessageDto> SaveMessageAsync(
-            int chatRoomId, string senderType, int? senderId, string content,
+            int chatRoomId, string senderType, string? senderId, string content,
             CancellationToken ct = default);
 
         Task<List<MessageDto>> GetHistoryAsync(
