@@ -21,6 +21,8 @@ namespace ApiProject.Controllers
             return product;
         }
 
+
+        
         // GET:api/Product/keyword
         [HttpGet("{keyword}")]
         public async Task<List<ResProductDTO>> GetProductsByIdAndProdName(string? keyword)
@@ -31,6 +33,13 @@ namespace ApiProject.Controllers
             return result;
         }
 
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> SoftDelete(int id)
+        {
+            var ok = await _ProductService.SoftDeleteAsync(id);
+            return ok ? NoContent() : NotFound();
+        }
 
 
     }

@@ -139,7 +139,20 @@ namespace ApiProject.Services
 
         }
 
+        public async Task<bool> SoftDeleteAsync(int id)
+        {
+            var p = await _db.TProducts.FirstOrDefaultAsync(p => p.FProductId == id);
+            if (p == null) return false;
+            p.FPstatus = 4; // 4=刪除
+            p.FUpdateTime = DateTime.Now;
+            await _db.SaveChangesAsync();
+            return true;
+        }
+
+
+
     }
+
 
 }
 
