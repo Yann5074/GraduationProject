@@ -1,7 +1,10 @@
 <script setup>
 import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
 onMounted(() => { })
+const router = useRouter()
+const goThanks = () => router.push({ name: 'thanks' })
 </script>
 
 <template>
@@ -275,7 +278,8 @@ onMounted(() => { })
 		                </div>
 
 		                <div class="form-group">
-		                  <button class="btn btn-black btn-lg py-3 btn-block" onclick="window.location='thankyou.html'">確認結帳</button>
+		                  <!-- <button class="btn btn-black btn-lg py-3 btn-block" onclick="window.location='thankyou.html'">確認結帳</button> -->
+                          <button type="button" class="btn btn-black btn-lg py-3 btn-block" @click="goThanks">確認結帳</button>
 		                </div>
 
 		              </div>
