@@ -1,6 +1,7 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
-
+import { RouterLink, RouterView, useRoute} from 'vue-router'
+const route = useRoute()
+const isActive = (path) => route.path === path
 </script>
 
 <template>
@@ -20,14 +21,14 @@ import { RouterLink, RouterView } from 'vue-router'
         <!-- Menu -->
 				<div class="collapse navbar-collapse" id="navbarsFurni">
 					<ul class="custom-navbar-nav navbar-nav ms-auto mb-2 mb-md-0">
-						<li class="nav-item active">
+						<li class="nav-item" :class="{ active: isActive('/') }">
 							<RouterLink class="nav-link" to="/">Home</RouterLink>
 						</li>
-						<li class="nav-item"><RouterLink class="nav-link" to="/shop">Shop</RouterLink></li>
-						<li class="nav-item"><RouterLink class="nav-link" to="/about">About</RouterLink></li>
-						<li class="nav-item"><RouterLink class="nav-link" to="/services">Services</RouterLink></li>
-						<li class="nav-item"><RouterLink class="nav-link" to="/blog">Blog</RouterLink></li>
-						<li class="nav-item"><RouterLink class="nav-link" to="/Contact">Contact us</RouterLink></li>
+						<li class="nav-item" :class="{ active: isActive('/shop') }"><RouterLink class="nav-link" to="/shop">Shop</RouterLink></li>
+						<li class="nav-item" :class="{ active: isActive('/about') }"><RouterLink class="nav-link" to="/about">About</RouterLink></li>
+						<li class="nav-item" :class="{ active: isActive('/service') }"><RouterLink class="nav-link" to="/services">Services</RouterLink></li>
+						<li class="nav-item" :class="{ active: isActive('/blog') }"><RouterLink class="nav-link" to="/blog">Blog</RouterLink></li>
+						<li class="nav-item" :class="{ active: isActive('/Contact') }"><RouterLink class="nav-link" to="/Contact">Contact us</RouterLink></li>
 					</ul>
 
 					<ul class="custom-navbar-cta navbar-nav mb-2 mb-md-0 ms-5">
