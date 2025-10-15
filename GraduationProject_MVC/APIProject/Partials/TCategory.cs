@@ -5,20 +5,23 @@ namespace ApiProject.Models
 {
     public partial class TCategory
     {
-        [Key]
-        [Column("fCategoryId")]
+
+        
         public int CategoryId { get; set; }
 
-        [Column("fName")] public string Name { get; set; } = "";
-        [Column("fParentCategoryId")] public int ParentCategoryId { get; set; }
-        [Column("fIsActive")] public bool IsActive { get; set; }
-        [Column("fSortOrder")] public int SortOrder { get; set; }
+        public string Name { get; set; }
+        public int? ParentCategoryId { get; set; }
+        public string Description { get; set; }
+        public string ImageUrl { get; set; }
+        public bool? IsActive { get; set; }
+        public int? SortOrder { get; set; }
+        public DateTime? CreateTime { get; set; }
+        public DateTime? UpdateTime { get; set; }
 
-
-        // （可選）導覽
-
-
-        public ICollection<TProduct> Products { get; set; } = new List<TProduct>();
+        // 導航屬性
+        public virtual TCategory FParentCategory { get; set; }
+        public virtual ICollection<TCategory> InverseFParentCategory { get; set; }
+        public virtual ICollection<TProduct> TProducts { get; set; }
 
     }
 }
