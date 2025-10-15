@@ -98,7 +98,7 @@ namespace GraduationProject.Controllers
                     FChatRoomId = c.FChatRoomId,
                     image = (m != null && !string.IsNullOrEmpty(m.FMemberImage))
             ? m.FMemberImage
-            : "https://placehold.co/44x44",
+            : "/MemberHeadImages/default.png",
 
                     FName = (m != null && !string.IsNullOrEmpty(m.FName))
            ? m.FName
@@ -127,7 +127,7 @@ namespace GraduationProject.Controllers
                     .ToListAsync();
             }
 
-            var vm = new ChatRoomsPageVm { Rooms = rooms, SelectedId = chatRoomId, Messages = messages };
+            var vm = new CChatRoomsPageVm { Rooms = rooms, SelectedId = chatRoomId, Messages = messages };
             return View(vm);
         }
 

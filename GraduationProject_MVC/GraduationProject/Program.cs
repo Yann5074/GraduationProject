@@ -66,6 +66,9 @@ builder.Services.AddScoped<SkuGenerator>();
 builder.Services.AddScoped<IProductService, CProductService>();
 builder.Services.AddScoped<IPasswordHasher<TMember>, PasswordHasher<TMember>>();
 
+// Application services
+//builder.Services.AddScoped<IChatRoom>
+
 var app = builder.Build();
 
 
@@ -109,7 +112,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Order}/{action=List}/{id?}");
+    pattern: "{controller=ChatRoom}/{action=Index}");
 app.MapRazorPages();
 
 app.MapControllers(); 
