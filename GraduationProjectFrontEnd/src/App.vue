@@ -2,6 +2,7 @@
 import { RouterLink, RouterView, useRoute} from 'vue-router'
 const route = useRoute()
 const isActive = (path) => route.path === path
+import MaterialButton from "@/components/MaterialButton.vue";
 </script>
 
 <template>
@@ -10,7 +11,6 @@ const isActive = (path) => route.path === path
 		<nav class="custom-navbar navbar navbar navbar-expand-md navbar-dark bg-dark" arial-label="Furni navigation bar">
 
 			<div class="container">
-				<!-- <a class="navbar-brand" href="index.html">Furni<span>.</span></a> -->
         		<RouterLink class="navbar-brand" to="/">Furni<span>.</span></RouterLink>
 
         <!-- Toggler -->
