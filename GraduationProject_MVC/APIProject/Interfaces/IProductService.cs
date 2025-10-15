@@ -7,6 +7,9 @@ namespace ApiProject.Interfaces
         Task<List<ResProductDTO>> GetAllProductAsync(CancellationToken ct = default);
 
         Task<List<ResProductDTO>> GetProductByProdNameAsync(string? keyword, CancellationToken ct = default);
+
+        Task<bool> SoftDeleteAsync(int id);
+
     }
 
 }
