@@ -8,6 +8,10 @@
         public string Name { get; set; }
         public int? Gender { get; set; }
         public DateOnly? BirthDate { get; set; }
+
+        public string Email {  get; set; }
+        public string MemberImage { get; set; }
+
         public string Phone { get; set; }
         public string Address { get; set; }
         public string? AvatarUrl { get; set; }
