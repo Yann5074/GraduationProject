@@ -33,7 +33,7 @@ const isActive = (path) => route.path === path
 
 					<ul class="custom-navbar-cta navbar-nav mb-2 mb-md-0 ms-5">
 						<li><a class="nav-link" href="#"><img src="../public/asset/images/user.svg"></a></li>
-						<li><a class="nav-link" href="cart.html"><img src="../public/asset/images/cart.svg"></a></li>
+						<li><RouterLink class="nav-link" to="/cart"><img src="../public/asset/images/cart.svg"></RouterLink></li>
 					</ul>
 				</div>
 			</div>
