@@ -520,6 +520,10 @@ public partial class dbFurniMartContext : DbContext
             entity.Property(e => e.FDisplayName)
                 .HasMaxLength(50)
                 .HasColumnName("fDisplayName");
+            entity.Property(e => e.FEmail)
+                .HasMaxLength(150)
+                .HasColumnName("fEmail");
+            entity.Property(e => e.FEmailState).HasColumnName("fEmailState");
             entity.Property(e => e.FGender).HasColumnName("fGender");
             entity.Property(e => e.FLeveId).HasColumnName("fLeveId");
             entity.Property(e => e.FMemberImage)
@@ -536,6 +540,7 @@ public partial class dbFurniMartContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("fPhone");
+            entity.Property(e => e.FPhoneState).HasColumnName("fPhoneState");
             entity.Property(e => e.FStatus).HasColumnName("fStatus");
             entity.Property(e => e.FUpdateTime)
                 .HasColumnType("datetime")

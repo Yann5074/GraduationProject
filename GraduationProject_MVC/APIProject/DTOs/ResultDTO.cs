@@ -5,6 +5,7 @@
     {
         public bool Ok { get; set; }
         public int Code { get; set; }
+        public string Message { get; set; }
 
     }
 }

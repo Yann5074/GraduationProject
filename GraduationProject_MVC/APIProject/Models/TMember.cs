@@ -17,6 +17,8 @@ public partial class TMember
 
     public string FPhone { get; set; }
 
+    public bool? FPhoneState { get; set; }
+
     public DateOnly? FBirthDate { get; set; }
 
     public string FAddress { get; set; }
@@ -36,4 +38,8 @@ public partial class TMember
     public string FAccount { get; set; }
 
     public string FPasswords { get; set; }
+
+    public string FEmail { get; set; }
+
+    public bool? FEmailState { get; set; }
 }
