@@ -30,7 +30,6 @@
           </span>
           <h2 class="display-3 text-black">Thank you!</h2>
           <p class="lead mb-5">You order was successfuly completed.</p>
-          <!-- <p><a href="shop.html" class="btn btn-sm btn-outline-black">Back to shop</a></p> -->
           <p><RouterLink class="btn btn-sm btn-outline-black" to="/shop">Back to shop</RouterLink></p>
         </div>
       </div>

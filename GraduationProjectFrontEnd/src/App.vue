@@ -26,7 +26,7 @@ const isActive = (path) => route.path === path
 						</li>
 						<li class="nav-item" :class="{ active: isActive('/shop') }"><RouterLink class="nav-link" to="/shop">購物</RouterLink></li>
 						<li class="nav-item" :class="{ active: isActive('/about') }"><RouterLink class="nav-link" to="/about">關於我們</RouterLink></li>
-						<li class="nav-item" :class="{ active: isActive('/service') }"><RouterLink class="nav-link" to="/services">服務項目</RouterLink></li>
+						<li class="nav-item" :class="{ active: isActive('/services') }"><RouterLink class="nav-link" to="/services">服務項目</RouterLink></li>
 						<li class="nav-item" :class="{ active: isActive('/design') }"><RouterLink class="nav-link" to="/design">布置靈感</RouterLink></li>
 						<li class="nav-item" :class="{ active: isActive('/Contact') }"><RouterLink class="nav-link" to="/Contact">聯絡我們</RouterLink></li>
 					</ul>

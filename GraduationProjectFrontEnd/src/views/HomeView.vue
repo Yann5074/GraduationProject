@@ -1,7 +1,10 @@
 <script setup>
 import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
 onMounted(() => { })
+const router = useRouter()
+const goShop = () => router.push({ name: 'shop' })
 </script>
 
 <template>
@@ -13,7 +16,7 @@ onMounted(() => { })
 							<div class="intro-excerpt">
 								<h1>Modern Interior <span clsas="d-block">Design Studio</span></h1>
 								<p class="mb-4">Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate velit imperdiet dolor tempor tristique.</p>
-								<p><a href="" class="btn btn-secondary me-2">Shop Now</a><a href="#" class="btn btn-white-outline">Explore</a></p>
+								<p><RouterLink class="btn btn-secondary me-2" to="/shop">Shop Now</RouterLink><a href="#" class="btn btn-white-outline">Explore</a></p>
 							</div>
 						</div>
 						<div class="col-lg-7">
@@ -35,7 +38,7 @@ onMounted(() => { })
 					<div class="col-md-12 col-lg-3 mb-5 mb-lg-0">
 						<h2 class="mb-4 section-title">Crafted with excellent material.</h2>
 						<p class="mb-4">Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate velit imperdiet dolor tempor tristique. </p>
-						<p><a href="shop.html" class="btn">Explore</a></p>
+						<p><RouterLink class="btn btn-sm btn-outline-black" to="/shop">看更多</RouterLink></p>
 					</div> 
 					<!-- End Column 1 -->
 
