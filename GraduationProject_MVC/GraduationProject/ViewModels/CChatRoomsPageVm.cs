@@ -2,7 +2,7 @@
 
 namespace GraduationProject.ViewModels
 {
-    public class ChatRoomsPageVm
+    public class CChatRoomsPageVm
     {
         public List<ChatRoomLlistDTO> Rooms { get; set; } = new();
 
