@@ -13,7 +13,7 @@ onMounted(() => { })
 							<div class="intro-excerpt">
 								<h1>About Us</h1>
 								<p class="mb-4">Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate velit imperdiet dolor tempor tristique.</p>
-								<p><a href="" class="btn btn-secondary me-2">Shop Now</a><a href="#" class="btn btn-white-outline">Explore</a></p>
+								<p><RouterLink class="btn btn-secondary me-2" to="/shop">Shop Now</RouterLink><a href="#" class="btn btn-white-outline">Explore</a></p>
 							</div>
 						</div>
 						<div class="col-lg-7">
