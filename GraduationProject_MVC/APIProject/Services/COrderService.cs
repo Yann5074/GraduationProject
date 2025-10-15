@@ -130,5 +130,42 @@ namespace ApiProject.Services
                 Code = StatusCodes.Status200OK
             };
         }
+
+        // 修改統編
+        public async Task<ResultDTO> EditTaxNoAsync(int orderId, ReqTaxNoDTO reqDTO)
+        {
+            if (orderId != reqDTO.OrderId)
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status400BadRequest
+                };
+            TOrder order = _context.TOrders.FirstOrDefault(o => o.FOrderId == orderId);
+            if (order == null)
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status404NotFound
+                };
+            order.FTaxNo = reqDTO.TaxNo;
+            await _context.SaveChangesAsync();
+            return new ResultDTO
+            {
+                Ok = true,
+                Code = StatusCodes.Status200OK
+            };
+        }
+
+        //建立訂單
+        public async Task<ResultDTO> CreateOrderAsync(CartDTO dto)
+        {
+            //少接收訂單資料並儲存到資料庫
+            await _context.SaveChangesAsync();
+            return new ResultDTO
+            {
+                Ok = true,
+                Code = StatusCodes.Status200OK
+            };
+        }
     }
 }

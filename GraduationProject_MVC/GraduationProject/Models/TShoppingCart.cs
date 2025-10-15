@@ -11,11 +11,13 @@ public partial class TShoppingCart
 
     public string FDate { get; set; }
 
-    public int? FCustomerId { get; set; }
+    public int FIsDeleted { get; set; }
 
-    public int? FProductId { get; set; }
+    public int FCustomerId { get; set; }
 
-    public int? FCount { get; set; }
+    public int FProductVariantId { get; set; }
 
-    public decimal? FPrice { get; set; }
+    public int FCount { get; set; }
+
+    public decimal FPrice { get; set; }
 }
