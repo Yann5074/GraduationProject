@@ -14,13 +14,13 @@ namespace ApiProject.Controllers
 
         // GET /api/products
         [HttpGet]
-        public async Task<ActionResult<ResultPagedDTO<ResProductDTO>>> GetProducts([FromQuery] ReqProductQueryDTO query, CancellationToken ct)
+        public async Task<List<ResProductDTO>> GetAllProducts()
         {
-            var result = await _ProductService.GetProductsAsync(query, ct);
-            return Ok(result);
+            var product = await _ProductService.AllProductAsync();
+            return product;
         }
 
-      
+
 
 
 

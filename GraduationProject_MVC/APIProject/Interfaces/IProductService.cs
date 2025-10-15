@@ -4,6 +4,6 @@ namespace ApiProject.Interfaces
 {
     public interface IProductService
     {
-        Task<ResultPagedDTO<ResProductDTO>> GetProductsAsync(ReqProductQueryDTO query, CancellationToken ct = default);
+        Task<List<ResProductDTO>> AllProductAsync(CancellationToken ct = default);
     }
 }
