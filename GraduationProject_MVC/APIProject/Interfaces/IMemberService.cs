@@ -11,11 +11,12 @@ namespace ApiProject.Interfaces
         public Task<ResMemberDTO?> MemberLoginAsync(ReqMemberLoginDTO reqdto, CancellationToken ct = default);
         //取得會員資料
         public Task<ResMemberDTO> GetMemberMeAsync(int memberId, CancellationToken ct = default);
-        //填寫會員資料及可改手機和Email
+        //填寫會員資料及可修改手機和Email
         public Task MemberUpdateMeAsync(int memberId, ReqMemberUpdateDTO req, CancellationToken ct = default);
         //登出
         public Task<ResultDTO> MemberLogoutAsync(CancellationToken ct = default);
-        //public Task ChangePasswordAsync(int memberId, ReqMemberChangePasswordDTO req);
+        //修改密碼
+        public Task<ResultDTO> MemberUpdatePasswordAsync(int memberId, ReqMemberUpdatePasswordDTO req, CancellationToken ct = default);
 
         //public Task<string> SaveAvatarAsync(int memberId, IFormFile file);
 

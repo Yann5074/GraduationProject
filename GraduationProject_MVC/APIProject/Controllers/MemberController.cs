@@ -58,8 +58,6 @@ namespace ApiProject.Controllers
 
             var memberId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-            //var memberId = 10029;
-
             try
             {
                 await _memberService.MemberUpdateMeAsync(memberId, req, ct);
@@ -110,6 +108,28 @@ namespace ApiProject.Controllers
             var result = await _memberService.MemberLogoutAsync(ct);
             // 若你想遵守 204 無內容，也可直接 return NoContent();
             return StatusCode(result.Code, result); // 這裡選擇 200 + 訊息，前端好顯示
+        }
+
+        // 5) 修改密碼
+        // PUT /api/members/me/UpdatePassword
+        [Authorize]
+        [HttpPut("me/UpdatePassword")]
+        public async Task<IActionResult> UpdatePassword([FromBody] ReqMemberUpdatePasswordDTO req, CancellationToken ct)
+        {
+            //ASP.NET Core 在接收 [FromBody] ReqMemberChangePasswordDTO req 時，會自動幫你檢查欄位是否符合資料模型（例如必填欄位、格式）。
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+            //從登入者的 Cookie（Claims）取得會員 ID
+            var memberId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            try
+            {
+                var result = await _memberService.MemberUpdatePasswordAsync(memberId, req, ct);
+                return StatusCode(result.Code, result);   // 或 return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }
