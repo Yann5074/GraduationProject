@@ -1,8 +1,9 @@
 using ApiProject.Interfaces;
 using ApiProject.Models;
 using ApiProject.Services;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,14 +27,32 @@ builder.Services.AddCors(option =>
 
 builder.Services.AddDbContext<dbFurniMartContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart")));
 
-// �`�J COrderService
+// COrderService
 builder.Services.AddScoped<IOrderService, COrderService>();
 // 加入 CCartService
 builder.Services.AddScoped<ICartService, CCartService>();
 // CMemberServices
 builder.Services.AddScoped<IMemberService, CMemberServices>();
-
+// 密碼雜湊器
 builder.Services.AddScoped<IPasswordHasher<TMember>, PasswordHasher<TMember>>();
+// 設定 Cookie 驗證（重點）
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(opt =>
+    {
+        opt.Cookie.Name = "app.auth";
+        opt.Cookie.HttpOnly = true;
+        opt.Cookie.SameSite = SameSiteMode.Lax;   // 同站 Swagger 測試可用 Lax；跨站要 None+Secure
+        opt.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        // API 不要 302 轉導
+        opt.Events = new CookieAuthenticationEvents
+        {
+            OnRedirectToLogin = ctx => { ctx.Response.StatusCode = 401; return Task.CompletedTask; },
+            OnRedirectToAccessDenied = ctx => { ctx.Response.StatusCode = 403; return Task.CompletedTask; }
+        };
+    });
+
+// 用於在 Service 內取得 HttpContext
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddDbContext<dbFurniMartContext>(options =>
 {
@@ -53,6 +72,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("VueClient");
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

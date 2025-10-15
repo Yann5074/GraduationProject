@@ -1,7 +1,11 @@
 ﻿using ApiProject.DTOs;
 using ApiProject.Interfaces;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ApiProject.Controllers
 {
@@ -18,13 +22,16 @@ namespace ApiProject.Controllers
         // 1) 註冊
         // POST /api/members/create
         [HttpPost("create")]
-        public async Task<IActionResult> Create([FromBody] ReqMemberCreateDTO req, CancellationToken ct)
+        public async Task<IActionResult> Create([FromBody] ReqMemberCreateAccountDTO req, CancellationToken ct)
         {
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
 
             try
             {
-                var result = await _memberService.MemberCreateAsync(req, ct);
+                var result = await _memberService.MemberCreateAccountAsync(req, ct);
+
+                // 可選：註冊後直接登入（Cookie）
+                //await SignInAsync(entityIdOrAccount);
 
                 // Service 會回一個 ResultDTO（內含 Ok、Code…），
                 // 這裡用它的 Code 當作 HTTP 狀態碼，一併把物件回給前端
@@ -41,21 +48,68 @@ namespace ApiProject.Controllers
             }
         }
 
-        // 2) 登入
-        // POST /api/members/login
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] ReqMemberLoginDTO req, CancellationToken ct)
+        // 2) 填寫會員資料及可改手機和Email
+        // PUT /api/members/UpdateMe
+        [Authorize]
+        [HttpPut("UpdateMe")]
+        public async Task<IActionResult> UpdateMe([FromBody] ReqMemberUpdateDTO req, CancellationToken ct)
         {
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+            var memberId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            //var memberId = 10029;
+
             try
             {
-                var result = await _memberService.MemberLoginAsync(req, ct);
-                return StatusCode(result.Code, result);
+                await _memberService.MemberUpdateMeAsync(memberId, req, ct);
+                return NoContent(); // 204：更新成功無內容
             }
             catch (InvalidOperationException ex)
             {
-                // 回傳 400 給前端
+                // 例如：手機/Email 重複、資料不存在…（你在 Service 丟的）
                 return BadRequest(new { message = ex.Message });
             }
+        }
+
+        // 3) 登入
+        // POST /api/members/login
+        [AllowAnonymous]
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] ReqMemberLoginDTO req, CancellationToken ct)
+        {
+            //呼叫 Service 驗證帳密
+            var m = await _memberService.MemberLoginAsync(req, ct);
+            if (m == null) return Unauthorized(new { message = "帳號或密碼錯誤" });
+
+            //建立「Claims」（身分資訊）
+            var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, m.MemberId.ToString()),
+                    new Claim(ClaimTypes.Name, m.Account),
+                    new Claim("displayName", m.DisplayName ?? string.Empty),
+                };
+            //建立「身份（Identity）」與「主體（Principal）」
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+            //寫入 Cookie（登入成功）
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                new AuthenticationProperties { IsPersistent = true });
+
+            return Ok(m); // 或 Ok(m) 也可
+        }
+
+        // 4) 登出
+        // POST /api/members/logout
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout(CancellationToken ct)
+        {
+            var result = await _memberService.MemberLogoutAsync(ct);
+            // 若你想遵守 204 無內容，也可直接 return NoContent();
+            return StatusCode(result.Code, result); // 這裡選擇 200 + 訊息，前端好顯示
         }
     }
 }
