@@ -17,8 +17,8 @@ namespace ApiProject.Interfaces
         public Task<ResultDTO> MemberLogoutAsync(CancellationToken ct = default);
         //修改密碼
         public Task<ResultDTO> MemberUpdatePasswordAsync(int memberId, ReqMemberUpdatePasswordDTO req, CancellationToken ct = default);
-
-        //public Task<string> SaveAvatarAsync(int memberId, IFormFile file);
+        //上傳大頭貼
+        //public Task<ResMemberUploadPhotoDTO> MemberUploadPhotoAsync(int memberId, IFormFile file, CancellationToken ct = default);
 
     }
 }
