@@ -1,3 +1,4 @@
+
 using ApiProject.Interfaces;
 using ApiProject.Models;
 using ApiProject.Services;
@@ -70,6 +71,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("VueClient");
+
+// 讓 wwwroot 可被存取（預設用 wwwroot）
+app.UseStaticFiles(); // 確保能讀到 /MemberHeadImages/檔名
+
 app.UseAuthentication();
 app.UseAuthorization();
 

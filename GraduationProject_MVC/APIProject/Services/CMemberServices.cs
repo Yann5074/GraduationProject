@@ -14,12 +14,14 @@ namespace ApiProject.Services
         private readonly dbFurniMartContext _context;
         private readonly IPasswordHasher<TMember> _hasher;
         private readonly IHttpContextAccessor _http;
+        private readonly IWebHostEnvironment _env;
 
-        public CMemberServices(dbFurniMartContext context, IPasswordHasher<TMember> hasher, IHttpContextAccessor httpContextAccessor)
+        public CMemberServices(dbFurniMartContext context, IPasswordHasher<TMember> hasher, IHttpContextAccessor httpContextAccessor, IWebHostEnvironment env)
         {
             _context = context;
             _hasher = hasher;
             _http = httpContextAccessor;
+            _env = env;
         }
 
         //註冊帳號
@@ -255,5 +257,81 @@ namespace ApiProject.Services
                 Message = "密碼已更新"
             };
         }
+
+        //上傳大頭貼
+        //public async Task<ResMemberUploadPhotoDTO> MemberUploadPhotoAsync(int memberId, IFormFile file, CancellationToken ct = default)
+        //{
+        //    if (file == null || file.Length == 0)
+        //        throw new InvalidOperationException("未收到檔案");
+
+        //    // 1) 基本限制（大小 2MB，可自行調整）
+        //    const long MAX_BYTES = 2 * 1024 * 1024;
+        //    if (file.Length > MAX_BYTES)
+        //        throw new InvalidOperationException("檔案過大，限制 2MB 以內");
+
+        //    // 2) 副檔名/ContentType 檢查（僅允許常見圖片）
+        //    var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        //    var okExts = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+        //    if (!okExts.Contains(ext))
+        //        throw new InvalidOperationException("僅支援 jpg、jpeg、png、webp 格式");
+
+        //    var okContentTypes = new[] { "image/jpeg", "image/png", "image/webp" };
+        //    if (!okContentTypes.Contains(file.ContentType.ToLowerInvariant()))
+        //        throw new InvalidOperationException("檔案 Content-Type 不正確");
+
+        //    // 3) 準備資料夾與檔名
+        //    var folder = Path.Combine(_env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"),
+        //                              "MemberHeadImages");
+        //    if (!Directory.Exists(folder))
+        //        Directory.CreateDirectory(folder);
+
+        //    // 唯一檔名：memberId_時間戳+隨機碼.ext
+        //    var fileName = $"{memberId}_{DateTime.UtcNow.Ticks}_{Guid.NewGuid():N}{ext}";
+        //    var fullPath = Path.Combine(folder, fileName);
+
+        //    // 4) 寫檔
+        //    using (var stream = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None))
+        //    {
+        //        await file.CopyToAsync(stream, ct);
+        //    }
+
+        //    // 5) 更新 DB（追蹤狀態）
+        //    var member = await _context.TMembers.FirstOrDefaultAsync(m => m.FMemberId == memberId, ct);
+        //    if (member == null)
+        //    {
+        //        // 若找不到，刪掉剛剛寫入的檔案以免殘留
+        //        try { System.IO.File.Delete(fullPath); } catch { /* ignore */ }
+        //        throw new InvalidOperationException("找不到會員資料");
+        //    }
+
+        //    // （可選）刪除舊頭貼檔案（若不是 default.png）
+        //    if (!string.IsNullOrWhiteSpace(member.FMemberImage) &&
+        //        !string.Equals(member.FMemberImage, "default.png", StringComparison.OrdinalIgnoreCase))
+        //    {
+        //        var oldPath = Path.Combine(folder, member.FMemberImage);
+        //        if (System.IO.File.Exists(oldPath))
+        //        {
+        //            try { System.IO.File.Delete(oldPath); } catch { /* ignore */ }
+        //        }
+        //    }
+
+        //    member.FMemberImage = fileName;
+        //    member.FUpdateTime = DateTime.Now;
+        //    await _context.SaveChangesAsync(ct);
+
+        //    // 6) 回完整網址
+        //    var req = _http.HttpContext?.Request;
+        //    var baseUrl = req == null
+        //        ? ""
+        //        : $"{req.Scheme}://{req.Host}";
+        //    var url = $"{baseUrl}/MemberHeadImages/{fileName}";
+
+        //    return new ResMemberUploadPhotoDTO
+        //    {
+        //        Url = url,
+        //        FileName = fileName
+        //    };
+        //}
+
     }
 }
