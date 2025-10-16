@@ -19,6 +19,30 @@ namespace ApiProject.Models
         [ForeignKey(nameof(FPstatus))]
         public virtual TPstatus PStatus { get; set; }
 
+
+        [NotMapped]
+        public string MainImageUrl => ProductAssets?
+            .Where(a => a.FIsPrimary == true)
+            .OrderBy(a => a.FSortOrder)
+            .Select(a => a.FUrl)
+            .FirstOrDefault() ?? "/images/default.png";
+
+        [NotMapped]
+        public int TotalStock => ProductVariants?.Sum(v => v.FStock ?? 0) ?? 0;
+
+        [NotMapped]
+        public bool IsAvailable => FPstatus == 1 && TotalStock > 0;
+
+        [NotMapped]
+        public decimal? MinPrice => ProductVariants?
+            .Where(v => v.FPrice.HasValue)
+            .Min(v => v.FPrice);
+
+        [NotMapped]
+        public decimal? MaxPrice => ProductVariants?
+            .Where(v => v.FPrice.HasValue)
+            .Max(v => v.FPrice);
+
     }
 
 

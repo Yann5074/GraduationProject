@@ -2,11 +2,14 @@
 {
     public class ResProductAssetDTO
     {
-        public int AssetId { get; init; }
-        public string? Url { get; init; }       // tProductAsset.fUrl
-        public string? Picture { get; init; }   // fPicture
-        public bool? IsPrimary { get; init; }    // fIsPrimary
-        public int? SortOrder { get; init; }     // fSortOrder
-        public string? MimeType { get; init; }  // fMimeType
+        public int FAssetId { get; set; }
+        public int? FProductId { get; set; }
+        public int? FProductVariantId { get; set; }
+        public string FPicture { get; set; }
+        public string FAssetType { get; set; }
+        public string FMimeType { get; set; }
+        public string FUrl { get; set; }
+        public bool? FIsPrimary { get; set; }
+        public int? FSortOrder { get; set; }
     }
 }

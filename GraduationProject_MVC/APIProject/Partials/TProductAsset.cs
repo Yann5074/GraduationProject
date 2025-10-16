@@ -7,8 +7,6 @@ namespace ApiProject.Models
     public partial class TProductAsset
     {
 
-
-
         [ForeignKey(nameof(FProductId))]
         public virtual TProduct Product { get; set; }
 
