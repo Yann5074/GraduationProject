@@ -13,7 +13,7 @@ namespace GraduationProject.Services
     public class CMemberService : IMemberService
     {
         private readonly dbFurniMartContext _db;
-        private IWebHostEnvironment _enviro;
+        private  IWebHostEnvironment _enviro;
         public CMemberService(dbFurniMartContext db, IWebHostEnvironment enviro)
         {
             _db = db;
