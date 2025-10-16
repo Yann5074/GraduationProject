@@ -1,10 +1,12 @@
 ﻿using ApiProject.DTOs;
 using ApiProject.Interfaces;
+using ApiProject.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace ApiProject.Controllers
@@ -14,9 +16,13 @@ namespace ApiProject.Controllers
     public class MemberController : ControllerBase
     {
         private readonly IMemberService _memberService;
-        public MemberController(IMemberService memberService)
+        private readonly dbFurniMartContext _db;
+        private readonly IWebHostEnvironment _env;
+        public MemberController(IMemberService memberService, dbFurniMartContext db, IWebHostEnvironment env)
         {
             _memberService = memberService;
+            _db = db;
+            _env = env;
         }
 
         // 1) 註冊
@@ -131,5 +137,96 @@ namespace ApiProject.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        // 6) 上傳大頭貼
+        //// POST /api/members/UploadPhoto
+        //[Authorize]
+        //[HttpPost("me/UploadPhoto")]
+        //public async Task<ActionResult<ResMemberUploadPhotoDTO>> UploadPhoto([FromForm] UploadPhotoForm form, CancellationToken ct)
+        //{
+        //    try
+        //    {
+        //        //從登入者的 Cookie（Claims）取得會員 ID
+        //        var memberId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        //        var res = await _memberService.MemberUploadPhotoAsync(memberId, file, ct);
+        //        return Ok(res); // { url, fileName }
+        //    }
+        //    catch (InvalidOperationException ex)
+        //    {
+        //        return BadRequest(new { message = ex.Message });
+        //    }
+        //}
+
+        // 6) 上傳大頭貼
+        // POST /api/member/me/uploadphoto
+        [Authorize]
+        [HttpPost("me/uploadphoto")]
+        [Consumes("multipart/form-data")]
+        [RequestFormLimits(MultipartBodyLengthLimit = 2_000_000)] // 2MB
+        public async Task<ActionResult<object>> UploadPhoto([FromForm] UploadPhotoForm form, CancellationToken ct)
+        {
+            var file = form.File;
+            if (file == null || file.Length == 0)
+                return BadRequest(new { message = "未選擇檔案" });
+
+            // 1) 基本限制
+            const long MAX_BYTES = 2 * 1024 * 1024; // 2MB
+            if (file.Length > MAX_BYTES)
+                return BadRequest(new { message = "檔案過大，限制 2MB 以內" });
+
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var okExts = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            if (!okExts.Contains(ext))
+                return BadRequest(new { message = "僅支援 jpg、jpeg、png、webp" });
+
+            var okContentTypes = new[] { "image/jpeg", "image/png", "image/webp" };
+            if (!okContentTypes.Contains(file.ContentType.ToLowerInvariant()))
+                return BadRequest(new { message = "Content-Type 不正確" });
+
+            // 2) 取得登入者 Id
+            var memberId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            // 3) 取會員（要追蹤）
+            var member = await _db.TMembers.FirstOrDefaultAsync(m => m.FMemberId == memberId, ct);
+            if (member == null) return BadRequest(new { message = "找不到會員資料" });
+
+            // 4) 準備資料夾/檔名
+            var webRoot = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var folder = Path.Combine(webRoot, "MemberHeadImages");
+            if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+
+            var fileName = $"{memberId}_{DateTime.UtcNow.Ticks}_{Guid.NewGuid():N}{ext}";
+            var fullPath = Path.Combine(folder, fileName);
+
+            // 5) 寫檔
+            using (var stream = System.IO.File.Create(fullPath))
+            {
+                await file.CopyToAsync(stream, ct);
+            }
+
+            // 6) 刪舊檔（若不是預設）
+            if (!string.IsNullOrWhiteSpace(member.FMemberImage) &&
+                !string.Equals(member.FMemberImage, "default.png", StringComparison.OrdinalIgnoreCase))
+            {
+                var oldPath = Path.Combine(folder, member.FMemberImage);
+                if (System.IO.File.Exists(oldPath))
+                {
+                    try { System.IO.File.Delete(oldPath); } catch { /* ignore */ }
+                }
+            }
+
+            // 7) 更新 DB
+            member.FMemberImage = fileName;
+            member.FUpdateTime = DateTime.Now;
+            await _db.SaveChangesAsync(ct);
+
+            // 8) 組完整網址
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var url = $"{baseUrl}/MemberHeadImages/{fileName}";
+
+            return Ok(new { url, fileName });
+        }
+
+
     }
 }
