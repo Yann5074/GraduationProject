@@ -6,6 +6,7 @@ namespace ApiProject.Models
     {
         public dbFurniMartContext() { }
 
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
@@ -17,5 +18,8 @@ namespace ApiProject.Models
                 optionsBuilder.UseSqlServer(Config.GetConnectionString("dbFurniMart"));
             }
         }
+
+
+
     }
 }
