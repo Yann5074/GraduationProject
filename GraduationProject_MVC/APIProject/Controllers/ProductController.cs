@@ -20,13 +20,11 @@ namespace ApiProject.Controllers
             try
             {
                 var result = await _ProductService.GetAllProductsAsync(filter);
-
-                // ✅ 直接回傳商品列表
-                return Ok(new ResApiResponseDTO<List<ResProductListDTO>>
+                return Ok(new ResApiResponseDTO<ResultPagedDTO<ResProductListDTO>>
                 {
                     Success = true,
                     Message = "取得商品列表成功",
-                    Data = result  // 直接是 List<ProductListDto>
+                    Data = result
                 });
             }
             catch (Exception ex)
@@ -40,26 +38,92 @@ namespace ApiProject.Controllers
             }
         }
 
-
-
-        // GET:api/Product/keyword
-        [HttpGet("{keyword}")]
-        public async Task<List<ResProductDTO>> GetProductsByIdAndProdName(string? keyword)
+        [HttpGet("filter-options")]
+        public async Task<IActionResult> GetFilterOptions()
         {
-            if (keyword.IsNullOrEmpty())
-                return null;
-            var result = await _ProductService.GetProductByProdNameAsync(keyword);
-            return result;
+            try
+            {
+                var result = await _ProductService.GetFilterOptionsAsync();
+                return Ok(new ResApiResponseDTO<ResFilterOptionsDTO>
+                {
+                    Success = true,
+                    Message = "取得篩選選項成功",
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ResApiResponseDTO<object>
+                {
+                    Success = false,
+                    Message = $"取得篩選選項失敗: {ex.Message}",
+                    Data = null
+                });
+            }
         }
 
+        //Get:api/product/1
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetProduct(int id)
+        {
+            try
+            {
+                var result = await _ProductService.GetProductByIdAsync(id);
 
-        //[HttpDelete("{id:int}")]
-        //public async Task<IActionResult> SoftDelete(int id)
-        //{
-        //    var ok = await _ProductService.SoftDeleteAsync(id);
-        //    return ok ? NoContent() : NotFound();
-        //}
+                if (result == null)
+                {
+                    return NotFound(new ResApiResponseDTO<object>
+                    {
+                        Success = false,
+                        Message = "找不到該商品",
+                        Data = null
+                    });
+                }
 
+                return Ok(new ResApiResponseDTO<ResProductDetailDTO>
+                {
+                    Success = true,
+                    Message = "取得商品成功",
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ResApiResponseDTO<object>
+                {
+                    Success = false,
+                    Message = $"取得商品失敗: {ex.Message}",
+                    Data = null
+                });
+            }
+        }
 
+        //GET:api/product/search/茶几
+        [HttpGet("search/{keyword}")]
+        public async Task<IActionResult> SearchProductsByKeyword(string keyword)
+        {
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                return BadRequest(new ResApiResponseDTO<object>
+                {
+                    Success = false,
+                    Message = "請提供搜尋關鍵字",
+                    Data = null
+                });
+            }
+
+            var result = await _ProductService.GetProductByProdNameAsync(keyword);
+
+            return Ok(new ResApiResponseDTO<List<ResProductDTO>>
+            {
+                Success = true,
+                Message = "搜尋成功",
+                Data = result ?? new List<ResProductDTO>()
+            });
+        }
+    
     }
+
+
+    
 }

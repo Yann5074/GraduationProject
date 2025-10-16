@@ -17,7 +17,7 @@ namespace ApiProject.Services
         // Services/CProductService.cs
 
         //列出產品
-        public async Task<List<ResProductListDTO>> GetAllProductsAsync(ReqProductFilterDTO filter)
+        public async Task<ResultPagedDTO<ResProductListDTO>> GetAllProductsAsync(ReqProductFilterDTO filter)
         {
             var query = _db.TProducts
                 .Include(p => p.Category)
@@ -27,13 +27,16 @@ namespace ApiProject.Services
                     .ThenInclude(v => v.Color)
                 .AsQueryable();
 
-            // 套用篩選
+            // 篩選
             query = ApplyFilters(query, filter);
 
-            // 套用排序
+            // 排序
             query = ApplySorting(query, filter.SortBy);
 
-            // 套用分頁並回傳
+            // 總筆數
+            var totalCount = await query.CountAsync();
+
+            // 分頁
             var products = await query
                 .Skip((filter.PageNumber - 1) * filter.PageSize)
                 .Take(filter.PageSize)
@@ -45,7 +48,7 @@ namespace ApiProject.Services
                     FCategoryId = p.FCategoryId,
                     CategoryName = p.Category.FName,
                     FPstatus = p.FPstatus,
-                    StatusName = p.PStatus.FPstatusName,
+                    StatusName = p.PStatus.FPStatusName,
                     FWarrantyMonth = p.FWarrantyMonth,
                     FAssemblyRequired = p.FAssemblyRequired,
                     FDiscount = p.FDiscount,
@@ -63,7 +66,17 @@ namespace ApiProject.Services
                 })
                 .ToListAsync();
 
-            return products;
+            return new ResultPagedDTO<ResProductListDTO>
+            {
+                Data = products,
+                Pagination = new ResPaginationDTO
+                {
+                    TotalCount = totalCount,
+                    PageSize = filter.PageSize,
+                    CurrentPage = filter.PageNumber,
+                    TotalPages = (int)Math.Ceiling(totalCount / (double)filter.PageSize)
+                }
+            };
         }
 
 
@@ -129,17 +142,128 @@ namespace ApiProject.Services
 
         }
 
-        //public async Task<bool> SoftDeleteAsync(int id)
-        //{
-        //    var p = await _db.TProducts.FirstOrDefaultAsync(p => p.FProductId == id);
-        //    if (p == null) return false;
-        //    p.FPstatus = 4; // 4=刪除
-        //    p.FUpdateTime = DateTime.Now;
-        //    await _db.SaveChangesAsync();
-        //    return true;
-        //}
+        public async Task<ResFilterOptionsDTO> GetFilterOptionsAsync()
+        {
+            // 分類
+            var categories = await _db.TCategories
+                .Include(c => c.TProducts)
+                .Where(c => c.FIsActive == true)
+                .Select(c => new ResCategoryOptionDTO
+                {
+                    CategoryId = c.FCategoryId,
+                    Name = c.FName,
+                    ProductCount = c.TProducts.Count(p => p.FPstatus == 1)
+                })
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            // 價格範圍
+            var priceRange = await _db.TProductVariants
+                .Where(v => v.FPrice.HasValue && v.FPstatus == 1)
+                .GroupBy(v => 1)
+                .Select(g => new ResPriceRangeDTO
+                {
+                    MinPrice = g.Min(v => v.FPrice.Value),
+                    MaxPrice = g.Max(v => v.FPrice.Value)
+                })
+                .FirstOrDefaultAsync() ?? new ResPriceRangeDTO { MinPrice = 0, MaxPrice = 0 };
+
+            // 狀態
+            var statusOptions = await _db.TPstatuses
+                .OrderBy(s => s.FPStatus)
+                .Select(s => new ResStatusOptionDTO
+                {
+                    FPStatus = s.FPStatus,
+                    FPStatusName = s.FPStatusName
+                })
+                .ToListAsync();
+
+            return new ResFilterOptionsDTO
+            {
+                Categories = categories,
+                PriceRange = priceRange,
+                StatusOptions = statusOptions
+            };
+        }
 
 
+        public async Task<ResProductDetailDTO> GetProductByIdAsync(int id)
+        {
+            var product = await _db.TProducts
+                .Include(p => p.Category)
+                .Include(p => p.PStatus)
+                .Include(p => p.ProductAssets)
+                .Include(p => p.ProductVariants)
+                    .ThenInclude(v => v.Color)
+                .Where(p => p.FProductId == id)
+                .Select(p => new ResProductDetailDTO
+                {
+                    FProductId = p.FProductId,
+                    FName = p.FName,
+                    FDescription = p.FDescription,
+                    FCategoryId = p.FCategoryId,
+                    CategoryName = p.Category.FName,
+                    FPstatus = p.FPstatus,
+                    StatusName = p.PStatus.FPStatusName,
+                    FWarrantyMonth = p.FWarrantyMonth,
+                    FAssemblyRequired = p.FAssemblyRequired,
+                    FAssemblyPart = p.FAssemblyPart,
+                    FDiscount = p.FDiscount,
+                    MainImageUrl = p.ProductAssets
+                        .Where(a => a.FIsPrimary == true)
+                        .OrderBy(a => a.FSortOrder)
+                        .Select(a => a.FUrl)
+                        .FirstOrDefault() ?? "/images/default.png",
+                    TotalStock = p.ProductVariants.Sum(v => v.FStock ?? 0),
+                    IsAvailable = p.FPstatus == 1,
+                    MinPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Min(v => v.FPrice),
+                    MaxPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Max(v => v.FPrice),
+                    FCreateTime = p.FCreateTime,
+                    FUpdateTime = p.FUpdateTime,
+
+                    Variants = p.ProductVariants.Select(v => new ResProductVariantDTO
+                    {
+                        FProductVariantId = v.FProductVariantId,
+                        FProductId = v.FProductId,
+                        FSku = v.FSku,
+                        FPrice = v.FPrice,
+                        FCost = v.FCost,
+                        FStock = v.FStock,
+                        FPstatus = v.FPstatus,
+                        FColorId = v.FColorId,
+                        ColorName = v.Color.FColorName,
+                        ColorCode = v.Color.FColorCode,
+                        FLength = v.FLength,
+                        FWidth = v.FWidth,
+                        FHeight = v.FHeight,
+                        FSizeLabel = v.FSizeLabel,
+                        FWeight = v.FWeight
+                    }).ToList(),
+
+                    Assets = p.ProductAssets
+                        .OrderBy(a => a.FSortOrder)
+                        .Select(a => new ResProductAssetDTO
+                        {
+                            FAssetId = a.FAssetId,
+                            FProductId = a.FProductId,
+                            FProductVariantId = a.FProductVariantId,
+                            FPicture = a.FPicture,
+                            FAssetType = a.FAssetType,
+                            FUrl = a.FUrl,
+                            FIsPrimary = a.FIsPrimary,
+                            FSortOrder = a.FSortOrder
+                        }).ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            return product;
+        }
+
+
+
+        /*
+         ///////////////////////////////////////////////
+         */
         private IQueryable<TProduct> ApplyFilters(IQueryable<TProduct> query, ReqProductFilterDTO filter)
         {
             if (filter.CategoryId.HasValue)
