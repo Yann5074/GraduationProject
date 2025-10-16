@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GraduationProject.Controllers
 {
-    public class MemberController : Controller
+    public class MemberController : SuperController
     {
         //DI 測試
         private readonly IMemberService _MemberService;

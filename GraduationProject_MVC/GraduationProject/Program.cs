@@ -21,7 +21,6 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// ����������@�]����@��^
 builder.Services.AddScoped<IEmployeeService, CEmployeeService>();
 builder.Services.AddScoped<IPasswordHasher<TEmployee>, PasswordHasher<TEmployee>>();
 builder.Services.AddScoped<IAuthService, CAuthService>();
@@ -29,18 +28,13 @@ builder.Services.AddScoped<IAuthService, CAuthService>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession(o =>
 {
-    // Session �L���ɶ� �� 4 �p�ɨS�ʧ@�N����
     o.IdleTimeout = TimeSpan.FromHours(4);
 
-    // Cookie �u��z�L HTTP �s���]�s���� JS Ū����^
-    // ���� XSS ����
     o.Cookie.HttpOnly = true;
 
-    // �i�D GDPR / Cookie �P�N����G�o�� Cookie �O�u�����n���v��
     o.Cookie.IsEssential = true;
 });
 
-//���U (�`�J)
 builder.Services.AddDbContext<dbFurniMartContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart"));

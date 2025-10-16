@@ -53,7 +53,8 @@ namespace GraduationProject.Services
                     HeadShot = user.FHeadShot,
                     Account = user.FAccount!,
                     Email = user.FEmail,
-                    RoleId = user.FRoleId
+                    RoleId = user.FRoleId,
+                    StatusId = user.FStatusId
                 }
             };
         }

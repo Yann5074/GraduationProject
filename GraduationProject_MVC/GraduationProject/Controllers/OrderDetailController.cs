@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GraduationProject.Controllers
 {
-    public class OrderDetailController : Controller
+    public class OrderDetailController : SuperController
     {
         private readonly IOrderDetailService _orderDetailService;
         public OrderDetailController(IOrderDetailService orderDetailService)

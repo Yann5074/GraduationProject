@@ -13,7 +13,6 @@ namespace GraduationProject.Controllers
 {
     public class HomeController : Controller
     {
-        //�غc�l�`�J
         private readonly ILogger<HomeController> _logger;
         private readonly IAuthService _auth;
         public HomeController(ILogger<HomeController> logger, IAuthService auth)
@@ -34,17 +33,15 @@ namespace GraduationProject.Controllers
             var result = await _auth.AuthenticateAsync(vm.txtAccount, vm.txtPassword, ct);
             if (!result.Success || result.User is null)
             {
-                ModelState.AddModelError(string.Empty, result.Error ?? "�n�J����");
+                ModelState.AddModelError(string.Empty, result.Error ?? "帳號或密碼有誤");
                 return View(vm);
             }
 
-            // �u�s�ݭn������ Session�]�A�쥻�� SetJson�^
             HttpContext.Session.SetString(
                CEmployeeDictionary.SK_LOGINED_USER,
                JsonSerializer.Serialize(result.User)
             );
 
-            // Ū���]�b�O�B�ήɡ^
             var json = HttpContext.Session.GetString(CEmployeeDictionary.SK_LOGINED_USER);
             var user = json is null ? null : JsonSerializer.Deserialize<SessionUser>(json);
 

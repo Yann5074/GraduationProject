@@ -12,7 +12,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace GraduationProject.Controllers
 {
 
-    public class ProductsController : Controller
+    public class ProductsController : SuperController
     {
         
         private readonly IProductService _ProductService;

@@ -1,13 +1,16 @@
-﻿using GraduationProject.DTOs;
+﻿using GraduationProject.Dictionary;
+using GraduationProject.DTOs;
 using GraduationProject.Interfaces;
 using GraduationProject.Models;
 using GraduationProject.ViewModels;
 using Humanizer;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace GraduationProject.Controllers
 {
-    public class EmployeeController : Controller
+    public class EmployeeController : SuperController
     {
         //建構子注入
         private readonly IEmployeeService _svc;
@@ -68,9 +71,17 @@ namespace GraduationProject.Controllers
         }
 
         //Delete
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int? id)
         {
+            // 讀 Session 判斷是否管理者（RoleId==4 為管理者）
+            var json = HttpContext.Session.GetString(CEmployeeDictionary.SK_LOGINED_USER);
+            var me = json is null ? null : JsonSerializer.Deserialize<SessionUser>(json);
+            if (me?.RoleId != 4 && me?.StatusId !=1) return Forbid();
+
             var delete = await _svc.DeleteEmployeeAsync(id);
+            TempData[delete ? "Message" : "Error"] = delete ? "已註銷該員工帳號。" : "刪除失敗：找不到資料或已註銷。";
             return RedirectToAction(nameof(List));
         }
 

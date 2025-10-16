@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GraduationProject.Controllers
 {
-    public class OrderController : Controller
+    public class OrderController : SuperController
     {
         private readonly IOrderService _orderService;
         public OrderController(IOrderService orderService)

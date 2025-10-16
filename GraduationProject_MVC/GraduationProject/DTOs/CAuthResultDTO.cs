@@ -14,5 +14,6 @@
         public string Account { get; init; } = default!;
         public string? Email { get; init; }
         public int? RoleId { get; init; }
+        public int? StatusId { get; init; }
     }
 }
