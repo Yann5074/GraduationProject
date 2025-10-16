@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GraduationProject.Controllers
 {
-    public class ChatRoomController : Controller
+    public class ChatRoomController : SuperController
     {
         //建構子示範直接把 DbContext 注入控制器
         dbFurniMartContext _context;

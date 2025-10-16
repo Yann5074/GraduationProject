@@ -1,6 +1,12 @@
-﻿@model GraduationProject.ViewModels.CEmployeeEditViewModel
+﻿@using GraduationProject.DTOs
+@using GraduationProject.Dictionary
+@using System.Text.Json
+@model GraduationProject.ViewModels.CEmployeeEditViewModel
 
 @{
+    // var json = Context.Session.GetString(CEmployeeDictionary.SK_LOGINED_USER);
+    // var me = json is null ? null : JsonSerializer.Deserialize<SessionUser>(json);
+    // var isAdmin = me?.RoleId == 4; 
     ViewData["Title"] = "Edit";
 }
 
@@ -175,7 +181,7 @@
 
             <div class="d-flex gap-2">
                 <input type="submit" value="送出並儲存" class="btn btn-primary" />
-                <a asp-action="Details" asp-route-id="@Model.EmployeeId" class="btn btn-secondary">取消</a>
+                <a asp-action="List" class="btn btn-secondary">取消</a>
             </div>
         </form>
     </div>

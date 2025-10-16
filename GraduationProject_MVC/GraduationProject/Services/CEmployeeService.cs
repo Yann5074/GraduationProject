@@ -95,15 +95,13 @@ namespace GraduationProject.Services
         //Delete
         public async Task<bool> DeleteEmployeeAsync(int? id)
         {
-            if (id == null)
-                return false;
-            var emp = await _db.TEmployees
-                           .FirstOrDefaultAsync(e => e.FEmployeeId == id.Value);
-            if (emp is null) return false;
+            if (id is null || id <= 0) return false;
 
-            emp.FStatusId = 4; // 軟刪除
-            await _db.SaveChangesAsync();
-            return true;
+            var affected = await _db.TEmployees
+                .Where(e => e.FEmployeeId == id.Value && e.FStatusId != 4)
+                .ExecuteUpdateAsync(s => s.SetProperty(e => e.FStatusId, 4));
+
+            return affected > 0;
         }
 
         //Edit畫面

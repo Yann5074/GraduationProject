@@ -1,6 +1,31 @@
 ﻿@using GraduationProject.DTOs
 @model IEnumerable<CEmployeeListItemDTO>
+@using GraduationProject.Dictionary
+@using System.Text.Json
 
+@{
+    var json = Context.Session.GetString(CEmployeeDictionary.SK_LOGINED_USER);
+    var me = json is null ? null : JsonSerializer.Deserialize<SessionUser>(json);
+    var isAdmin = me?.RoleId == 4 && me?.StatusId == 1; 
+
+    var okMsg = TempData["Message"] as string;
+    var errMsg = TempData["Error"] as string;
+}
+
+@if (!string.IsNullOrEmpty(okMsg))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @okMsg
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (!string.IsNullOrEmpty(errMsg))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @errMsg
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
 <div class="container-xxl py-4">
     <!-- Header / Toolbar -->
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
@@ -83,13 +108,20 @@
                                         <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info me-1">
                                             <i class="bi bi-eye"></i> 詳細
                                         </a>
-                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary me-1">
-                                            <i class="bi bi-pencil"></i> 修改
-                                        </a>
-                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger"
-                                           onclick="return confirm('確定要註銷此帳號嗎？')">
-                                            <i class="bi bi-trash"></i> 註銷
-                                        </a>
+                                        @if (isAdmin)
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary me-1">
+                                                <i class="bi bi-pencil"></i> 修改
+                                            </a>
+                                            <form asp-controller="Employee" asp-action="Delete" asp-route-id="@item.Id"
+                                                  method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                        onclick="return confirm('確定要註銷此帳號嗎？')">
+                                                    <i class="bi bi-trash"></i> 註銷
+                                                </button>
+                                            </form>
+                                        }
                                     </td>
                                 </tr>
                             }
