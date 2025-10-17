@@ -121,9 +121,36 @@ namespace ApiProject.Controllers
                 Data = result ?? new List<ResProductDTO>()
             });
         }
-    
+
+
+        [HttpGet("{id:int}/similar")]
+        public async Task<IActionResult> GetSimilarProducts(int id,[FromQuery] int count = 4)
+        {
+            try
+            {
+                // 限制數量範圍
+                if (count < 1) count = 4;
+                if (count > 20) count = 20;
+
+                var result = await _ProductService.GetSimilarProductsAsync(id, count);
+
+                return Ok(new ResApiResponseDTO<List<ResProductListDTO>>
+                {
+                    Success = true,
+                    Message = "取得相似商品成功",
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ResApiResponseDTO<object>
+                {
+                    Success = false,
+                    Message = $"取得相似商品失敗: {ex.Message}",
+                    Data = null
+                });
+            }
+        }
+
     }
-
-
-    
 }
