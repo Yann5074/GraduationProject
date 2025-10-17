@@ -48,6 +48,14 @@ namespace GraduationProject.Controllers
             return RedirectToAction("Index", "Home");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();               // 清掉登入資料
+            return RedirectToAction("Login", "Home");  // 回登入頁
+        }
+
         public IActionResult Index()
         {
             return View();

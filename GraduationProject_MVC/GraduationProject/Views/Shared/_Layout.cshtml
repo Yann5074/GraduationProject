@@ -67,7 +67,11 @@
                         </li>
                     </ul>
                     @* <partial name="_LoginPartial" /> *@
-                    <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Login">登入</a>
+                    @* <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Login">登入</a> *@
+                    <form asp-controller="Home" asp-action="Logout" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger">登出</button>
+                    </form>
                 </div>
             </div>
         </nav>
