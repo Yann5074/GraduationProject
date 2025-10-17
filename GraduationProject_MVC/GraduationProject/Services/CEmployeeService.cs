@@ -1,4 +1,5 @@
 ﻿using GraduationProject.DTOs;
+using GraduationProject.Enum;
 using GraduationProject.Interfaces;
 using GraduationProject.Models;
 using GraduationProject.ViewModels;
@@ -18,28 +19,35 @@ namespace GraduationProject.Services
             _hasher = hasher;
         }
 
+        // 關鍵字搜尋方法
+        private static IQueryable<TEmployee> KeywordFilter(IQueryable<TEmployee> q, string? keyword)
+        {
+            if (string.IsNullOrWhiteSpace(keyword)) return q;
+
+            var pattern = $"%{keyword.Trim()}%";
+            return q.Where(e =>
+                EF.Functions.Like(e.FName ?? "", pattern) ||
+                EF.Functions.Like(e.FPhone ?? "", pattern) ||
+                EF.Functions.Like(e.FEmail ?? "", pattern) ||
+                EF.Functions.Like(e.FBloodType ?? "", pattern) ||
+                EF.Functions.Like(e.FAccount ?? "", pattern) ||
+                (e.FGenderNavigation != null && EF.Functions.Like(e.FGenderNavigation.FGenderName ?? "", pattern)) ||
+                (e.FRole != null && EF.Functions.Like(e.FRole.FRoleClass ?? "", pattern)) ||
+                (e.FStatus != null && EF.Functions.Like(e.FStatus.FStatus ?? "", pattern))
+            );
+        }
+
         //List
         public async Task<List<CEmployeeListItemDTO>> GetEmployeeListAsync(
             string? keyword, CancellationToken ct = default)
         {
             // 基底查詢：不含 Include
-            IQueryable<TEmployee> q = _db.TEmployees.AsNoTracking();
+            IQueryable<TEmployee> q = _db.TEmployees
+                .AsNoTracking()
+                .Where(e => e.FStatusId != (int)CEmployeeStatusEnum.Deleted);//帳號註銷不顯示
 
-            // 關鍵字條件
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                var pattern = $"%{keyword.Trim()}%";
-                q = q.Where(e =>
-                    EF.Functions.Like(e.FName ?? "", pattern) ||
-                    EF.Functions.Like(e.FPhone ?? "", pattern) ||
-                    EF.Functions.Like(e.FEmail ?? "", pattern) ||
-                    EF.Functions.Like(e.FBloodType ?? "", pattern) ||
-                    EF.Functions.Like(e.FAccount ?? "", pattern) ||
-                    (e.FGenderNavigation != null && EF.Functions.Like(e.FGenderNavigation.FGenderName ?? "", pattern)) ||
-                    (e.FRole != null && EF.Functions.Like(e.FRole.FRoleClass ?? "", pattern)) ||
-                    (e.FStatus != null && EF.Functions.Like(e.FStatus.FStatus ?? "", pattern))
-                );
-            }
+            // 關鍵字方法
+            q = KeywordFilter(q, keyword);
 
             return await q.OrderBy(e => e.FEmployeeId)
                           .Select(e => new CEmployeeListItemDTO
@@ -57,6 +65,35 @@ namespace GraduationProject.Services
                           })
                           .ToListAsync(ct);
         }
+
+        //Deleted List
+        public async Task<List<CEmployeeListItemDTO>> GetEmployeeDeletedListAsync(
+           string? keyword, CancellationToken ct = default)
+        {
+            IQueryable<TEmployee> q = _db.TEmployees
+               .AsNoTracking()
+               .Where(e => e.FStatusId == (int)CEmployeeStatusEnum.Deleted);//只顯示註銷帳號
+
+            // 關鍵字方法
+            q = KeywordFilter(q, keyword);
+
+            return await q.OrderBy(e => e.FEmployeeId)
+                          .Select(e => new CEmployeeListItemDTO
+                          {
+                              Id = e.FEmployeeId,
+                              HeadShot = e.FHeadShot,
+                              Name = e.FName,
+                              Phone = e.FPhone,
+                              Email = e.FEmail,
+                              BloodType = e.FBloodType,
+                              Account = e.FAccount,
+                              GenderName = e.FGenderNavigation != null ? e.FGenderNavigation.FGenderName : null,
+                              RoleClass = e.FRole != null ? e.FRole.FRoleClass : null,
+                              Status = e.FStatus != null ? e.FStatus.FStatus : null
+                          })
+                          .ToListAsync(ct);
+        }
+
         //Create
         public async Task<int> CreateEmployeeAsync(CEmployeeCreateDTO dto, CancellationToken ct = default)
         {
@@ -92,7 +129,7 @@ namespace GraduationProject.Services
             return emp.FEmployeeId;
         }
 
-        //Delete
+        //FakeDelete
         public async Task<bool> DeleteEmployeeAsync(int? id)
         {
             if (id is null || id <= 0) return false;
@@ -102,6 +139,18 @@ namespace GraduationProject.Services
                 .ExecuteUpdateAsync(s => s.SetProperty(e => e.FStatusId, 4));
 
             return affected > 0;
+        }
+
+        //ReallyDelete
+        public async Task<bool> ReallyDeleteEmployeeAsync(int? id)
+        {
+            if (id is null || id <= 0) return false;
+
+            var delete = await _db.TEmployees
+                .Where(e => e.FEmployeeId == id.Value && e.FStatusId == 4)
+                .ExecuteDeleteAsync();
+
+            return delete > 0;
         }
 
         //Edit畫面
@@ -160,8 +209,8 @@ namespace GraduationProject.Services
                 .FirstOrDefaultAsync(ct);
         }
 
-        //Detail
-        public async Task<CEmployeeDetailDTO?> DetailEmployeeAsync(int? id, CancellationToken ct = default)
+        //Details
+        public async Task<CEmployeeDetailDTO?> DetailEmployeeAsync(int? id, bool fromDeleted = false, CancellationToken ct = default)
         {
             return await _db.TEmployees
             .AsNoTracking()
