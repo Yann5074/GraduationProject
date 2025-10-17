@@ -91,11 +91,18 @@ namespace GraduationProject.Controllers
             return RedirectToAction(nameof(List));
         }
 
-        //Delete
-        public async Task<IActionResult> Delete(int? id)
+        //ReallyDelete
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReallyDelete(int? id)
         {
-            var delete = await _svc.DeleteEmployeeAsync(id);
-            return RedirectToAction(nameof(List));
+            // 讀 Session 判斷是否管理者（RoleId==4 為管理者）
+            var json = HttpContext.Session.GetString(CEmployeeDictionary.SK_LOGINED_USER);
+            var me = json is null ? null : JsonSerializer.Deserialize<SessionUser>(json);
+            if (me?.RoleId != 4 && me?.StatusId != 1) return Forbid();
+
+            var delete = await _svc.ReallyDeleteEmployeeAsync(id);
+            return RedirectToAction(nameof(DeletedList));
         }
 
         //Edit
