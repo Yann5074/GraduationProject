@@ -30,6 +30,13 @@ namespace GraduationProject.Controllers
             return View(items);
         }
 
+        //DeletedList
+        public async Task<IActionResult> DeletedList(CEmplKeywordViewModel vm, CancellationToken ct)
+        {
+            var items = await _svc.GetEmployeeDeletedListAsync(vm.Keyword, ct);
+            return View(items);
+        }
+
         //Create
         [HttpGet]
         public IActionResult Create(CancellationToken ct)
@@ -81,7 +88,6 @@ namespace GraduationProject.Controllers
             if (me?.RoleId != 4 && me?.StatusId !=1) return Forbid();
 
             var delete = await _svc.DeleteEmployeeAsync(id);
-            TempData[delete ? "Message" : "Error"] = delete ? "已註銷該員工帳號。" : "刪除失敗：找不到資料或已註銷。";
             return RedirectToAction(nameof(List));
         }
 
@@ -94,11 +100,12 @@ namespace GraduationProject.Controllers
 
         //Edit
         [HttpGet]
-        public async Task<IActionResult> Edit(int id, CancellationToken ct)
+        public async Task<IActionResult> Edit(int id, bool fromDeleted = false)
         {
-            var vm = await _svc.GetEmployeeEditVmAsync(id, ct);
+            var vm = await _svc.GetEmployeeEditVmAsync(id);
             if (vm is null) return NotFound();
-
+            
+            vm.FromDeleted = fromDeleted;
             return View(vm);
         }
         [HttpPost]
@@ -165,9 +172,9 @@ namespace GraduationProject.Controllers
 
         //Details
         [HttpGet]
-        public async Task<IActionResult> Details(int id, CancellationToken ct)
+        public async Task<IActionResult> Details(int id, bool fromDeleted = false, CancellationToken ct = default)
         {
-            var dto = await _svc.DetailEmployeeAsync(id, ct);
+            var dto = await _svc.DetailEmployeeAsync(id);
             if (dto is null) return NotFound();
 
             var vm = new CEmployeeDetailViewModel
@@ -201,11 +208,8 @@ namespace GraduationProject.Controllers
                 FHireDate = dto.FHireDate,
                 FLoginTime = dto.FLoginTime,
                 FChangePasswordTime = dto.FChangePasswordTime,
-                // 可根據使用者權限設定
-                CanEdit = User.IsInRole("管理者"),
-                CanDelete = User.IsInRole("管理者")
+                FromDeleted = fromDeleted
             };
-
             return View(vm);
         }
 

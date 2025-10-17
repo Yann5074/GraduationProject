@@ -23,5 +23,6 @@ namespace GraduationProject.ViewModels
         public DateTime? FLoginTime { get; set; }
         public DateTime? FChangePasswordTime { get; set; }
         public IFormFile? Photo { get; set; }
+        public bool FromDeleted { get; set; }
     }
 }

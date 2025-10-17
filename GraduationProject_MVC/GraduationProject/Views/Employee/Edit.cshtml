@@ -20,6 +20,8 @@
         <form asp-action="Edit" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
             <input type="hidden" name="fEmployeeId" value="@Model.EmployeeId" />
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="FromDeleted" />
 
             <div class="mb-3">
                 <label asp-for="FName" class="form-label">姓名</label>
@@ -181,7 +183,8 @@
 
             <div class="d-flex gap-2">
                 <input type="submit" value="送出並儲存" class="btn btn-primary" />
-                <a asp-action="List" class="btn btn-secondary">取消</a>
+                <a asp-action="@(Model.FromDeleted ? "DeletedList" : "List")"
+                   class="btn btn-secondary">取消</a>
             </div>
         </form>
     </div>

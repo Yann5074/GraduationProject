@@ -8,11 +8,14 @@ namespace GraduationProject.Interfaces
     {
         Task<List<CEmployeeListItemDTO>> GetEmployeeListAsync(
         string? keyword, CancellationToken ct = default);
+        Task<List<CEmployeeListItemDTO>> GetEmployeeDeletedListAsync(
+        string? keyword, CancellationToken ct = default);
         Task<int> CreateEmployeeAsync(CEmployeeCreateDTO dto, CancellationToken ct = default);
         Task<bool> DeleteEmployeeAsync(int? id);
+        Task<bool> ReallyDeleteEmployeeAsync(int? id);
         Task<bool> EditEmployeeAsync(int id, CEmployeeEditDTO dto, CancellationToken ct = default);
         // 讀取 Edit 畫面的資料（直接回 VM，找不到回 null）
         Task<CEmployeeEditViewModel?> GetEmployeeEditVmAsync(int id, CancellationToken ct = default);
-        Task<CEmployeeDetailDTO?> DetailEmployeeAsync(int? id, CancellationToken ct = default);
+        Task<CEmployeeDetailDTO?> DetailEmployeeAsync(int? id, bool fromDeleted = false, CancellationToken ct = default);
     }
 }
