@@ -11,7 +11,8 @@ namespace ApiProject.Interfaces
         Task<ResultPagedDTO<ResProductListDTO>> GetAllProductsAsync(ReqProductFilterDTO filter);
         Task<ResFilterOptionsDTO> GetFilterOptionsAsync();
         Task<ResProductDetailDTO> GetProductByIdAsync(int id);
-        //Task<bool> UpdateStockAsync(int variantId, int quantity);
+        Task<List<ResProductListDTO>> GetSimilarProductsAsync(int productId, int count = 4);
+
 
     }
 

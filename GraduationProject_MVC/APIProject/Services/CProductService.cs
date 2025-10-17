@@ -260,6 +260,90 @@ namespace ApiProject.Services
         }
 
 
+        public async Task<List<ResProductListDTO>> GetSimilarProductsAsync(int productId, int count = 4)
+        {
+            // 1. 先取得當前商品的資訊
+            var currentProduct = await _db.TProducts
+                .Include(p => p.ProductVariants)
+                .Where(p => p.FProductId == productId)
+                .Select(p => new
+                {
+                    p.FProductId,
+                    p.FCategoryId,
+                    // 計算該商品的平均價格
+                    AvgPrice = p.ProductVariants
+                        .Where(v => v.FPrice.HasValue)
+                        .Average(v => v.FPrice)
+                })
+                .FirstOrDefaultAsync();
+
+            // 如果找不到商品，回傳空列表
+            if (currentProduct == null)
+                return new List<ResProductListDTO>();
+
+            // 2. 計算價格範圍（±30%）
+            decimal? minPrice = null;
+            decimal? maxPrice = null;
+
+            if (currentProduct.AvgPrice.HasValue)
+            {
+                minPrice = currentProduct.AvgPrice.Value * 0.7m;  // -30%
+                maxPrice = currentProduct.AvgPrice.Value * 1.3m;  // +30%
+            }
+
+            // 3. 查詢相似商品
+            var query = _db.TProducts
+                .Include(p => p.Category)
+                .Include(p => p.PStatus)
+                .Include(p => p.ProductAssets)
+                .Include(p => p.ProductVariants)
+                    .ThenInclude(v => v.Color)
+                .Where(p =>
+                    p.FProductId != productId &&           // 排除當前商品
+                    p.FPstatus == 1 &&                     // 只要上架的商品
+                    p.FCategoryId == currentProduct.FCategoryId  // 相同分類
+                )
+                .AsQueryable();
+
+            // 4. 如果有價格範圍，加入價格篩選
+            if (minPrice.HasValue && maxPrice.HasValue)
+            {
+                query = query.Where(p => p.ProductVariants
+                    .Any(v => v.FPrice >= minPrice && v.FPrice <= maxPrice));
+            }
+
+            // 5. 取得指定數量的商品
+            var similarProducts = await query
+                .Take(count)
+                .Select(p => new ResProductListDTO
+                {
+                    FProductId = p.FProductId,
+                    FName = p.FName,
+                    FDescription = p.FDescription,
+                    FCategoryId = p.FCategoryId,
+                    CategoryName = p.Category.FName,
+                    FPstatus = p.FPstatus,
+                    StatusName = p.PStatus.FPstatusName,
+                    FWarrantyMonth = p.FWarrantyMonth,
+                    FAssemblyRequired = p.FAssemblyRequired,
+                    FDiscount = p.FDiscount,
+                    MainImageUrl = p.ProductAssets
+                        .Where(a => a.FIsPrimary == true)
+                        .OrderBy(a => a.FSortOrder)
+                        .Select(a => a.FUrl)
+                        .FirstOrDefault() ?? "/images/default.png",
+                    TotalStock = p.ProductVariants.Sum(v => v.FStock ?? 0),
+                    IsAvailable = p.FPstatus == 1 && p.ProductVariants.Sum(v => v.FStock ?? 0) > 0,
+                    MinPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Min(v => v.FPrice),
+                    MaxPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Max(v => v.FPrice),
+                    FCreateTime = p.FCreateTime,
+                    FUpdateTime = p.FUpdateTime
+                })
+                .ToListAsync();
+
+            return similarProducts;
+        }
+
 
         /*
          ///////////////////////////////////////////////
