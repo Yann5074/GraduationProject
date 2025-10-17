@@ -101,12 +101,12 @@
                                                class="btn btn-sm btn-outline-primary">
                                                 <i class="bi bi-pencil"></i> 修改
                                             </a>
-                                            <form asp-controller="Employee" asp-action="Delete" asp-route-id="@item.Id"
+                                            <form asp-controller="Employee" asp-action="ReallyDelete" asp-route-id="@item.Id"
                                                   method="post" class="d-inline">
                                                 @Html.AntiForgeryToken()
                                                 <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                        onclick="return confirm('確定要註銷此帳號嗎？')">
-                                                    <i class="bi bi-trash"></i> 註銷
+                                                        onclick="return confirm('確定要永久刪除此帳號嗎？\n刪除後將無法復原!')">
+                                                    <i class="bi bi-trash"></i> 永久刪除
                                                 </button>
                                             </form>
                                         }
