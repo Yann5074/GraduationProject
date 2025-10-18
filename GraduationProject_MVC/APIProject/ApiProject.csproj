@@ -20,4 +20,8 @@
     <Folder Include="wwwroot\MemberHeadImages\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\MemberHeadImages\" />
+  </ItemGroup>
+
 </Project>

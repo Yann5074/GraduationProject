@@ -200,7 +200,6 @@ namespace GraduationProject.Controllers
         }
 
 
-
         public async Task<IActionResult> Details(int? id, CancellationToken ct = default)
         {
             if (id is null) return RedirectToAction("List");
