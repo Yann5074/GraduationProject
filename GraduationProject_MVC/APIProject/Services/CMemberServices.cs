@@ -202,9 +202,13 @@ namespace ApiProject.Services
         //登出
         public async Task<ResultDTO> MemberLogoutAsync(CancellationToken ct = default)
         {
-            // 取當前 HttpContext；若為 null 表示非 HTTP 請求環境
+            // 取當前 HttpContext
             var httpCtx = _http.HttpContext ?? throw new InvalidOperationException("無法取得目前的 HTTP 內容");
 
+            // ✅ 清除 Session
+            httpCtx.Session.Clear();
+
+            // ✅ 登出 Cookie（會讓 [Authorize] 失效）
             await httpCtx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             return new ResultDTO

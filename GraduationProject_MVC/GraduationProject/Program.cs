@@ -5,6 +5,8 @@ using GraduationProject.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -78,7 +80,16 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+var mvcSharedImagesPath = Path.GetFullPath(
+    Path.Combine(builder.Environment.ContentRootPath, "..", "SharedStorage", "MemberHeadImages")
+);
+Directory.CreateDirectory(mvcSharedImagesPath);
 
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(mvcSharedImagesPath),
+    RequestPath = "/MemberHeadImages"
+});
 app.UseRouting();
 
 app.UseSession();

@@ -1,4 +1,6 @@
-﻿using ApiProject.DTOs;
+﻿using ApiProject.Dictionary;
+using ApiProject.DTOs;
+using ApiProject.Infrastructure;
 using ApiProject.Interfaces;
 using ApiProject.Models;
 using Microsoft.AspNetCore.Authentication;
@@ -86,22 +88,31 @@ namespace ApiProject.Controllers
             var m = await _memberService.MemberLoginAsync(req, ct);
             if (m == null) return Unauthorized(new { message = "帳號或密碼錯誤" });
 
-            //建立「Claims」（身分資訊）
-            var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.NameIdentifier, m.MemberId.ToString()),
-                    new Claim(ClaimTypes.Name, m.Account),
-                    new Claim("displayName", m.DisplayName ?? string.Empty),
-                };
-            //建立「身份（Identity）」與「主體（Principal）」
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var principal = new ClaimsPrincipal(identity);
-            //寫入 Cookie（登入成功）
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                principal,
-                new AuthenticationProperties { IsPersistent = true });
+            ////建立「Claims」（身分資訊）
+            //var claims = new List<Claim>
+            //    {
+            //        new Claim(ClaimTypes.NameIdentifier, m.MemberId.ToString()),
+            //        new Claim(ClaimTypes.Name, m.Account),
+            //        new Claim("displayName", m.DisplayName ?? string.Empty),
+            //    };
+            ////建立「身份（Identity）」與「主體（Principal）」
+            //var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            //var principal = new ClaimsPrincipal(identity);
+            ////寫入 Cookie（登入成功）
 
+            //await HttpContext.SignInAsync(
+            //    CookieAuthenticationDefaults.AuthenticationScheme,
+            //    principal,
+            //    new AuthenticationProperties { IsPersistent = true });
+
+            // (B) ✅ CDictionary + Session：把常用資訊放進去
+            HttpContext.Session.Clear(); // ✅ 防 session 固定攻擊
+            HttpContext.Session.SetString(CMemberDictionary.SK_LOGIN_ID, m.MemberId.ToString());
+            HttpContext.Session.SetString(CMemberDictionary.SK_LOGIN_ACCOUNT, m.Account);
+            HttpContext.Session.SetString(CMemberDictionary.SK_LOGIN_NAME, m.DisplayName ?? string.Empty);
+
+            // 整包 DTO（選用）
+            HttpContext.Session.SetObject(CMemberDictionary.SK_LOGIN_OBJECT, m);
             return Ok(m); // 或 Ok(m) 也可
         }
 
@@ -116,7 +127,33 @@ namespace ApiProject.Controllers
             return StatusCode(result.Code, result); // 這裡選擇 200 + 訊息，前端好顯示
         }
 
-        // 5) 修改密碼
+        // 5) 取得個資
+        // GET /api/members/me
+        [HttpGet("me")]
+        public IActionResult GetMe()
+        {
+            var dto = HttpContext.Session.GetObject<ResMemberDTO>(CMemberDictionary.SK_LOGIN_OBJECT);
+            if (dto != null)
+                return Ok(dto);
+
+            // 萬一只存了簡單欄位，備用
+            var idStr = HttpContext.Session.GetString(CMemberDictionary.SK_LOGIN_ID);
+            var acct = HttpContext.Session.GetString(CMemberDictionary.SK_LOGIN_ACCOUNT);
+            var display = HttpContext.Session.GetString(CMemberDictionary.SK_LOGIN_NAME);
+
+            if (string.IsNullOrEmpty(idStr))
+                return Unauthorized(new { message = "Session 過期，請重新登入" });
+
+            return Ok(new
+            {
+                MemberId = int.Parse(idStr),
+                Account = acct,
+                DisplayName = display
+            });
+
+        }
+
+        // 6) 修改密碼
         // PUT /api/members/me/UpdatePassword
         [Authorize]
         [HttpPut("me/UpdatePassword")]
@@ -157,7 +194,7 @@ namespace ApiProject.Controllers
         //    }
         //}
 
-        // 6) 上傳大頭貼
+        // 7) 上傳大頭貼
         // POST /api/member/me/uploadphoto
         [Authorize]
         [HttpPost("me/uploadphoto")]
@@ -171,44 +208,44 @@ namespace ApiProject.Controllers
 
             // 1) 基本限制
             const long MAX_BYTES = 2 * 1024 * 1024; // 2MB
-            if (file.Length > MAX_BYTES)
-                return BadRequest(new { message = "檔案過大，限制 2MB 以內" });
+            if (file.Length > MAX_BYTES) return BadRequest(new { message = "檔案過大，限制 2MB 以內" });
 
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             var okExts = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-            if (!okExts.Contains(ext))
-                return BadRequest(new { message = "僅支援 jpg、jpeg、png、webp" });
+            if (!okExts.Contains(ext)) return BadRequest(new { message = "僅支援 jpg、jpeg、png、webp" });
 
             var okContentTypes = new[] { "image/jpeg", "image/png", "image/webp" };
             if (!okContentTypes.Contains(file.ContentType.ToLowerInvariant()))
                 return BadRequest(new { message = "Content-Type 不正確" });
 
-            // 2) 取得登入者 Id
+            // 2) 取得登入者 Id（只用 Session 也可：int.Parse(HttpContext.Session.GetString(...))）
             var memberId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
             // 3) 取會員（要追蹤）
             var member = await _db.TMembers.FirstOrDefaultAsync(m => m.FMemberId == memberId, ct);
             if (member == null) return BadRequest(new { message = "找不到會員資料" });
 
-            // 4) 準備資料夾/檔名
-            var webRoot = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var folder = Path.Combine(webRoot, "MemberHeadImages");
-            if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+            // 4) 準備「共用資料夾」與檔名  🔁 這段改成 SharedStorage
+            //    方案根/SharedStorage/MemberHeadImages
+            var sharedRoot = Path.GetFullPath(
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "SharedStorage", "MemberHeadImages")
+            );
+            Directory.CreateDirectory(sharedRoot);
 
             var fileName = $"{memberId}_{DateTime.UtcNow.Ticks}_{Guid.NewGuid():N}{ext}";
-            var fullPath = Path.Combine(folder, fileName);
+            var fullPath = Path.Combine(sharedRoot, fileName);
 
             // 5) 寫檔
-            using (var stream = System.IO.File.Create(fullPath))
+            await using (var stream = System.IO.File.Create(fullPath))
             {
                 await file.CopyToAsync(stream, ct);
             }
 
-            // 6) 刪舊檔（若不是預設）
+            // 6) 刪舊檔（若不是預設） 🔁 也要用 sharedRoot
             if (!string.IsNullOrWhiteSpace(member.FMemberImage) &&
                 !string.Equals(member.FMemberImage, "default.png", StringComparison.OrdinalIgnoreCase))
             {
-                var oldPath = Path.Combine(folder, member.FMemberImage);
+                var oldPath = Path.Combine(sharedRoot, member.FMemberImage);
                 if (System.IO.File.Exists(oldPath))
                 {
                     try { System.IO.File.Delete(oldPath); } catch { /* ignore */ }
@@ -220,12 +257,15 @@ namespace ApiProject.Controllers
             member.FUpdateTime = DateTime.Now;
             await _db.SaveChangesAsync(ct);
 
-            // 8) 組完整網址
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var url = $"{baseUrl}/MemberHeadImages/{fileName}";
+            // 8) 回傳路徑
+            //    只要兩個專案 Program.cs 都把 /MemberHeadImages 映射到 sharedRoot，
+            //    這裡可以回相對路徑，也可以回完整 URL（都能用）
+            var relative = $"/MemberHeadImages/{fileName}";
+            var absolute = $"{Request.Scheme}://{Request.Host}{relative}";
 
-            return Ok(new { url, fileName });
+            return Ok(new { url = absolute, relative, fileName });
         }
+
 
 
     }
