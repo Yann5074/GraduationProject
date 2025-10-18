@@ -3,7 +3,7 @@
     public class ResChatRoomCreateDTO
     {
         public int FChatRoomId { get; set; }
-        public string? image { get; set; }  //會員投向
+        public string? image { get; set; }  //會員頭向
         public string? FVisitorId { get; set; }  //訪客ID
         public string FName { get; set; }  //會員名稱
         public string FStatus { get; set; }  //聊天室狀態

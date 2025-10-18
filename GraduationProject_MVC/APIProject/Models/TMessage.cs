@@ -26,4 +26,7 @@ public partial class TMessage
     public string FMetaJson { get; set; }
 
     public DateTime? FCreatedAt { get; set; }
+
+    public virtual TChatRoom ChatRoom { get; set; } = null!;
+
 }

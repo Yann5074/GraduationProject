@@ -1,6 +1,6 @@
 ﻿namespace GraduationProject.DTOs
 {
-    public class ChatRoomLlistDTO
+    public class ChatRoomListDTO
     {
 
         public string? image { get; set; } //會員頭像

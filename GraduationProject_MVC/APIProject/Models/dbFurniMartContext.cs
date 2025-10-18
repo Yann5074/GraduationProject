@@ -661,6 +661,11 @@ public partial class dbFurniMartContext : DbContext
             entity.Property(e => e.FSenderType)
                 .HasMaxLength(20)
                 .HasColumnName("fSenderType");
+            entity.HasOne(d => d.ChatRoom)         // 每個 Message 屬於一個 ChatRoom
+         .WithMany(p => p.Messages)         // 一個 ChatRoom 有多個 Message
+         .HasForeignKey(d => d.FChatRoomId) // 外鍵欄位
+         .HasConstraintName("FK_tMessage_tChatRoom"); ;
+
         });
 
         modelBuilder.Entity<TModel>(entity =>
