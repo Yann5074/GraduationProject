@@ -46,27 +46,30 @@ namespace ApiProject.Controllers
         public async Task<IActionResult> sendmessage(int? chatRoomId, string message)
         {
             //檢查聊天室是否存在
-            var chatRoom = await 
-            (from c in _context.TChatRooms 
-             join m in _context.TMembers on c.FMemberId equals m.FMemberId into gm from m in gm.DefaultIfEmpty()
-             let last = _context.TMessages
-                 .Where(msg => msg.FChatRoomId == c.FChatRoomId)
-                 .OrderByDescending(msg => msg.FCreatedAt)
-                 .FirstOrDefault()
-             where c.FChatRoomId == chatRoomId
-             select new  ResChatRoomCreateDTO
-             {
-                 FChatRoomId = c.FChatRoomId,
-                 image = (m != null && !string.IsNullOrEmpty(m.FMemberImage)) ? m.FMemberImage : "https://i.imgur.com/8Km9tLL.jpg",
-                 FVisitorId = c.FVisitorKey,
-                 FName = (m != null && !string.IsNullOrEmpty(m.FName)) ? m.FName : "訪客",
-                 FStatus = c.FStatus,
-                 Fcontent = (last != null) ? last.FContent : "",
-                 FEmployeeId = c.FEmployeeId.ToString(),
-                 FCreatedAt = c.FCreatedAt ?? DateTime.MinValue,
-                 FClosedAt = c.FClosedAt
-             }
-         
+            var room = await _context.TChatRooms
+                .Include(c => c.member)
+                .Include(c => c.Messages)
+                .Where(c => c.FChatRoomId == chatRoomId)
+                .Select(c => new ResChatRoomCreateDTO
+                {
+                    FChatRoomId = c.FChatRoomId,
+                    image = c.Member != null && !string.IsNullOrEmpty(c.Member.FMemberImage)
+                        ? c.Member.FMemberImage
+                        : "https://i.imgur.com/8Km9tLL.jpg",
+                    FVisitorId = c.FVisitorKey,
+                    FName = c.Member != null && !string.IsNullOrEmpty(c.Member.FName)
+                        ? c.Member.FName : "訪客",
+                    FStatus = c.FStatus,
+                    Fcontent = c.Messages
+                        .OrderByDescending(m => m.FCreatedAt)
+                        .Select(m => m.FContent)
+                        .FirstOrDefault(),
+                    FEmployeeId = c.FEmployeeId.ToString(),
+                    FCreatedAt = c.FCreatedAt ?? DateTime.MinValue,
+                    FClosedAt = c.FClosedAt
+                })
+                .FirstOrDefaultAsync();
+
             if (chatRoom == null)
             {
                 return NotFound("Chat room not found.");

@@ -30,4 +30,7 @@ public partial class TChatRoom
     public int? FIsBotActive { get; set; }
 
     public string FBotStateJson { get; set; }
+
+    public virtual ICollection<TMessage> Messages { get; set; } = new List<TMessage>();
+
 }

@@ -21,7 +21,7 @@ namespace GraduationProject.Controllers
         //增加一筆聊天室id    firstmessage 訪客id 會員id   (本質是留言板) 拿會員或訪客 id創留言板 
         //input  memberid  visitorid  firstmessage
         //output ChatRoomid
-        public IActionResult CreateChatRoom(int? memberid, string? visitorid)
+        public async Task<IActionResult> CreateChatRoom(int? memberid, string? visitorid)
         {
             //判斷 memberid visitorid 不能同時為空   
             if (memberid == null && visitorid == null)
@@ -38,7 +38,7 @@ namespace GraduationProject.Controllers
                 FCreatedAt = DateTime.Now,
                 FStatus = "open",
             });
-            _context.SaveChanges();
+            await _context.SaveChangesAsync(); 
             var ChatRoomid = a.Entity.FChatRoomId;
             //接著output ChatRoomid
             return View(ChatRoomid);
@@ -82,9 +82,9 @@ namespace GraduationProject.Controllers
             return View();
         }
 
-        public async Task<IActionResult> Index(int? chatRoomId)
+        public async Task<IActionResult> Index(string? q ,int? chatRoomId)
         {
-            var rooms = await (
+            var roomsQuery = await (
                 from c in _context.TChatRooms
                 join m in _context.TMembers on c.FMemberId equals m.FMemberId into gm
                 from m in gm.DefaultIfEmpty() // ← left join
@@ -93,7 +93,7 @@ namespace GraduationProject.Controllers
                     .OrderByDescending(x => x.FCreatedAt)
                     .Select(x => new { x.FCreatedAt, x.FContent })
                     .FirstOrDefault()
-                select new ChatRoomLlistDTO
+                select new ChatRoomListDTO
                 {
                     FChatRoomId = c.FChatRoomId,
                     image = (m != null && !string.IsNullOrEmpty(m.FMemberImage))
@@ -110,6 +110,18 @@ namespace GraduationProject.Controllers
                 .OrderByDescending(x => x.FLastMessageTime)
                 .ToListAsync();
 
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var qTrim = q.Trim();
+                roomsQuery = roomsQuery.Where(r =>
+                    r.FName.Contains(qTrim) ||
+                    r.FChatRoomId.ToString() == qTrim
+                ).ToList(); // ← 記憶體篩選，用 ToList()
+            }
+
+            var rooms = roomsQuery
+                .OrderByDescending(x => x.FLastMessageTime)
+                .ToList(); // ← 記憶體排序，用 ToList()，不要 Async
 
             List<MessageDto> messages = new();
             if (chatRoomId.HasValue)
@@ -132,15 +144,35 @@ namespace GraduationProject.Controllers
         }
 
 
-        //public async Task<List<TMessage>> GetMessageList(int chatRoomId)
-        //{
-        //    var message = await _context.TMessages
-        //        .Where(m => m.FChatRoomId == chatRoomId)
-        //        .OrderBy(m => m.FCreatedAt)
-        //        .ToListAsync();
+        // 送出訊息（右下輸入框）
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendMessage(int chatRoomId, string content, string senderType = "employee", string? senderId = null, string? q = null)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+                return RedirectToAction(nameof(Index), new { chatRoomId, q });
 
+            var msg = new TMessage
+            {
+                FChatRoomId = chatRoomId,
+                FSenderType = senderType,
+                FSenderId = senderId,
+                FContent = content.Trim(),
+                FCreatedAt = DateTime.Now
+            };
+            _context.TMessages.Add(msg);
 
-        //    return message;
-        //}
+            // 同步更新最後訊息時間
+            var room = await _context.TChatRooms.FirstOrDefaultAsync(r => r.FChatRoomId == chatRoomId);
+            if (room != null) 
+                
+                room.FLastMessageAt = msg.FCreatedAt;
+
+            await _context.SaveChangesAsync();
+
+            // 回到 Index 保持在原聊天室與原查詢條件
+            return RedirectToAction(nameof(Index), new { chatRoomId,     });
+        }
     }
 }
+

@@ -233,36 +233,29 @@ public partial class dbFurniMartContext : DbContext
         modelBuilder.Entity<TChatRoom>(entity =>
         {
             entity.HasKey(e => e.FChatRoomId);
-
             entity.ToTable("tChatRoom");
 
             entity.Property(e => e.FChatRoomId).HasColumnName("fChatRoomId");
             entity.Property(e => e.FBotStateJson).HasColumnName("fBotStateJson");
-            entity.Property(e => e.FChannel)
-                .HasMaxLength(30)
-                .HasColumnName("fChannel");
-            entity.Property(e => e.FClosedAt)
-                .HasColumnType("datetime")
-                .HasColumnName("fClosedAt");
-            entity.Property(e => e.FCreatedAt)
-                .HasColumnType("datetime")
-                .HasColumnName("fCreatedAt");
+            entity.Property(e => e.FChannel).HasMaxLength(30).HasColumnName("fChannel");
+            entity.Property(e => e.FClosedAt).HasColumnType("datetime").HasColumnName("fClosedAt");
+            entity.Property(e => e.FCreatedAt).HasColumnType("datetime").HasColumnName("fCreatedAt");
             entity.Property(e => e.FEmployeeId).HasColumnName("fEmployeeId");
-            entity.Property(e => e.FFirstMessageAt)
-                .HasColumnType("datetime")
-                .HasColumnName("fFirstMessageAt");
+            entity.Property(e => e.FFirstMessageAt).HasColumnType("datetime").HasColumnName("fFirstMessageAt");
             entity.Property(e => e.FIsBotActive).HasColumnName("fIsBotActive");
-            entity.Property(e => e.FLastMessageAt)
-                .HasColumnType("datetime")
-                .HasColumnName("fLastMessageAt");
+            entity.Property(e => e.FLastMessageAt).HasColumnType("datetime").HasColumnName("fLastMessageAt");
             entity.Property(e => e.FMemberId).HasColumnName("fMemberId");
-            entity.Property(e => e.FStatus)
-                .HasMaxLength(20)
-                .HasColumnName("fStatus");
-            entity.Property(e => e.FVisitorKey)
-                .HasMaxLength(60)
-                .HasColumnName("fVisitorKey");
+            entity.Property(e => e.FStatus).HasMaxLength(20).HasColumnName("fStatus");
+            entity.Property(e => e.FVisitorKey).HasMaxLength(60).HasColumnName("fVisitorKey");
+
+            // 🔧 關鍵：把外鍵關係說清楚，避免 EF 亂猜成 MemberFMemberId
+            entity.HasOne(d => d.FMemberId)              // 導覽屬性 (TChatRoom.FMember)
+                  .WithMany(p => p.TChatRooms)         // 反向集合 (TMember.TChatRooms)；沒有就新增
+                  .HasForeignKey(d => d.FMemberId)     // 外鍵欄位
+                  .OnDelete(DeleteBehavior.NoAction)   // 按需調整
+                  .HasConstraintName("FK_tChatRoom_tMember_FMemberId");
         });
+
 
         modelBuilder.Entity<TCheckinRecord>(entity =>
         {
