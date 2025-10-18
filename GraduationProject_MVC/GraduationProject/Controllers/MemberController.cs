@@ -148,32 +148,57 @@ namespace GraduationProject.Controllers
         }
 
         //儲存照片檔案方法
+        // 儲存照片檔案方法（寫到 <方案根>/SharedStorage/MemberHeadImages）
         private async Task<string?> SaveHeadshotAsync(
-        IFormFile? photo, string? oldFileName, CancellationToken ct,
-        long maxBytes = 2 * 1024 * 1024)
+            IFormFile? photo, string? oldFileName, CancellationToken ct,
+            long maxBytes = 2 * 1024 * 1024)
         {
             if (photo is null || photo.Length == 0) return null;
 
-            // 1) 檢查副檔名/大小
+            // 1) 檢查副檔名 / 大小 / Content-Type
             var ext = Path.GetExtension(photo.FileName).ToLowerInvariant();
-            var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-            if (!allowed.Contains(ext)) throw new InvalidOperationException("只允許上傳 jpg / png / webp。");
-            if (photo.Length > maxBytes) throw new InvalidOperationException("檔案過大，請小於 2MB。");
+            var allowedExts = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            if (!allowedExts.Contains(ext))
+                throw new InvalidOperationException("只允許上傳 jpg / jpeg / png / webp。");
 
-            // 2) 生成檔名 & 目錄
+            if (photo.Length > maxBytes)
+                throw new InvalidOperationException("檔案過大，請小於 2MB。");
+
+            var okTypes = new[] { "image/jpeg", "image/png", "image/webp" };
+            if (!okTypes.Contains(photo.ContentType.ToLowerInvariant()))
+                throw new InvalidOperationException("Content-Type 不正確。");
+
+            // 2) 共用實體路徑：<解決方案根>/SharedStorage/MemberHeadImages
+            //    ⚠️ 不要再用 _enviro.WebRootPath（那是 MVC 自己的 wwwroot）
+            var sharedRoot = Path.GetFullPath(
+                Path.Combine(_enviro.ContentRootPath, "..", "SharedStorage", "MemberHeadImages")
+            );
+            Directory.CreateDirectory(sharedRoot);
+
+            // 3) 產生檔名並寫檔
             var fileName = $"{Guid.NewGuid():N}{ext}";
-            var dir = Path.Combine(_enviro.WebRootPath, "MemberHeadImages");
-            Directory.CreateDirectory(dir);
+            var fullPath = Path.Combine(sharedRoot, fileName);
 
-            // 3) 儲存新檔（非同步）
-            var path = Path.Combine(dir, fileName);
-            await using (var fs = System.IO.File.Create(path))
+            await using (var fs = System.IO.File.Create(fullPath))
             {
                 await photo.CopyToAsync(fs, ct);
             }
 
+            // 4) 刪除舊檔（若有、且不是預設圖）
+            if (!string.IsNullOrWhiteSpace(oldFileName) &&
+                !string.Equals(oldFileName, "default.png", StringComparison.OrdinalIgnoreCase))
+            {
+                var oldPath = Path.Combine(sharedRoot, oldFileName);
+                if (System.IO.File.Exists(oldPath))
+                {
+                    try { System.IO.File.Delete(oldPath); } catch { /* ignore */ }
+                }
+            }
+
+            // 5) 回傳新檔名（DB 只存檔名，頁面用 /MemberHeadImages/{檔名} 顯示）
             return fileName;
         }
+
 
 
         public async Task<IActionResult> Details(int? id, CancellationToken ct = default)
