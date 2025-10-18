@@ -2,43 +2,58 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
+
+export const http = axios.create({
+  baseURL: 'https://localhost:7131', // 你的 API 根網址
+  withCredentials: true, // ✅ 讓瀏覽器帶上/保存 Cookie
+  timeout: 10000,
+})
 
 const router = useRouter()
 
-// form state
-const email = ref('')
+/* =============== 2) 登入 API 封裝（同檔案） =============== */
+async function loginAPI(account, password) {
+  // 後端期望的是 { account, password }
+  return http.post('/api/Member/login', { account, password })
+}
+async function meAPI() {
+  return http.get('/api/member/me')
+}
+
+/* =============== 3) 表單狀態 =============== */
+const account = ref('') // ✅ 用 account，不是 email
 const password = ref('')
-const remember = ref(true)
+const remember = ref(true) // 若後端需要可一併傳給 loginAPI
 const showPassword = ref(false)
 const loading = ref(false)
 const errorMsg = ref('')
 
-// basic validation
-const emailValid = computed(() => /\S+@\S+\.\S+/.test(email.value))
+/* 簡單驗證 */
+const accountValid = computed(() => account.value.trim().length > 0)
 const passwordValid = computed(() => password.value.length >= 6)
-const canSubmit = computed(() => emailValid.value && passwordValid.value && !loading.value)
+const canSubmit = computed(() => accountValid.value && passwordValid.value && !loading.value)
 
+/* 送出 */
 const onSubmit = async (e) => {
   e.preventDefault()
   errorMsg.value = ''
   if (!canSubmit.value) {
-    errorMsg.value = '請輸入有效的 Email 與至少 6 碼的密碼'
+    errorMsg.value = '請輸入帳號與至少 6 碼的密碼'
     return
   }
   loading.value = true
   try {
-    // TODO: 這裡換成你實際的登入 API
-    // const res = await fetch('/api/auth/login', { method:'POST', body: JSON.stringify({ email: email.value, password: password.value, remember: remember.value }) })
-    // if (!res.ok) throw new Error('登入失敗')
+    // ✅ 登入：後端會回 Set-Cookie，Axios（withCredentials）會自動保存
+    await loginAPI(account.value, password.value)
 
-    // 模擬成功
-    await new Promise(r => setTimeout(r, 600))
+    // 可選：立即取得登入者資料確認
+    await meAPI()
 
-    // 登入後導頁（自行替換路徑）
+    // 導頁
     router.push('/')
-
   } catch (err) {
-    errorMsg.value = (err && err.message) || '登入失敗，請再試一次'
+    errorMsg.value = err?.response?.data?.message || '登入失敗，請再試一次'
   } finally {
     loading.value = false
   }
@@ -46,59 +61,49 @@ const onSubmit = async (e) => {
 </script>
 
 <template>
-<!-- Start Hero Section -->
-	<div class="hero">
-		<div class="container">
-			<div class="row justify-content-between">
-				<div class="col-lg-5">
-					<div class="intro-excerpt">
-						<h1>Sign In</h1>
-					</div>
-				</div>
-				<div class="col-lg-7"></div>
-			</div>
-		</div>
-	</div>
-<!-- End Hero Section -->
+  <!-- 你的畫面保持不變，只把 Email 欄位改成 Account（帳號） -->
+  <div class="hero">
+    <div class="container">
+      <div class="row justify-content-between">
+        <div class="col-lg-5">
+          <div class="intro-excerpt"><h1>Sign In</h1></div>
+        </div>
+        <div class="col-lg-7"></div>
+      </div>
+    </div>
+  </div>
 
   <div
     class="min-vh-100 d-flex align-items-center"
-    :style="{
-      backgroundSize: 'cover',
-      backgroundPosition: 'center'
-    }"
+    :style="{ backgroundSize: 'cover', backgroundPosition: 'center' }"
   >
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-12 col-md-8 col-lg-5">
-          <!-- card -->
           <div class="card border-0 shadow-lg">
             <div class="card-header bg-dark text-white text-center py-3">
               <h4 class="mb-0">Sign In</h4>
             </div>
 
             <div class="card-body p-4">
-              <!-- error -->
-              <div v-if="errorMsg" class="alert alert-danger py-2" role="alert">
-                {{ errorMsg }}
-              </div>
+              <div v-if="errorMsg" class="alert alert-danger py-2" role="alert">{{ errorMsg }}</div>
 
               <form @submit="onSubmit" novalidate>
-                <!-- Email -->
+                <!-- Account -->
                 <div class="mb-3">
-                  <label for="email" class="form-label">Email</label>
+                  <label for="account" class="form-label">Account</label>
                   <input
-                    id="email"
-                    name="email"
-                    type="email"
+                    id="account"
+                    name="account"
+                    type="text"
                     class="form-control"
-                    :class="{ 'is-invalid': email && !emailValid }"
-                    placeholder="you@example.com"
-                    v-model.trim="email"
-                    autocomplete="email"
+                    :class="{ 'is-invalid': account && !accountValid }"
+                    placeholder="輸入帳號"
+                    v-model.trim="account"
+                    autocomplete="username"
                     required
                   />
-                  <div class="invalid-feedback">請輸入有效的 Email</div>
+                  <div class="invalid-feedback">請輸入帳號</div>
                 </div>
 
                 <!-- Password -->
@@ -109,68 +114,40 @@ const onSubmit = async (e) => {
                       type="button"
                       class="btn btn-sm btn-link text-decoration-none"
                       @click="showPassword = !showPassword"
-                      :aria-pressed="showPassword"
                     >
                       {{ showPassword ? '隱藏' : '顯示' }}密碼
                     </button>
                   </div>
-
-                  <div class="input-group">
-                    <input
-                      :type="showPassword ? 'text' : 'password'"
-                      id="password"
-                      name="password"
-                      class="form-control"
-                      :class="{ 'is-invalid': password && !passwordValid }"
-                      placeholder="至少 6 碼"
-                      v-model="password"
-                      autocomplete="current-password"
-                      minlength="6"
-                      required
-                    />
-                  </div>
+                  <input
+                    :type="showPassword ? 'text' : 'password'"
+                    id="password"
+                    name="password"
+                    class="form-control"
+                    :class="{ 'is-invalid': password && !passwordValid }"
+                    placeholder="至少 6 碼"
+                    v-model="password"
+                    autocomplete="current-password"
+                    minlength="6"
+                    required
+                  />
                   <div class="invalid-feedback">密碼長度至少 6 碼</div>
                 </div>
 
-                <!-- Remember me -->
+                <!-- Remember me（若後端要支援可帶到 loginAPI 第三個參數） -->
                 <div class="form-check form-switch mb-3">
                   <input
                     class="form-check-input"
                     type="checkbox"
                     id="rememberMe"
-                    name="rememberMe"
                     v-model="remember"
                   />
                   <label class="form-check-label" for="rememberMe">Remember me</label>
                 </div>
 
-                <!-- Submit -->
                 <div class="d-grid">
-                  <button
-                    type="submit"
-                    class="btn btn-success btn-lg"
-                    :disabled="!canSubmit"
-                  >
-                    <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  <button type="submit" class="btn btn-success btn-lg" :disabled="!canSubmit">
+                    <span v-if="loading" class="spinner-border spinner-border-sm me-2" />
                     {{ loading ? 'Signing in...' : 'Sign In' }}
-                  </button>
-                </div>
-
-                <!-- Divider -->
-                <div class="text-center text-muted my-3">
-                  <small>or continue with</small>
-                </div>
-
-                <!-- Social (可自行移除) -->
-                <div class="d-flex justify-content-center gap-2">
-                  <button type="button" class="btn btn-outline-secondary">
-                    <i class="fab fa-facebook me-1"></i> Facebook
-                  </button>
-                  <button type="button" class="btn btn-outline-secondary">
-                    <i class="fab fa-github me-1"></i> GitHub
-                  </button>
-                  <button type="button" class="btn btn-outline-secondary">
-                    <i class="fab fa-google me-1"></i> Google
                   </button>
                 </div>
               </form>
@@ -183,7 +160,6 @@ const onSubmit = async (e) => {
               </small>
             </div>
           </div>
-          <!-- /card -->
         </div>
       </div>
     </div>
@@ -191,7 +167,6 @@ const onSubmit = async (e) => {
 </template>
 
 <style scoped>
-/* 讓卡片有「浮起來」感覺 */
 .card {
   border-radius: 1rem;
 }
