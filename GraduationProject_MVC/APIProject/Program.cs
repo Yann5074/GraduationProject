@@ -27,6 +27,8 @@ builder.Services.AddDbContext<dbFurniMartContext>(options => options.UseSqlServe
 
 // �`�J COrderService
 builder.Services.AddScoped<IOrderService, COrderService>();
+// 加入 CCartService
+builder.Services.AddScoped<ICartService, CCartService>();
 
 builder.Services.AddDbContext<dbFurniMartContext>(options =>
 {

@@ -157,12 +157,12 @@ namespace ApiProject.Services
         }
 
         //建立訂單
-        public async Task<ResultDTO> CreateOrderAsync(CartDTO dto)
+        public async Task<ResultDTO> CreateOrderAsync(CartToOrderDTO dto)
         {
             //少接收訂單資料並儲存到資料庫
             await _context.SaveChangesAsync();
             return new ResultDTO
-            {
+            { 
                 Ok = true,
                 Code = StatusCodes.Status200OK
             };
