@@ -25,9 +25,12 @@
                     <label for="txtPassword" class="form-label">員工密碼</label>
                     @Html.TextBox("txtPassword", "", new { @class = "form-control", id = "txtPassword", type = "password", placeholder = "請輸入您的密碼" })
                 </div>
-
+                
                 <div class="d-grid gap-2">
                     <input type="submit" value="登入" class="btn btn-primary" />
+                </div>
+                <div class="text-end mt-1">
+                    <a asp-controller="Home" asp-action="ForgotPassword">忘記密碼？</a>
                 </div>
             </div>
         </div>

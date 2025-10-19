@@ -1,5 +1,24 @@
 ﻿﻿@* Views/Shared/_Layout.cshtml *@
+@using System.Text.Json
+@using GraduationProject.DTOs
+@using GraduationProject
+@using GraduationProject.Dictionary
 @{
+    var json = Context.Session.GetString(CEmployeeDictionary.SK_LOGINED_USER);
+    var me = json is null ? null : JsonSerializer.Deserialize<SessionUser>(json);
+
+    // 角色名稱（依你的 RoleId 對應調整）
+    string? roleName = me?.RoleId switch
+    {
+        4 => "管理者",
+        3 => "組長",
+        2 => "職員",
+        1 => "實習生",
+        _ => null
+    };
+
+    var headshot = Url.Content($"~/HeadShotImages/{(me?.HeadShot ?? "default.png")}");
+
     var ctrl = ViewContext.RouteData.Values["Controller"]?.ToString();
 }
 <!DOCTYPE html>
@@ -41,40 +60,103 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">GraduationProject</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Order" asp-action="List">訂單管理</a>
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Products" asp-action="List">產品管理</a>
-                        </li>
-                        @* <li class="nav-item">
+    <section>
+        <header>
+            <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+                <div class="container-fluid">
+                    <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">GraduationProject</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                            aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                        <ul class="navbar-nav flex-grow-1">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Order" asp-action="List">訂單管理</a>
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Products" asp-action="List">產品管理</a>
+                            </li>
+                            @* <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li> *@
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Member" asp-action="List">會員管理</a>
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Employee" asp-action="List">員工清單</a>
-                        </li>
-                    </ul>
-                    @* <partial name="_LoginPartial" /> *@
-                    @* <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Login">登入</a> *@
-                    <form asp-controller="Home" asp-action="Logout" method="post" class="d-inline">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-danger">登出</button>
-                    </form>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Member" asp-action="List">會員管理</a>
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Employee" asp-action="List">員工清單</a>
+                            </li>
+                        </ul>
+                        @* <partial name="_LoginPartial" /> *@
+                        @* <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Login">登入</a> *@
+                        
+                        <!-- 右側：登入者資訊 + 登出 -->
+                        <div class="d-flex align-items-center">
+                            @if (me is not null)
+                            {
+                                <div class="dropdown">
+                                    <a class="d-flex align-items-center text-decoration-none dropdown-toggle"
+                                       href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <img src="@headshot"
+                                             alt="頭貼"
+                                             class="rounded-circle border me-2"
+                                             style="width:36px;height:36px;object-fit:cover"
+                                             onerror="this.onerror=null;this.src='@Url.Content("~/HeadShotImages/default.png")';" />
+                                        <div class="d-none d-sm-block text-start">
+                                            <div class="fw-semibold small">@me.Name</div>
+                                            @if (!string.IsNullOrEmpty(roleName))
+                                            {
+                                                <div class="text-muted small">@roleName</div>
+                                            }
+                                        </div>
+                                    </a>
+
+                                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+                                        <li class="dropdown-header">
+                                            <div class="fw-semibold">@me.Name</div>
+                                            @if (!string.IsNullOrEmpty(roleName))
+                                            {
+                                                <div class="text-muted small">@roleName</div>
+                                            }
+                                        </li>
+                                        <li><hr class="dropdown-divider" /></li>
+
+                                        <!-- 個人資料 -->
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Employee" asp-action="Details" asp-route-id="@me.Id">
+                                                <i class="bi bi-person me-2"></i> 個人資料
+                                            </a>
+                                        </li>
+
+                                        <!-- 修改密碼（導去你自己的頁面/控制器） -->
+                                        @* <li>
+                                            <a class="dropdown-item" asp-controller="Employee" asp-action="Edit">
+                                                <i class="bi bi-key me-2"></i> 修改密碼
+                                            </a>
+                                        </li> *@
+
+                                        <li><hr class="dropdown-divider" /></li>
+
+                                        <!-- 登出：用 POST + 防偽 -->
+                                        <li>
+                                            <form asp-controller="Home" asp-action="Logout" method="post" class="px-3">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-danger w-100">
+                                                    <i class="bi bi-box-arrow-right me-2"></i> 登出
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            }
+                            else
+                            {
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="Home" asp-action="Login">登入</a>
+                            }
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </nav>
+            </nav>
+        </header>
         <!-- /NAVBAR -->
         <!-- MAIN：頁面內容渲染在這 -->
         <main>
@@ -88,13 +170,12 @@
             </div>
         </footer>
     <!-- /CONTENT -->
-        <!-- /CONTENT -->
-        @* 必要腳本（讓你的 script.js 能正確綁定）*@
+    @*必要腳本（讓你的 script.js 能正確綁定）*@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
-    @* 你的互動邏輯（就是你上一則貼的那段） *@
-        <script src="~/js/script.js" asp-append-version="true"></script>
+    @* 你的互動邏輯（就是你上一則貼的那段）*@
+    <script src="~/js/script.js" asp-append-version="true"></script>
 
         @* 站台共用 *@
         <script src="~/js/site.js" asp-append-version="true"></script>

@@ -607,10 +607,6 @@ public partial class dbFurniMartContext : DbContext
             entity.Property(e => e.FDisplayName)
                 .HasMaxLength(50)
                 .HasColumnName("fDisplayName");
-            entity.Property(e => e.FEmail)
-                .HasMaxLength(150)
-                .HasColumnName("fEmail");
-            entity.Property(e => e.FEmailState).HasColumnName("fEmailState");
             entity.Property(e => e.FGender).HasColumnName("fGender");
             entity.Property(e => e.FLeveId).HasColumnName("fLeveId");
             entity.Property(e => e.FMemberImage)
@@ -627,7 +623,6 @@ public partial class dbFurniMartContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("fPhone");
-            entity.Property(e => e.FPhoneState).HasColumnName("fPhoneState");
             entity.Property(e => e.FStatus).HasColumnName("fStatus");
             entity.Property(e => e.FUpdateTime)
                 .HasColumnType("datetime")
@@ -652,9 +647,7 @@ public partial class dbFurniMartContext : DbContext
                 .HasColumnName("fCreatedAt");
             entity.Property(e => e.FMetaJson).HasColumnName("fMetaJson");
             entity.Property(e => e.FParentMessageId).HasColumnName("fParentMessageId");
-            entity.Property(e => e.FSenderId)
-                .HasMaxLength(10)
-                .HasColumnName("fSenderId");
+            entity.Property(e => e.FSenderId).HasColumnName("fSenderId");
             entity.Property(e => e.FSenderType)
                 .HasMaxLength(20)
                 .HasColumnName("fSenderType");
@@ -1049,6 +1042,24 @@ public partial class dbFurniMartContext : DbContext
             entity.Property(e => e.FPaymentDate)
                 .HasColumnType("datetime")
                 .HasColumnName("fPaymentDate");
+        });
+
+        modelBuilder.Entity<TShoppingCart>(entity =>
+        {
+            entity.HasKey(e => e.FId);
+
+            entity.ToTable("tShoppingCart");
+
+            entity.Property(e => e.FId).HasColumnName("fId");
+            entity.Property(e => e.FCount).HasColumnName("fCount");
+            entity.Property(e => e.FCustomerId).HasColumnName("fCustomerId");
+            entity.Property(e => e.FDate)
+                .HasMaxLength(50)
+                .HasColumnName("fDate");
+            entity.Property(e => e.FPrice)
+                .HasColumnType("money")
+                .HasColumnName("fPrice");
+            entity.Property(e => e.FProductId).HasColumnName("fProductId");
         });
 
         modelBuilder.Entity<TStatus>(entity =>
