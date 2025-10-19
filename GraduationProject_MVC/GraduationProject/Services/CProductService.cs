@@ -34,53 +34,79 @@ namespace GraduationProject.Services
 
         public IEnumerable<CProductDTO> SearchProduct(CProductSearchKeywordViewModel vm)
         {
-            string keyword = vm.txtKeyword?.Trim();
-
-
-            var query = _db.TProducts
-                .AsNoTracking()
-                .Include(o => o.ProductVariants) // 或 ProductVariant（若是一對一）
-                    .ThenInclude(v => v.Color)
-                .Include(o => o.ProductAssets)   // 或 ProductAsset
-                .Include(o => o.Category)
-                .Include(o => o.PStatus)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(keyword))
+            try
             {
-                query = query.Where(o =>
-                    EF.Functions.Like(o.FName, $"%{keyword}%") ||
-                    EF.Functions.Like(o.Category.FName, $"%{keyword}%") ||
-                    EF.Functions.Like(o.PStatus.FPStatusName, $"%{keyword}%") ||
-                    o.ProductVariants.Any(v => v.Color != null &&
-                                               EF.Functions.Like(v.Color.FColorName, $"%{keyword}%"))
-                );
-            }
+                string keyword = vm.txtKeyword?.Trim();
 
+                var query = _db.TProducts
+                    .AsNoTracking()
+                    .Include(o => o.ProductVariants)
+                        .ThenInclude(v => v.Color)
+                    .Include(o => o.ProductAssets)
+                    .Include(o => o.Category)
+                    .Include(o => o.PStatus)
+                    .AsQueryable();
 
-            var result = query
-                .Select(o => new CProductDTO
+                if (!string.IsNullOrWhiteSpace(keyword))
                 {
-                    ProductId = o.FProductId,
-                    Name = o.FName,
-                    Description = o.FDescription,
-                    CategoryId = o.FCategoryId,
-                    CategoryName = o.Category.FName,
-                    PStatus = o.PStatus.FPStatusName,
-                    ColorName = string.Join(", ",
-                    o.ProductVariants
-                     .Where(v => v.Color != null)
-                     .Select(v => v.Color.FColorName)
-                     .Distinct()),
-                    // 若是一對多，決定要抓哪個價格（例如最低價）
-                    // 價格：取最低價
-                    Price = o.ProductVariants.Min(v => (decimal?)v.FPrice),
+                    query = query.Where(o =>
+                        EF.Functions.Like(o.FName, $"%{keyword}%") ||
+                        EF.Functions.Like(o.Category.FName, $"%{keyword}%") ||
+                        EF.Functions.Like(o.PStatus.FPStatusName, $"%{keyword}%") ||
+                        o.ProductVariants.Any(v => v.Color != null &&
+                            EF.Functions.Like(v.Color.FColorName, $"%{keyword}%"))
+                    );
+                }
 
-                    // 成本：取最低成本
-                    Cost = o.ProductVariants.Min(v => (decimal?)v.FCost),
-                })
-                .ToList();
-            return result;
+                var result = query
+                    .Select(o => new CProductDTO
+                    {
+                        ProductId = o.FProductId,
+                        Name = o.FName,
+                        Description = o.FDescription,
+                        CategoryId = o.FCategoryId,
+                        CategoryName = o.Category.FName,
+                        PStatus = o.PStatus.FPStatusName,
+                        ColorName = string.Join(", ",
+                            o.ProductVariants
+                                .Where(v => v.Color != null)
+                                .Select(v => v.Color.FColorName)
+                                .Distinct()),
+                        Price = o.ProductVariants.Any()
+                            ? o.ProductVariants.Min(v => v.FPrice)
+                            : null,
+                        Cost = o.ProductVariants.Any()
+                            ? o.ProductVariants.Min(v => v.FCost)
+                            : null,
+                        // 加入變體資料
+                        Variants = o.ProductVariants.Select(v => new CProductVariantDTO
+                        {
+                            VariantId = v.FProductVariantId,
+                            SKU = v.FSku,
+                            ColorName = v.Color != null ? v.Color.FColorName : "無顏色",
+                            ColorCode = v.Color != null ? v.Color.FColorCode : null,
+                            Price = v.FPrice,
+                            Cost = v.FCost,
+                            Stock = v.FStock,
+                            SizeLabel = v.FSizeLabel,
+                            Length = v.FLength,
+                            Width = v.FWidth,
+                            Height = v.FHeight,
+                            Weight = v.FWeight,
+                            PStatus = v.FPstatus.HasValue ?
+                                _db.TPstatuses.FirstOrDefault(s => s.FPstatus == v.FPstatus).FPStatusName
+                                : "未知"
+                        }).ToList()
+                    })
+                    .ToList();
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "搜尋產品時發生錯誤，關鍵字：{Keyword}", vm.txtKeyword);
+                throw;
+            }
         }
 
 

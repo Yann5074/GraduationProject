@@ -31,5 +31,6 @@ namespace GraduationProject.DTOs
         public DateTime? CreateTime { get; set; }
         public DateTime? UpdateTime { get; set; }
 
+        public List<CProductVariantDTO> Variants { get; set; } = new List<CProductVariantDTO>();
     }
 }

@@ -12,6 +12,7 @@ namespace GraduationProject.Models
         [ForeignKey(nameof(FCategoryId))]
         public TCategory Category  { get; set; }
 
+
         [ForeignKey(nameof(FPstatus))]
         public virtual TPstatus PStatus { get; set; }
 

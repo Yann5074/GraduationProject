@@ -12,6 +12,7 @@ namespace ApiProject.Models
         public TProduct ProductId { get; set; }
         public virtual ICollection<TProductVariant> ProductVariants { get; set; } = new List<TProductVariant>();
         public virtual ICollection<TProductAsset> ProductAssets { get; set; } = new List<TProductAsset>();
+        public virtual ICollection<TProductPart> ProductParts { get; set; }
 
         [ForeignKey(nameof(FCategoryId))]
         public TCategory Category { get; set; }
