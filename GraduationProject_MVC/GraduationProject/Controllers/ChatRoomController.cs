@@ -144,35 +144,59 @@ namespace GraduationProject.Controllers
         }
 
 
-        // 送出訊息（右下輸入框）
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SendMessage(int chatRoomId, string content, string senderType = "employee", string? senderId = null, string? q = null)
-        {
-            if (string.IsNullOrWhiteSpace(content))
-                return RedirectToAction(nameof(Index), new { chatRoomId, q });
+   
 
-            var msg = new TMessage
+        [HttpPost]
+        //[ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendMessage(int chatRoomId,string content)
+        {
+            TChatRoom room = await _context.TChatRooms
+                .AsTracking()
+                .FirstOrDefaultAsync(r => r.FChatRoomId == chatRoomId);
+            string senderId = null;
+            TMessage msg = new TMessage
             {
                 FChatRoomId = chatRoomId,
-                FSenderType = senderType,
-                FSenderId = senderId,
-                FContent = content.Trim(),
+                FSenderId = senderId,   // ← string
+                FContent = content,
                 FCreatedAt = DateTime.Now
             };
+
             _context.TMessages.Add(msg);
+            await _context.SaveChangesAsync();
+            // 5) 更新聊天室最後訊息時間（若您表上有此欄位）
 
-            // 同步更新最後訊息時間
-            var room = await _context.TChatRooms.FirstOrDefaultAsync(r => r.FChatRoomId == chatRoomId);
-            if (room != null) 
-                
-                room.FLastMessageAt = msg.FCreatedAt;
-
+            room.FLastMessageAt = DateTime.Now;
+            _context.TChatRooms.Update(room);
             await _context.SaveChangesAsync();
 
-            // 回到 Index 保持在原聊天室與原查詢條件
-            return RedirectToAction(nameof(Index), new { chatRoomId,     });
+            //// 6) 回到 Index，維持目前聊天室與搜尋字  RedirectToAction跳轉到指定的動作方法
+            return RedirectToAction(nameof(Index), new { chatRoomId });
         }
+
+            
+        [HttpGet("/debug-fks")] // 👈 絕對路由，不受 default route 影響
+        public IActionResult DebugFks()
+        {
+            var et = _context.Model.FindEntityType(typeof(GraduationProject.Models.TChatRoom));
+            var fks = et.GetForeignKeys().Select(fk => new
+            {
+                Dependent = fk.DeclaringEntityType.Name,
+                Principal = fk.PrincipalEntityType.Name,
+                Columns = string.Join(",", fk.Properties.Select(p => p.Name))
+            });
+            return Json(fks);
+        }
+
+        // 以登入系統取得目前使用者的字串 Id（沒有登入就回空字串）
+        //private string GetCurrentUserIdString()
+        //{
+        //    // 常見做法：Identity 的 NameIdentifier
+        //    // using System.Security.Claims;
+        //    var claim = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        //    return claim?.Value ?? string.Empty;
+        //}
+
     }
 }
 
