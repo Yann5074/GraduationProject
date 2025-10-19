@@ -78,6 +78,16 @@ namespace GraduationProject.Services
                         Cost = o.ProductVariants.Any()
                             ? o.ProductVariants.Min(v => v.FCost)
                             : null,
+
+                        PrimaryImageUrl = o.ProductAssets
+                        .Where(a => a.FIsPrimary == true)
+                        .Select(a => a.FUrl)
+                        .FirstOrDefault(),
+                        // 加入所有圖片
+                        ImageUrls = o.ProductAssets
+                        .OrderBy(a => a.FSortOrder)
+                        .Select(a => a.FUrl)
+                        .ToList(),
                         // 加入變體資料
                         Variants = o.ProductVariants.Select(v => new CProductVariantDTO
                         {

@@ -60,6 +60,8 @@ builder.Services.AddScoped<IPasswordHasher<TMember>, PasswordHasher<TMember>>();
 
 var app = builder.Build();
 
+
+
 var provider = new FileExtensionContentTypeProvider();
 provider.Mappings[".webp"] = "image/webp";
 app.UseStaticFiles(new StaticFileOptions { ContentTypeProvider = provider });
@@ -89,6 +91,8 @@ app.UseStaticFiles(new StaticFileOptions
     FileProvider = new PhysicalFileProvider(mvcSharedImagesPath),
     RequestPath = "/MemberHeadImages"
 });
+
+
 app.UseRouting();
 
 app.UseSession();

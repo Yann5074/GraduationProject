@@ -84,6 +84,43 @@ body {
 }
 
 /* �T�����վ� */
+/* ���~�Ϥ��˦� */
+.product-image {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-image:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* �Ϥ��d���˦� */
+.card-img-overlay {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), transparent);
+}
+
+/* �Y�ϼ˦� */
+.img-thumbnail {
+    border: 2px solid #dee2e6;
+    transition: border-color 0.3s ease;
+}
+
+.img-thumbnail:hover {
+    border-color: #0d6efd;
+}
+
+/* Modal �Ϥ��˦� */
+#modalImage {
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Accordion �����Ϥ��ϰ� */
+.row.g-2 {
+    gap: 0.5rem;
+}
+
+/* �T�����վ� */
 @media (max-width: 768px) {
     .accordion-button .row>div {
         font-size: 0.875rem;
