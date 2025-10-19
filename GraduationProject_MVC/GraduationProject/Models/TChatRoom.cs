@@ -30,9 +30,4 @@ public partial class TChatRoom
     public int? FIsBotActive { get; set; }
 
     public string FBotStateJson { get; set; }
-
-    // 🌼 導覽屬性（多對一）
-    public virtual TMember? FMember { get; set; }  // ✔ 導覽屬性（指向 TMember）
-    // 🌼 導覽屬性（一對多）
-    public virtual ICollection<TMessage> Messages { get; set; } = new List<TMessage>();
 }
