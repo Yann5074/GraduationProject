@@ -1,9 +1,12 @@
 using GraduationProject.Data;
 using GraduationProject.Interfaces;
 using GraduationProject.Models;
+using GraduationProject.Options;
 using GraduationProject.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.CodeAnalysis.Emit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 
@@ -24,6 +27,8 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 builder.Services.AddScoped<IEmployeeService, CEmployeeService>();
 builder.Services.AddScoped<IPasswordHasher<TEmployee>, PasswordHasher<TEmployee>>();
 builder.Services.AddScoped<IAuthService, CAuthService>();
+builder.Services.Configure<CEmployeeEmailOptions>(builder.Configuration.GetSection("Email"));
+builder.Services.AddScoped<IEmployeeEmailSender, CMailSenderService>();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession(o =>
