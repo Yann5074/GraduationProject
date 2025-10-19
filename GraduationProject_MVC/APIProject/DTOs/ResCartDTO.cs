@@ -4,10 +4,9 @@
     {
         public int MemberId { get; set; }
 
-        public int ProductVariantId { get; set; }
+        public decimal TotalPrice { get; set; }
 
-        public int Count { get; set; }
+        public IEnumerable<ResCartItemDTO> CartItem { get; set; } = new List<ResCartItemDTO>();
 
-        public int SubTotal { get; set; }
     }
 }

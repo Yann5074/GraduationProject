@@ -1,6 +1,6 @@
 ﻿namespace ApiProject.DTOs
 {
-    public class CartDTO
+    public class CartToOrderDTO
     {
     }
 }

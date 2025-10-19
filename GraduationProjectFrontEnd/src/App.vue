@@ -7,7 +7,7 @@ import MaterialButton from "@/components/MaterialButton.vue";
 
 <template>
 	<main>
-  		<!-- Start Header/Navigation -->
+		<!-- Start Header/Navigation -->
 		<nav class="custom-navbar navbar navbar navbar-expand-md navbar-dark bg-dark" arial-label="Furni navigation bar">
 
 			<div class="container">
@@ -29,6 +29,7 @@ import MaterialButton from "@/components/MaterialButton.vue";
 						<li class="nav-item" :class="{ active: isActive('/services') }"><RouterLink class="nav-link" to="/services">服務項目</RouterLink></li>
 						<li class="nav-item" :class="{ active: isActive('/design') }"><RouterLink class="nav-link" to="/design">布置靈感</RouterLink></li>
 						<li class="nav-item" :class="{ active: isActive('/Contact') }"><RouterLink class="nav-link" to="/Contact">聯絡我們</RouterLink></li>
+						<li class="nav-item" :class="{ active: isActive('/Order') }"><RouterLink class="nav-link" to="/Order">訂單測試</RouterLink></li>
 					</ul>
 
 					<ul class="custom-navbar-cta navbar-nav mb-2 mb-md-0 ms-5">

@@ -96,7 +96,7 @@ namespace ApiProject.Controllers
 
         //Put:api/Order
         [HttpPut]
-        public async Task<IActionResult> CreateOrderAsync(CartDTO dto)
+        public async Task<IActionResult> CreateOrderAsync(CartToOrderDTO dto)
         {
             var result = await _orderService.CreateOrderAsync(dto);
             return Ok();

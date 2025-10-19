@@ -24,6 +24,14 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[tCart]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tCartItem]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[tCategory]",
          "ObjectType": 0
       },
@@ -157,10 +165,6 @@
       },
       {
          "Name": "[dbo].[tSalary]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[tShoppingCart]",
          "ObjectType": 0
       },
       {
