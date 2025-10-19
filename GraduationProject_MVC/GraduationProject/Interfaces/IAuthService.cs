@@ -10,5 +10,6 @@ namespace GraduationProject.Interfaces
         //forget passwords setting
         Task<string?> GenerateResetTokenAsync(string account, string email, CancellationToken ct = default);
         Task<bool> ResetPasswordAsync(string account, string token, string newPassword, CancellationToken ct = default);
+
     }
 }

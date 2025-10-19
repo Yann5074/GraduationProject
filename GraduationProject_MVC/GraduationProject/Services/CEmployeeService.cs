@@ -44,7 +44,7 @@ namespace GraduationProject.Services
             // 基底查詢：不含 Include
             IQueryable<TEmployee> q = _db.TEmployees
                 .AsNoTracking()
-                .Where(e => e.FStatusId != (int)CEmployeeStatusEnum.Deleted);//帳號註銷不顯示
+                .Where(e => e.FStatusId != (int)EmployeeStatusEnum.Deleted);//帳號註銷不顯示
 
             // 關鍵字方法
             q = KeywordFilter(q, keyword);
@@ -72,7 +72,7 @@ namespace GraduationProject.Services
         {
             IQueryable<TEmployee> q = _db.TEmployees
                .AsNoTracking()
-               .Where(e => e.FStatusId == (int)CEmployeeStatusEnum.Deleted);//只顯示註銷帳號
+               .Where(e => e.FStatusId == (int)EmployeeStatusEnum.Deleted);//只顯示註銷帳號
 
             // 關鍵字方法
             q = KeywordFilter(q, keyword);

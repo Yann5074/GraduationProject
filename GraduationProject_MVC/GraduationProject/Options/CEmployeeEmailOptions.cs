@@ -1,5 +1,6 @@
 ﻿namespace GraduationProject.Options
 {
+    //忘記密碼信箱驗證用
     public class CEmployeeEmailOptions
     {
         public string FromName { get; set; } = "";
