@@ -19,12 +19,12 @@ namespace GraduationProject.Controllers
         private readonly IWebHostEnvironment _env; // 為了存圖片
         private readonly dbFurniMartContext _db;
 
-        public ProductsController(IProductService ProductService, IWebHostEnvironment env)
+        public ProductsController(IProductService ProductService, IWebHostEnvironment env, dbFurniMartContext db)
         {
             _ProductService = ProductService;
             _env = env;
+            _db = db;
 
-            
         }
 
         [HttpGet]
@@ -210,6 +210,10 @@ namespace GraduationProject.Controllers
             return RedirectToAction("List");
         }
 
+
+
+
+       
     }
 
 }

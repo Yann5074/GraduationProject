@@ -31,6 +31,11 @@ namespace GraduationProject.DTOs
         public DateTime? CreateTime { get; set; }
         public DateTime? UpdateTime { get; set; }
 
+
+        // 圖片相關
+        public string PrimaryImageUrl { get; set; }  // 主要圖片
+        public List<string> ImageUrls { get; set; } = new List<string>();  // 所有圖片
+
         public List<CProductVariantDTO> Variants { get; set; } = new List<CProductVariantDTO>();
     }
 }
