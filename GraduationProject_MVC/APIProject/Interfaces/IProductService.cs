@@ -7,7 +7,6 @@ namespace ApiProject.Interfaces
 
 
         Task<List<ResProductDTO>> GetProductByProdNameAsync(string? keyword, CancellationToken ct = default);
-
         Task<ResultPagedDTO<ResProductListDTO>> GetAllProductsAsync(ReqProductFilterDTO filter);
         Task<ResFilterOptionsDTO> GetFilterOptionsAsync();
         Task<ResProductDetailDTO> GetProductByIdAsync(int id);

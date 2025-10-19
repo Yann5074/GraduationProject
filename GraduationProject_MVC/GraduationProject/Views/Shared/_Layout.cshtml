@@ -1,4 +1,4 @@
-﻿@* Views/Shared/_Layout.cshtml *@
+﻿﻿@* Views/Shared/_Layout.cshtml *@
 @{
     var ctrl = ViewContext.RouteData.Values["Controller"]?.ToString();
 }
@@ -83,16 +83,17 @@
             </div>
         </footer>
     <!-- /CONTENT -->
+        <!-- /CONTENT -->
         @* 必要腳本（讓你的 script.js 能正確綁定）*@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
     @* 你的互動邏輯（就是你上一則貼的那段） *@
-    <script src="~/js/script.js" asp-append-version="true"></script>
+        <script src="~/js/script.js" asp-append-version="true"></script>
 
-    @* 站台共用 *@
-    <script src="~/js/site.js" asp-append-version="true"></script>
+        @* 站台共用 *@
+        <script src="~/js/site.js" asp-append-version="true"></script>
 
-    @RenderSection("Scripts", required: false)
+        @RenderSection("Scripts", required: false)
 </body>
 </html>

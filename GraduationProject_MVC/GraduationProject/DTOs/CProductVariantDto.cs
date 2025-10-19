@@ -8,7 +8,7 @@ namespace GraduationProject.DTOs
 
         [Range(0.01, 9999999.99, ErrorMessage = "售價必須大於0")]
         [Display(Name = "售價")]
-        public decimal Price { get; set; }
+        public decimal? Price { get; set; }
 
         [Range(0, 9999999.99, ErrorMessage = "成本不可為負")]
         [Display(Name = "成本")]
@@ -44,6 +44,13 @@ namespace GraduationProject.DTOs
 
         [Display(Name = "變體狀態")]
         public int PStatusId { get; set; } = 1; // 預設上架中
+
+        public int VariantId { get; set; }
+        public string? ColorName { get; set; }
+        public string? ColorCode { get; set; }
+        public string PStatus { get; set; }
+
+
 
         // 變體專屬圖片
         public List<IFormFile> VariantImages { get; set; } = new List<IFormFile>();

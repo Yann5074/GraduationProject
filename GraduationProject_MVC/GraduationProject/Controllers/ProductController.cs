@@ -19,11 +19,11 @@ namespace GraduationProject.Controllers
         private readonly IWebHostEnvironment _env; // 為了存圖片
         private readonly dbFurniMartContext _db;
 
-        public ProductsController(IProductService ProductService, IWebHostEnvironment env, dbFurniMartContext db)
+        public ProductsController(IProductService ProductService, IWebHostEnvironment env)
         {
             _ProductService = ProductService;
             _env = env;
-            _db = db;
+
             
         }
 
