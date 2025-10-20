@@ -80,14 +80,16 @@ namespace GraduationProject.Services
                             : null,
 
                         PrimaryImageUrl = o.ProductAssets
-                        .Where(a => a.FIsPrimary == true)
-                        .Select(a => a.FUrl)
-                        .FirstOrDefault(),
+                            .Where(a => a.FIsPrimary == true)
+                            .Select(a => a.FUrl)
+                            .FirstOrDefault() ?? "/ProductImages/default.png",
                         // 加入所有圖片
-                        ImageUrls = o.ProductAssets
-                        .OrderBy(a => a.FSortOrder)
-                        .Select(a => a.FUrl)
-                        .ToList(),
+                        ImageUrls = o.ProductAssets.Any()
+                            ? o.ProductAssets
+                                .OrderBy(a => a.FSortOrder)
+                                .Select(a => a.FUrl)
+                                .ToList()
+                            : new List<string> { "/ProductImages/default.png" },
                         // 加入變體資料
                         Variants = o.ProductVariants.Select(v => new CProductVariantDTO
                         {
