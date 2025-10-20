@@ -24,11 +24,17 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
+//Employee
 builder.Services.AddScoped<IEmployeeService, CEmployeeService>();
+//Hasher(Identity內建)
 builder.Services.AddScoped<IPasswordHasher<TEmployee>, PasswordHasher<TEmployee>>();
+//登入相關
 builder.Services.AddScoped<IAuthService, CAuthService>();
+//信箱驗證相關
 builder.Services.Configure<CEmployeeEmailOptions>(builder.Configuration.GetSection("Email"));
 builder.Services.AddScoped<IEmployeeEmailSender, CMailSenderService>();
+//圖表分析
+builder.Services.AddScoped<IAnalyticsService, CAnalyticsService>();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession(o =>
