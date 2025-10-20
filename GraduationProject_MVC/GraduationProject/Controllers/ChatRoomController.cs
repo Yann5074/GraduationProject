@@ -138,23 +138,33 @@ namespace GraduationProject.Controllers
                     })
                     .ToListAsync();
             }
-
+            
             var vm = new CChatRoomsPageVm { Rooms = rooms, SelectedId = chatRoomId, Messages = messages };
             return View(vm);
         }
 
 
-   
 
+        /// <summary>
+        /// 做了兩件事 1. 新增一筆聊天室內容  2.更新最新的聊天室最後一筆訊息的時間
+        /// </summary>
+        /// <param name="chatRoomId">  前端畫面左側的ChatRoomList的選擇id </param>
+        /// <param name="content">     前端畫面右側的messagelist 下面的 對話框裡面的 輸入內容 </param>
+        /// <returns></returns>
         [HttpPost]
         //[ValidateAntiForgeryToken]
         public async Task<IActionResult> SendMessage(int chatRoomId,string content)
         {
             TChatRoom room = await _context.TChatRooms
+                //AsTracking嘿～這些資料你要幫我記住它原本的樣子喔！」
                 .AsTracking()
                 .FirstOrDefaultAsync(r => r.FChatRoomId == chatRoomId);
-            string senderId = null;
-            TMessage msg = new TMessage
+            // senderid 用途 : 驗證身分  為何null  因為這裡少一個方法 
+            // 少一個功能  去member裡拿出來的資料  伏筆:interface
+            string senderId = null; 
+
+            //為何不加new會爆掉
+            var msg = new TMessage
             {
                 FChatRoomId = chatRoomId,
                 FSenderId = senderId,   // ← string
