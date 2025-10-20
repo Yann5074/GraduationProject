@@ -175,18 +175,6 @@ namespace GraduationProject.Controllers
         }
 
             
-        [HttpGet("/debug-fks")] // 👈 絕對路由，不受 default route 影響
-        public IActionResult DebugFks()
-        {
-            var et = _context.Model.FindEntityType(typeof(GraduationProject.Models.TChatRoom));
-            var fks = et.GetForeignKeys().Select(fk => new
-            {
-                Dependent = fk.DeclaringEntityType.Name,
-                Principal = fk.PrincipalEntityType.Name,
-                Columns = string.Join(",", fk.Properties.Select(p => p.Name))
-            });
-            return Json(fks);
-        }
 
         // 以登入系統取得目前使用者的字串 Id（沒有登入就回空字串）
         //private string GetCurrentUserIdString()

@@ -43,54 +43,32 @@ namespace ApiProject.Controllers
             return Ok(ChatRoomid);
         }
 
-        public async Task<IActionResult> sendmessage(int? chatRoomId, string message)
+        [HttpPost]
+        //[ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendMessage(int chatRoomId, string content)
         {
-            //檢查聊天室是否存在
-            var room = await _context.TChatRooms
-                .Include(c => c.member)
-                .Include(c => c.Messages)
-                .Where(c => c.FChatRoomId == chatRoomId)
-                .Select(c => new ResChatRoomCreateDTO
-                {
-                    FChatRoomId = c.FChatRoomId,
-                    image = c.Member != null && !string.IsNullOrEmpty(c.Member.FMemberImage)
-                        ? c.Member.FMemberImage
-                        : "https://i.imgur.com/8Km9tLL.jpg",
-                    FVisitorId = c.FVisitorKey,
-                    FName = c.Member != null && !string.IsNullOrEmpty(c.Member.FName)
-                        ? c.Member.FName : "訪客",
-                    FStatus = c.FStatus,
-                    Fcontent = c.Messages
-                        .OrderByDescending(m => m.FCreatedAt)
-                        .Select(m => m.FContent)
-                        .FirstOrDefault(),
-                    FEmployeeId = c.FEmployeeId.ToString(),
-                    FCreatedAt = c.FCreatedAt ?? DateTime.MinValue,
-                    FClosedAt = c.FClosedAt
-                })
-                .FirstOrDefaultAsync();
-
-            if (chatRoom == null)
+            TChatRoom room = await _context.TChatRooms
+                .AsTracking()
+                .FirstOrDefaultAsync(r => r.FChatRoomId == chatRoomId);
+            string senderId = null;
+            TMessage msg = new TMessage
             {
-                return NotFound("Chat room not found.");
-            }
-            //在這裡你可以加入將訊息存入資料庫的邏輯
-            //例如新增一個 TMessage 實體並設定相關屬性
-            //然後將其加入到資料庫中
-            //更新聊天室的最後訊息時間
-            chatRoom.FLastMessageAt = DateTime.Now;
-
-            var newMessage = new ResChatRoomCreateDTO
-            {
-                FChatRoomId = chatRoomId.Value,
-                Fcontent = message,
+                FChatRoomId = chatRoomId,
+                FSenderId = senderId,   // ← string
+                FContent = content,
                 FCreatedAt = DateTime.Now
-
-                
             };
 
+            _context.TMessages.Add(msg);
             await _context.SaveChangesAsync();
-            return Ok("Message sent successfully.");
+            // 5) 更新聊天室最後訊息時間（若您表上有此欄位）
+
+            room.FLastMessageAt = DateTime.Now;
+            _context.TChatRooms.Update(room);
+            await _context.SaveChangesAsync();
+
+            //// 6) 回到 Index，維持目前聊天室與搜尋字  RedirectToAction跳轉到指定的動作方法
+            return RedirectToAction(nameof(Index), new { chatRoomId });
         }
 
         public async Task<IActionResult> GetChatRooms(int? memberid, string? visitorid)
