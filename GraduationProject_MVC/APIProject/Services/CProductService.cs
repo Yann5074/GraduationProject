@@ -24,7 +24,7 @@ namespace ApiProject.Services
                 .Include(p => p.PStatus)
                 .Include(p => p.ProductAssets)
                 .Include(p => p.ProductVariants)
-                    .ThenInclude(v => v.Color)
+                .Include(p => p.ProductParts)
                 .AsQueryable();
 
             // 篩選
@@ -61,8 +61,13 @@ namespace ApiProject.Services
                     IsAvailable = p.FPstatus == 1 && p.ProductVariants.Sum(v => v.FStock ?? 0) > 0,
                     MinPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Min(v => v.FPrice),
                     MaxPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Max(v => v.FPrice),
-                    FCreateTime = p.FCreateTime,
-                    FUpdateTime = p.FUpdateTime
+
+                    //可自訂資訊
+                    IsCustomizable = p.ProductParts.Any(),
+
+                    CustomizablePartsCount = p.ProductParts.Count(),
+
+
                 })
                 .ToListAsync();
 
