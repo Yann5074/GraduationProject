@@ -152,5 +152,41 @@ namespace ApiProject.Controllers
             }
         }
 
+
+        [HttpGet("{id:int}/customization")]
+        public async Task<IActionResult> GetProductCustomization(int id)
+        {
+            try
+            {
+                var result = await _ProductService.GetProductCustomizationAsync(id);
+
+                if (result == null)
+                {
+                    return NotFound(new ResApiResponseDTO<object>
+                    {
+                        Success = false,
+                        Message = $"找不到產品 ID: {id} 或產品已下架",
+                        Data = null
+                    });
+                }
+
+                return Ok(new ResApiResponseDTO<ResProductCustomizationDTO>
+                {
+                    Success = true,
+                    Message = "取得產品自訂資訊成功",
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ResApiResponseDTO<object>
+                {
+                    Success = false,
+                    Message = $"伺服器錯誤: {ex.Message}",
+                    Data = null
+                });
+            }
+        }
+
     }
 }
