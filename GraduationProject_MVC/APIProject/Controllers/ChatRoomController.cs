@@ -1,5 +1,6 @@
 ﻿using ApiProject.DTOs;
 using ApiProject.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NuGet.DependencyResolver;
@@ -18,32 +19,70 @@ namespace ApiProject.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> CreateChatRoom(int? memberid, string? visitorid)
+        [HttpGet("Index")]
+        public async Task<IActionResult> Index(string? q, int? chatRoomId)
         {
-            //判斷 memberid visitorid 不能同時為空   
-            if (memberid == null && visitorid == null)
+            var roomsQuery = await (
+                from c in _context.TChatRooms
+                join m in _context.TMembers on c.FMemberId equals m.FMemberId into gm
+                from m in gm.DefaultIfEmpty() // ← left join
+                let last = _context.TMessages
+                    .Where(x => x.FChatRoomId == c.FChatRoomId)
+                    .OrderByDescending(x => x.FCreatedAt)
+                    .Select(x => new { x.FCreatedAt, x.FContent })
+                    .FirstOrDefault()
+                select new ResChatRoomListDTO
+                {
+                    FChatRoomId = c.FChatRoomId,
+                    image = (m != null && !string.IsNullOrEmpty(m.FMemberImage))
+            ? m.FMemberImage
+            : "/MemberHeadImages/default.png",
+
+                    FName = (m != null && !string.IsNullOrEmpty(m.FName))
+           ? m.FName
+            : (c.FMemberId == null ? "訪客" : c.FMemberId.ToString()),
+
+                    FLastMessageTime = last != null ? (DateTime?)last.FCreatedAt : null,
+                    FLastMessage = last != null ? last.FContent : null
+                })
+                .OrderByDescending(x => x.FLastMessageTime)
+                .ToListAsync();
+
+            if (!string.IsNullOrWhiteSpace(q))
             {
-                return BadRequest("Member ID and Visitor ID cannot both be null.");
+                var qTrim = q.Trim();
+                roomsQuery = roomsQuery.Where(r =>
+                    r.FName.Contains(qTrim) ||
+                    r.FChatRoomId.ToString() == qTrim
+                ).ToList(); // ← 記憶體篩選，用 ToList()
             }
-            //若是id 正確 就新增一筆資料到 TChatRoom
-            //把一筆新的聊天室資料交給 EF Core， 讓它暫時放在 Change Tracker（追蹤集合）裡等待提交。
-            var a = _context.TChatRooms.Add(new TChatRoom
+
+            var rooms = roomsQuery
+                .OrderByDescending(x => x.FLastMessageTime)
+                .ToList(); // ← 記憶體排序，用 ToList()，不要 Async
+
+            List<ResMessageDto> messages = new();
+            if (chatRoomId.HasValue)
             {
-                FMemberId = memberid,
-                FVisitorKey = visitorid,
-                FFirstMessageAt = DateTime.Now,
-                FLastMessageAt = DateTime.Now,
-                FCreatedAt = DateTime.Now,
-                FStatus = "open",
-            });
-            await _context.SaveChangesAsync();
-            var ChatRoomid = a.Entity.FChatRoomId;
-            //Entity ← 就是那個剛剛加入的 TChatRoom 物件
-            //接著output ChatRoomid
-            return Ok(ChatRoomid);
+                messages = await _context.TMessages
+                    .Where(m => m.FChatRoomId == chatRoomId)
+                    .OrderBy(m => m.FCreatedAt)
+                    .Select(m => new ResMessageDto
+                    {
+                        MessageId = m.FMessagesId,
+                        SenderType = m.FSenderType,
+                        SenderId = m.FSenderId,
+                        Content = m.FContent,
+                        CreatedAt = m.FCreatedAt
+                    })
+                    .ToListAsync();
+            }
+
+            var vm = new ResChatRoomsPageDTO { Rooms = rooms, SelectedId = chatRoomId, Messages = messages };
+            return Ok(vm);
         }
 
-        [HttpPost]
+        [HttpPost("SendMessage")]
         //[ValidateAntiForgeryToken]
         public async Task<IActionResult> SendMessage(int chatRoomId, string content)
         {
@@ -68,76 +107,18 @@ namespace ApiProject.Controllers
             await _context.SaveChangesAsync();
 
             //// 6) 回到 Index，維持目前聊天室與搜尋字  RedirectToAction跳轉到指定的動作方法
-            return RedirectToAction(nameof(Index), new { chatRoomId });
+            //return RedirectToAction(nameof(Index), new { chatRoomId });
+            return Ok(new { redirectedTo = "Index", chatRoomId });
         }
 
-        public async Task<IActionResult> GetChatRooms(int? memberid, string? visitorid)
-        {
-            if (memberid == null && visitorid == null)
-            {
-                return BadRequest("Member ID and Visitor ID cannot both be null.");
-            }
-            var chatRooms = await 
-            (from c in _context.TChatRooms 
-             join m in _context.TMembers on c.FMemberId equals m.FMemberId into gm from m in gm.DefaultIfEmpty()
-             let last = _context.TMessages
-                 .Where(msg => msg.FChatRoomId == c.FChatRoomId)
-                 .OrderByDescending(msg => msg.FCreatedAt)
-                 .FirstOrDefault()
-             where (memberid != null && c.FMemberId == memberid) || (visitorid != null && c.FVisitorKey == visitorid)
-             orderby last.FCreatedAt descending
-             select new  ResChatRoomCreateDTO
-             {
-                 FChatRoomId = c.FChatRoomId,
-                 image = (m != null && !string.IsNullOrEmpty(m.FMemberImage)) ? m.FMemberImage : "https://i.imgur.com/8Km9tLL.jpg",
-                 FVisitorId = c.FVisitorKey,
-                 FName = (m != null && !string.IsNullOrEmpty(m.FName)) ? m.FName : "訪客",
-                 FStatus = c.FStatus,
-                 Fcontent = (last != null) ? last.FContent : "",
-                 FEmployeeId = c.FEmployeeId.ToString(),
-                 FCreatedAt = c.FCreatedAt ?? DateTime.MinValue,
-                 FClosedAt = c.FClosedAt
-             }
-         
-            ).ToListAsync();
-            return Ok(chatRooms);
-        }
+       
+        
 
 
 
 
 
 
-        // GET: api/<ChatRoomController>
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
-
-        // GET api/<ChatRoomController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
-        }
-
-        // POST api/<ChatRoomController>
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
-
-        // PUT api/<ChatRoomController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/<ChatRoomController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
     }
+
 }

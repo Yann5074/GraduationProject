@@ -5,6 +5,9 @@ using System.Collections.Generic;
 
 namespace GraduationProject.Models;
 
+/// <summary>
+/// TMessage = 只是對應資料庫的欄位而已  model對應資料庫
+/// </summary>
 public partial class TMessage
 {
     public int FMessagesId { get; set; }
