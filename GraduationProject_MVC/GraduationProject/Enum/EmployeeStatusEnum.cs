@@ -8,5 +8,4 @@
         Deleted = 4    // 註銷
     }
 
-    public enum ResetPasswordResult { Ok, InvalidLink, WeakPassword }
 }

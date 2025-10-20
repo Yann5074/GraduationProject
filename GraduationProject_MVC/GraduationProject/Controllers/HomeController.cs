@@ -11,6 +11,7 @@ using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pag
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace GraduationProject.Controllers
 {
@@ -79,16 +80,16 @@ namespace GraduationProject.Controllers
 
             var token = await _auth.GenerateResetTokenAsync(vm.Account, vm.Email, ct);
 
-            // 無論有沒有找到都回同樣訊息，避免暴露帳號存在與否
             if (token is not null)
             {
+                //重設連結
                 var url = Url.Action(nameof(ResetPassword), "Home",
                     new { account = vm.Account, token }, Request.Scheme)!;
 
                 var html = $@"
                 <p>您好，請點擊以下連結重設密碼（60 分鐘內有效）：</p>
                 <p><a href=""{url}"">重設密碼</a></p>
-                <p>若非本人操作，請忽略此信。</p>";
+                <p>若非本人操作，請立即檢查帳戶並採取必要保護措施。</p>";
 
                 await _mail.SendAsync(vm.Email, "重設密碼連結", html, ct);
             }
@@ -108,6 +109,14 @@ namespace GraduationProject.Controllers
         {
             if (!ModelState.IsValid) return View(vm);
 
+            if (!Regex.IsMatch(vm.NewPassword ?? "",
+                @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{8,}$"))
+            {
+                ModelState.AddModelError(nameof(vm.NewPassword),
+                    "密碼強度不足：至少 8 碼，需包含大小寫字母、數字與符號。");
+                return View(vm);
+            }
+
             var ok = await _auth.ResetPasswordAsync(vm.Account, vm.Token, vm.NewPassword, ct);
             if (!ok)
             {
@@ -115,7 +124,6 @@ namespace GraduationProject.Controllers
                 return View(vm);
             }
 
-            TempData["Message"] = "密碼已重設，請使用新密碼登入。";
             return RedirectToAction(nameof(Login));
         }
 
