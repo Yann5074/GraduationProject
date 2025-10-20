@@ -67,7 +67,6 @@ namespace GraduationProject.Controllers
             try
             {
                 var newId = await _svc.CreateEmployeeAsync(dto, ct);
-                // 你也可以 TempData 成功訊息
                 return RedirectToAction(nameof(List));
             }
             catch (InvalidOperationException ex)

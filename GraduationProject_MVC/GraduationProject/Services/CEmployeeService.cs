@@ -98,8 +98,7 @@ namespace GraduationProject.Services
         public async Task<int> CreateEmployeeAsync(CEmployeeCreateDTO dto, CancellationToken ct = default)
         {
             // 帳號重複檢查
-            bool exists = await _db.TEmployees.AsNoTracking()
-                               .AnyAsync(x => x.FAccount == dto.FAccount, ct);
+            bool exists = await _db.TEmployees.AsNoTracking().AnyAsync(x => x.FAccount == dto.FAccount, ct);
             if (exists)
                 throw new InvalidOperationException("帳號已存在。");
 
@@ -120,7 +119,7 @@ namespace GraduationProject.Services
                 FChangePasswordTime = DateTime.Now
             };
 
-            // 雜湊密碼（使用 Identity 提供的 PasswordHasher）
+            // 雜湊密碼
             emp.FPasswords = _hasher.HashPassword(emp, dto.FPasswords);
 
             _db.TEmployees.Add(emp);

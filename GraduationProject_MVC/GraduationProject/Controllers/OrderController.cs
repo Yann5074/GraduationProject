@@ -4,15 +4,18 @@ using GraduationProject.Models;
 using GraduationProject.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace GraduationProject.Controllers
 {
     public class OrderController : SuperController
     {
         private readonly IOrderService _orderService;
-        public OrderController(IOrderService orderService)
+        private readonly IAnalyticsService _anylyticsService;
+        public OrderController(IOrderService orderService, IAnalyticsService anylyticsService)
         {
             _orderService = orderService;
+            _anylyticsService = anylyticsService;
         }
 
         // Order/List
@@ -170,6 +173,24 @@ namespace GraduationProject.Controllers
             if (result)
                 TempData["createSuccessMessage"] = "訂單建立成功";
             return RedirectToAction("List");
+        }
+
+        //圖表分析
+        public async Task<IActionResult> Dashboard(CancellationToken ct)
+        {
+            var dto = await _anylyticsService.GetDashboardAsync(ct);
+
+            var vm = new COrderDashboardViewModel
+            {
+                MonthlyLabels = dto.MonthlyLabels,
+                MonthlySales = dto.MonthlySales,
+                StatusLabels = dto.StatusLabels,
+                StatusCounts = dto.StatusCounts,
+                PaymentLabels = dto.PaymentLabels,
+                PaymentCounts = dto.PaymentCounts
+            };
+           
+            return View(vm);
         }
     }
 }
