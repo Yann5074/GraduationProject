@@ -61,7 +61,7 @@ namespace GraduationProject.Services
             };
         }
 
-        //重設密碼 產生一次性 Token（1 小時有效）
+        //產生一次性 Token（重設密碼用）
         public async Task<string?> GenerateResetTokenAsync(string account, string email, CancellationToken ct = default)
         {
             var user = await _db.TEmployees
@@ -70,12 +70,13 @@ namespace GraduationProject.Services
 
             if (user is null) return null;
 
-            // 你可以選擇：清掉該使用者「未用且未過期」的舊 token（避免多條可用連結）
+            // 清掉舊的未使用 Token
             await _db.TEmployeePasswordResets
                      .Where(r => r.FEmployeeId == user.FEmployeeId && r.FUsedAt == null && r.FExpiresAt > DateTime.Now)
                      .ExecuteDeleteAsync(ct);
 
-            var token = Guid.NewGuid().ToString("N");
+            //產生新 Token
+            var token = Guid.NewGuid().ToString("N");//純 32 字元識別碼
 
             var reset = new TEmployeePasswordReset
             {
@@ -97,16 +98,16 @@ namespace GraduationProject.Services
             var user = await _db.TEmployees.SingleOrDefaultAsync(e => e.FAccount == account, ct);
             if (user is null) return false;
 
-            // 找 token（未使用、未過期、對應到同一個人）
+            // 找 token
             var reset = await _db.TEmployeePasswordResets
                 .SingleOrDefaultAsync(r =>
-                     r.FToken == token &&
-                     r.FEmployeeId == user.FEmployeeId &&
-                     r.FUsedAt == null &&
-                     r.FExpiresAt > DateTime.Now, ct);
-            if (reset is null) return false;
+                     r.FToken == token && //Token 必須一致
+                     r.FEmployeeId == user.FEmployeeId && //對應到同一個人
+                     r.FUsedAt == null && //未使用
+                     r.FExpiresAt > DateTime.Now, ct); //未過期
+            if (reset is null) return false; //無效或過期的連結
 
-            // 密碼強度（可換 Regex 版本）
+            // 密碼強度
             if (!IsStrongPassword(newPassword)) return false;
 
             // 雜湊新密碼 + 設定使用時間
@@ -121,9 +122,14 @@ namespace GraduationProject.Services
         // 強度檢查
         private static bool IsStrongPassword(string pwd)
         {
+            //不允許空白, 長度需>8
             if (string.IsNullOrWhiteSpace(pwd) || pwd.Length < 8) return false;
-            bool lower = pwd.Any(char.IsLower), upper = pwd.Any(char.IsUpper),
-                 digit = pwd.Any(char.IsDigit), sym = pwd.Any(ch => !char.IsLetterOrDigit(ch));
+
+            string allowed = "!@#$%^&*()-_=+[]{};:'\",.<>/?\\|`~";
+            bool lower = pwd.Any(char.IsLower), //小寫
+                 upper = pwd.Any(char.IsUpper), //大寫
+                 digit = pwd.Any(char.IsDigit), //數字
+                 sym   = pwd.Any(allowed.Contains); //符號
             return lower && upper && digit && sym;
         }
     }
