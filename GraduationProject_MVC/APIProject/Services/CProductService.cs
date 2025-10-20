@@ -344,7 +344,93 @@ namespace ApiProject.Services
             return similarProducts;
         }
 
+        public async Task<ResProductCustomizationDTO> GetProductCustomizationAsync(int productId)
+        {
+            // 一次查詢載入所有相關資料（使用 Include）
+            var product = await _db.TProducts
+                .Include(p => p.ProductAssets)
+                .Include(p => p.ProductParts)
+                    .ThenInclude(part => part.ColorOptions)
+                        .ThenInclude(option => option.Textures)
+                .FirstOrDefaultAsync(p => p.FProductId == productId && p.FPstatus == 1);
 
+            if (product == null)
+            {
+                return null;
+            }
+
+            // 取得基礎價格（從第一個上架的 ProductVariant 取得）
+            var basePrice = await _db.TProductVariants
+                .Where(v => v.FProductId == productId && v.FPrice.HasValue && v.FPstatus == 1)
+                .OrderBy(v => v.FPrice)
+                .Select(v => v.FPrice.Value)
+                .FirstOrDefaultAsync();
+
+            // 組裝 DTO
+            var result = new ResProductCustomizationDTO
+            {
+                FProductId = product.FProductId,
+                FProductName = product.FName,
+                FDescription = product.FDescription,
+                BasePrice = basePrice,
+                FCategoryId = product.FCategoryId,
+                FWarrantyMonth = product.FWarrantyMonth,
+                FAssemblyRequired = product.FAssemblyRequired,
+
+                // 產品素材
+                Assets = product.ProductAssets
+                    .Where(a => !string.IsNullOrEmpty(a.FUrl))
+                    .OrderBy(a => a.FSortOrder ?? 999)
+                    .Select(a => new ResProductAssetDTO
+                    {
+                        FAssetId = a.FAssetId,
+                        FAssetType = a.FAssetType,
+                        FFilePath = a.FUrl,  // 使用 fUrl 作為檔案路徑
+                        FMimeType = a.FMimeType,
+                        FPosterUrl = a.FPosterUrl,
+                        FIsPrimary = a.FIsPrimary ?? false,
+                        FSortOrder = a.FSortOrder ?? 0
+                    }).ToList(),
+
+                // 產品部位
+                Parts = product.ProductParts
+                    .OrderBy(p => p.FDisplayOrder)
+                    .Select(part => new ResPartDTO
+                    {
+                        FPartId = part.FPartId,
+                        FPartName = part.FPartName,
+                        FPartCode = part.FPartCode,
+                        FDisplayOrder = part.FDisplayOrder,
+
+                        // 顏色選項
+                        ColorOptions = part.ColorOptions
+                            .OrderBy(o => o.FDisplayOrder)
+                            .Select(option => new ResColorOptionDTO
+                            {
+                                FColorOptionId = option.FColorOptionId,
+                                FOptionName = option.FOptionName,
+                                FColorHex = option.FColorHex,
+                                FThumbnail = option.FThumbnail,
+                                FIsDefault = option.FIsDefault,
+                                FDisplayOrder = option.FDisplayOrder,
+
+                                // 貼圖
+                                Textures = option.Textures
+                                    .Select(t => new ResTextureDTO
+                                    {
+                                        FTextureId = t.FTextureId,
+                                        FTextureType = t.FTextureType,
+                                        FFilePath = t.FFilePath,
+                                        FTiling = t.FTiling
+                                    }).ToList()
+
+                            }).ToList()
+
+                    }).ToList()
+            };
+
+            return result;
+        }
         /*
          ///////////////////////////////////////////////
          */
