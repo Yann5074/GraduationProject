@@ -42,13 +42,14 @@ body {
 
 /* Accordion �˦��u�� */
 .accordion-button {
-    background-color: #f8f9fa;
+    background-color: #FFFFFF;
     color: #212529;
 }
 
+/*�}�ҫ᪺�C���ܴ�*/
 .accordion-button:not(.collapsed) {
-    background-color: #e7f1ff;
-    color: #0c63e4;
+    background-color: #bdbbb9ff;
+    color: #272727ff;
     box-shadow: none;
 }
 
@@ -118,6 +119,42 @@ body {
 /* Accordion �����Ϥ��ϰ� */
 .row.g-2 {
     gap: 0.5rem;
+}
+
+/* ���~�C���˦� */
+.product-list-accordion .accordion-button {
+    height: 60px !important;
+    min-height: 110px;
+    max-height: 110px;
+    padding: 1rem 1rem 1rem 3.5rem;
+    overflow: hidden;
+    /* ����e���X */
+}
+
+.product-list-accordion .accordion-button::after {
+    display: none;
+    position: absolute;
+    left: 1rem;
+    right: auto;
+    margin: 0;
+    top: 50%;
+}
+
+/* �ϥ� Font Awesome �ϥ� */
+.product-list-accordion .accordion-button::before {
+    content: "\f0da";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.2s ease-in-out;
+}
+
+/* �i�}���A - ����ϥ� */
+.product-list-accordion .accordion-button:not(.collapsed)::before {
+    transform: translateY(-50%) rotate(90deg);
 }
 
 /* �T�����վ� */

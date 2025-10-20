@@ -1,9 +1,9 @@
 ﻿@model IEnumerable<GraduationProject.DTOs.CProductDTO>
 
-
 @{
     ViewData["Title"] = "產品列表";
 }
+
 
 <div class="container-fluid mt-4">
     <!-- 標題列 -->
@@ -77,209 +77,137 @@
     <!-- 產品列表 Accordion -->
     @if (Model != null && Model.Any())
     {
-        <div class="accordion" id="productAccordion">
+        <div class="accordion product-list-accordion" id="productAccordion">
             @foreach (var item in Model)
             {
                 var collapseId = $"collapse{item.ProductId}";
                 
-                <div class="accordion-item mb-2">
+                <div class="accordion-item ">
                     <h2 class="accordion-header">
-                        <button class="accordion-button collapsed" 
-                                type="button" 
-                                data-bs-toggle="collapse" 
-                                data-bs-target="#@collapseId">
-                            <div class="container-fluid">
-                                <div class="row align-items-center w-100">
-                                    <!-- 產品縮圖 -->
-                                    <div class="col-1">
-                                        @if (!string.IsNullOrWhiteSpace(item.PrimaryImageUrl))
-                                        {
-                                            <img src="@item.PrimaryImageUrl" 
-                                                 alt="@item.Name" 
-                                                 class="img-thumbnail"
-                                                 style="width: 50px; height: 50px; object-fit: cover;">
-                                        }
-                                        else
-                                        {
-                                            <div class="bg-secondary text-white d-flex align-items-center justify-content-center" 
-                                                 style="width: 50px; height: 50px; border-radius: 0.25rem;">
-                                                <i class="fas fa-image"></i>
-                                            </div>
-                                        }
-                                    </div>
-                                    <!-- 產品編號 -->
-                                    <div class="col-1">
-                                        <strong>#@item.ProductId</strong>
-                                    </div>
-                                    <!-- 產品名稱 -->
-                                    <div class="col-3">
-                                        <i class="fas fa-box me-2"></i>
-                                        <strong>@item.Name</strong>
-                                    </div>
-                                    <!-- 分類 -->
-                                    <div class="col-2">
-                                        <span class="badge bg-info">@item.CategoryName</span>
-                                    </div>
-                                    <!-- 價格 -->
-                                    <div class="col-2">
-                                        @if (item.Price.HasValue)
-                                        {
-                                            <span class="text-success fw-bold">NT$ @item.Price.Value.ToString("N0")</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">無價格</span>
-                                        }
-                                    </div>
-                                    <!-- 狀態 -->
-                                    <div class="col-2">
-                                        @switch (item.PStatus)
-                                        {
-                                            case "上架中":
-                                                <span class="badge bg-success">上架中</span>
-                                                break;
-                                            case "下架":
-                                                <span class="badge bg-secondary">下架</span>
-                                                break;
-                                            case "缺貨":
-                                                <span class="badge bg-warning text-dark">缺貨</span>
-                                                break;
-                                            case "刪除":
-                                                <span class="badge bg-danger">刪除</span>
-                                                break;
-                                            default:
-                                                <span class="badge bg-info">@item.PStatus</span>
-                                                break;
-                                        }
-                                    </div>
-                                    <!-- 變體數量 -->
-                                    <div class="col-1 text-end">
-                                        <span class="badge bg-primary">
-                                            <i class="fas fa-cubes"></i> @item.Variants.Count
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </button>
-                    </h2>
-                    <div id="@collapseId" class="accordion-collapse collapse">
-                        <div class="accordion-body">
-                            <!-- 產品圖片區域 -->
-                            <div class="row mb-4">
-                                <div class="col-md-12">
-                                    <h5 class="border-bottom pb-2">
-                                        <i class="fas fa-images text-primary"></i> 產品圖片
-                                    </h5>
-                                </div>
-                                @if (item.ImageUrls != null && item.ImageUrls.Any())
-                                {
-                                    <div class="col-md-12">
-                                        <div class="row g-2">
-                                            @foreach (var imgUrl in item.ImageUrls)
+                        <div class="d-flex align-items-center w-100" style="min-height:50px;">
+                            <!-- 左側：用來切換展開/收合，只放標題資訊 -->
+                            <button class="accordion-button collapsed flex-grow-1"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#@collapseId"
+                                    aria-expanded="false"
+                                    aria-controls="@collapseId"
+                                    style="min-height:50px;">
+                                <div class="container-fluid px-0">
+                                    <div class="row align-items-center w-100">
+                                        <!-- 狀態 -->
+                                        <div class="col-1 text-center">
+                                            @switch (item.PStatus)
                                             {
-                                                <div class="col-md-2 col-sm-3 col-4">
-                                                    <div class="card">
-                                                        <img src="@imgUrl" 
-                                                             class="card-img-top product-image" 
-                                                             alt="產品圖片"
-                                                             style="height: 150px; object-fit: cover; cursor: pointer;"
-                                                             onclick="showImageModal('@imgUrl', '@item.Name')">
-                                                        @if (imgUrl == item.PrimaryImageUrl)
-                                                        {
-                                                            <div class="card-img-overlay d-flex align-items-start justify-content-end p-2">
-                                                                <span class="badge bg-success">
-                                                                    <i class="fas fa-star"></i> 主圖
-                                                                </span>
-                                                            </div>
-                                                        }
-                                                    </div>
-                                                </div>
+                                                case "上架中":
+                                                    <span class="badge bg-success">上架中</span>
+                                                    ; break;
+                                                case "下架":
+
+                                                    <span class="badge bg-secondary">下架</span>
+                                                    ; break;
+                                                case "缺貨":
+
+                                                    <span class="badge bg-warning text-dark">缺貨</span>
+                                                    ; break;
+                                                case "刪除":
+
+                                                    <span class="badge bg-danger">刪除</span>
+                                                    ; break;
+                                                default:
+
+                                                    <span class="badge bg-info">@item.PStatus</span>
+                                                    ; break;
+                                            }
+                                        </div>
+                                        <!-- 產品名稱 -->
+                                        <div class="col-2">
+                                            <i class="fas fa-box me-2"></i>
+                                            <strong>@item.Name (@item.Variants.Count)</strong>
+                                        </div>
+                                        <!-- 分類 -->
+                                        <div class="col-1 text-center">
+                                            <span>@item.CategoryName</span>
+                                        </div>
+                                        <!-- 顏色 -->
+                                        <div class="col-2 text-center">
+                                            <span>@item.ColorName</span>
+                                        </div>
+                                        <!-- 價格 -->
+                                        <div class="col-1 text-center">
+                                            @if (item.Price.HasValue)
+                                            {
+                                                <span class="text-success fw-bold">NT$ @item.Price.Value.ToString("N0")</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">無價格</span>
                                             }
                                         </div>
                                     </div>
-                                }
-                                else
-                                {
-                                    <div class="col-md-12">
-                                        <div class="alert alert-warning" role="alert">
-                                            <i class="fas fa-exclamation-triangle"></i> 此產品尚未上傳圖片
-                                        </div>
-                                    </div>
-                                }
-                            </div>
+                                </div>
+                            </button>
 
+                            <!-- 右側：獨立的操作按鈕群組（不在 accordion-button 裡） -->
+                            <div class="ms-2 me-3">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a asp-action="Detail"
+                                       asp-route-id="@item.ProductId"
+                                       class="btn btn-outline-secondary"
+                                       title="詳細資料">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </a>
+
+                                    <a asp-action="View3D"
+                                       asp-route-id="@item.ProductId"
+                                       class="btn btn-outline-secondary"
+                                       title="3D 物件檢視區">
+                                        <i class="fa-solid fa-brush"></i>
+                                    </a>
+
+                                    <a asp-action="Edit"
+                                       asp-route-id="@item.ProductId"
+                                       class="btn btn-outline-secondary"
+                                       title="編輯產品">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+
+                                    <a asp-action="CreateVariant"
+                                       asp-route-productId="@item.ProductId"
+                                       class="btn btn-outline-secondary"
+                                       title="新增變體">
+                                        <i class="fas fa-plus"></i>
+                                    </a>
+
+                                    <a href="javascript:void(0);"
+                                       class="btn btn-outline-danger"
+                                       onclick="confirmDelete(@item.ProductId, '@item.Name');"
+                                       title="刪除產品">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </h2>
+
+                    <div id="@collapseId" class="accordion-collapse collapse">
+                        <div class="accordion-body">
                             <!-- 產品基本資訊 -->
-                            <div class="row mb-3">
-                                <div class="col-md-12">
-                                    <h5 class="border-bottom pb-2">
-                                        <i class="fas fa-info-circle text-primary"></i> 產品基本資訊
-                                    </h5>
-                                </div>
-                                <div class="col-md-6">
-                                    <table class="table table-sm">
-                                        <tr>
-                                            <th width="120">產品編號：</th>
-                                            <td>@item.ProductId</td>
-                                        </tr>
-                                        <tr>
-                                            <th>產品名稱：</th>
-                                            <td><strong>@item.Name</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <th>分類：</th>
-                                            <td><span class="badge bg-info">@item.CategoryName</span></td>
-                                        </tr>
-                                    </table>
-                                </div>
-                                <div class="col-md-6">
-                                    <table class="table table-sm">
-                                        <tr>
-                                            <th width="120">狀態：</th>
-                                            <td>
-                                                @switch (item.PStatus)
-                                                {
-                                                    case "上架中":
-                                                        <span class="badge bg-success">上架中</span>
-                                                        break;
-                                                    case "下架":
-                                                        <span class="badge bg-secondary">下架</span>
-                                                        break;
-                                                    case "缺貨":
-                                                        <span class="badge bg-warning text-dark">缺貨</span>
-                                                        break;
-                                                    case "刪除":
-                                                        <span class="badge bg-danger">刪除</span>
-                                                        break;
-                                                    default:
-                                                        <span class="badge bg-info">@item.PStatus</span>
-                                                        break;
-                                                }
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>可選顏色：</th>
-                                            <td>@(string.IsNullOrWhiteSpace(item.ColorName) ? "無" : item.ColorName)</td>
-                                        </tr>
-                                        <tr>
-                                            <th>變體數量：</th>
-                                            <td><span class="badge bg-primary">@item.Variants.Count</span></td>
-                                        </tr>
-                                    </table>
-                                </div>
+                            @* <div class="row mb-3">
                                 <div class="col-md-12">
                                     <strong>產品描述：</strong>
                                     <p class="text-muted mt-2">@(string.IsNullOrWhiteSpace(item.Description) ? "無描述" : item.Description)</p>
                                 </div>
-                            </div>
+                            </div> *@
 
                             <!-- 產品變體列表 -->
-                            <div class="row">
+                            @* <div class="row">
                                 <div class="col-md-12">
                                     <h5 class="border-bottom pb-2">
-                                        <i class="fas fa-cubes text-primary"></i> 產品變體 (@item.Variants.Count)
+                                         產品變體 (@item.Variants.Count)
                                     </h5>
                                 </div>
-                            </div>
+                            </div> *@
 
                             @if (item.Variants != null && item.Variants.Any())
                             {
@@ -287,24 +215,46 @@
                                     <table class="table table-sm table-bordered table-hover">
                                         <thead class="table-light">
                                             <tr>
-                                                <th>變體ID</th>
+                                                @* <th>變體ID</th> *@
+                                                <th class="text-center">狀態</th>
                                                 <th>SKU</th>
                                                 <th>顏色</th>
                                                 <th class="text-end">價格</th>
                                                 <th class="text-end">成本</th>
                                                 <th class="text-center">庫存</th>
-                                                <th>尺寸</th>
+                                                @* <th>尺寸</th> *@
                                                 <th>規格 (長x寬x高)</th>
                                                 <th>重量</th>
-                                                <th class="text-center">狀態</th>
-                                                <th class="text-center">操作</th>
+                                                
+                                                @* <th class="text-center">操作</th> *@
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach (var variant in item.Variants)
                                             {
                                                 <tr>
-                                                    <td>@variant.VariantId</td>
+                                                    @* <td>@variant.VariantId</td> *@
+
+                                                    <td class="text-center">
+                                                        @switch (variant.PStatus)
+                                                        {
+                                                            case "上架中":
+                                                                <span class="badge bg-success">上架中</span>
+                                                                break;
+                                                            case "下架":
+                                                                <span class="badge bg-secondary">下架</span>
+                                                                break;
+                                                            case "缺貨":
+                                                                <span class="badge bg-warning text-dark">缺貨</span>
+                                                                break;
+                                                            case "刪除":
+                                                                <span class="badge bg-danger">刪除</span>
+                                                                break;
+                                                            default:
+                                                                <span class="badge bg-info">@variant.PStatus</span>
+                                                                break;
+                                                        }
+                                                    </td>
                                                     <td>
                                                         <code>@variant.SKU</code>
                                                     </td>
@@ -313,7 +263,7 @@
                                                         {
                                                             <span class="d-flex align-items-center">
                                                                 <span class="color-box me-2" 
-                                                                      style="background-color: #@variant.ColorCode;">
+                                                                      style="background-color: #@variant.ColorCode; width: 20px; height: 20px; display: inline-block; border: 1px solid #ddd; border-radius: 3px;">
                                                                 </span>
                                                                 @variant.ColorName
                                                             </span>
@@ -364,9 +314,9 @@
                                                             <span class="text-muted">-</span>
                                                         }
                                                     </td>
-                                                    <td>
+                                                    @* <td>
                                                         @(string.IsNullOrWhiteSpace(variant.SizeLabel) ? "-" : variant.SizeLabel)
-                                                    </td>
+                                                    </td> *@
                                                     <td>
                                                         @if (variant.Length.HasValue && variant.Width.HasValue && variant.Height.HasValue)
                                                         {
@@ -387,31 +337,15 @@
                                                             <span class="text-muted">-</span>
                                                         }
                                                     </td>
-                                                    <td class="text-center">
-                                                        @switch (variant.PStatus)
-                                                        {
-                                                            case "上架中":
-                                                                <span class="badge bg-success">上架中</span>
-                                                                break;
-                                                            case "下架":
-                                                                <span class="badge bg-secondary">下架</span>
-                                                                break;
-                                                            case "缺貨":
-                                                                <span class="badge bg-warning text-dark">缺貨</span>
-                                                                break;
-                                                            default:
-                                                                <span class="badge bg-info">@variant.PStatus</span>
-                                                                break;
-                                                        }
-                                                    </td>
-                                                    <td class="text-center">
+                                                    
+                                                    @* <td class="text-center">
                                                         <a asp-action="EditVariant" 
                                                            asp-route-id="@variant.VariantId" 
                                                            class="btn btn-sm btn-primary" 
                                                            title="編輯變體">
                                                             <i class="fas fa-edit"></i>
                                                         </a>
-                                                    </td>
+                                                    </td> *@
                                                 </tr>
                                             }
                                         </tbody>
@@ -424,35 +358,6 @@
                                     <i class="fas fa-exclamation-triangle"></i> 此產品尚未建立任何變體
                                 </div>
                             }
-
-                            <!-- 操作按鈕 -->
-                            <div class="row mt-3">
-                                <div class="col-md-12 text-end">
-                                    <div class="btn-group" role="group">
-                                        <a asp-action="Detail" asp-route-id="@item.ProductId" 
-                                           class="btn btn-info">
-                                            <i class="fas fa-eye"></i> 詳細資料
-                                        </a>
-                                        <a asp-action="Edit" asp-route-id="@item.ProductId" 
-                                           class="btn btn-primary">
-                                            <i class="fas fa-edit"></i> 編輯產品
-                                        </a>
-                                        <a asp-action="UploadImage" asp-route-id="@item.ProductId" 
-                                           class="btn btn-secondary">
-                                            <i class="fas fa-images"></i> 管理圖片
-                                        </a>
-                                        <a asp-action="CreateVariant" asp-route-productId="@item.ProductId" 
-                                           class="btn btn-success">
-                                            <i class="fas fa-plus"></i> 新增變體
-                                        </a>
-                                        <button type="button" 
-                                                class="btn btn-danger" 
-                                                onclick="confirmDelete(@item.ProductId, '@item.Name')">
-                                            <i class="fas fa-trash"></i> 刪除產品
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -514,6 +419,12 @@
             console.log('Bootstrap 版本:', bootstrap.Tooltip.VERSION);
         }
 
+        // ⭐ 圖片載入失敗時使用預設圖片
+        function handleImageError(img) {
+            img.onerror = null; // 防止無限循環
+            img.src = '/ProductImages/default.png';
+        }
+
         // 顯示圖片 Modal
         function showImageModal(imageUrl, productName) {
             document.getElementById('modalImage').src = imageUrl;
@@ -524,6 +435,7 @@
 
         // 刪除產品確認
         function confirmDelete(id, name) {
+            event.stopPropagation(); // 阻止觸發 Accordion
             if (confirm('確定要刪除產品「' + name + '」嗎？\n刪除產品會同時刪除所有變體，此操作無法復原！')) {
                 document.getElementById('deleteId').value = id;
                 document.getElementById('deleteForm').submit();
@@ -550,7 +462,7 @@
                 alert('Bootstrap 未正確載入，請重新整理頁面');
                 return;
             }
-            
+
             var collapses = document.querySelectorAll('.accordion-collapse');
             collapses.forEach(function(collapse) {
                 var bsCollapse = new bootstrap.Collapse(collapse, {
@@ -567,7 +479,7 @@
                 alert('Bootstrap 未正確載入，請重新整理頁面');
                 return;
             }
-            
+
             var collapses = document.querySelectorAll('.accordion-collapse');
             collapses.forEach(function(collapse) {
                 var bsCollapse = bootstrap.Collapse.getInstance(collapse);
@@ -582,8 +494,16 @@
         }
 
         // 頁面載入完成後的初始化
-                document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function() {
             console.log('頁面載入完成，Accordion 已準備就緒');
+
+            // ⭐ 為所有圖片加入錯誤處理
+            var allImages = document.querySelectorAll('img');
+            allImages.forEach(function(img) {
+                img.addEventListener('error', function() {
+                    handleImageError(this);
+                });
+            });
 
             // 為所有產品圖片加入 hover 效果
             var productImages = document.querySelectorAll('.product-image');
