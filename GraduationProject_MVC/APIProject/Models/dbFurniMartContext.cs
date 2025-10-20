@@ -29,6 +29,8 @@ public partial class dbFurniMartContext : DbContext
 
     public virtual DbSet<TColor> TColors { get; set; }
 
+    public virtual DbSet<TColorOptionTexture> TColorOptionTextures { get; set; }
+
     public virtual DbSet<TContactForm> TContactForms { get; set; }
 
     public virtual DbSet<TCustomer> TCustomers { get; set; }
@@ -36,6 +38,8 @@ public partial class dbFurniMartContext : DbContext
     public virtual DbSet<TDeliveryStatus> TDeliveryStatuses { get; set; }
 
     public virtual DbSet<TEmployee> TEmployees { get; set; }
+
+    public virtual DbSet<TEmployeePasswordReset> TEmployeePasswordResets { get; set; }
 
     public virtual DbSet<TEmployeeRole> TEmployeeRoles { get; set; }
 
@@ -67,6 +71,8 @@ public partial class dbFurniMartContext : DbContext
 
     public virtual DbSet<TOrderStatusHistory> TOrderStatusHistories { get; set; }
 
+    public virtual DbSet<TPartColorOption> TPartColorOptions { get; set; }
+
     public virtual DbSet<TPaymentMethod> TPaymentMethods { get; set; }
 
     public virtual DbSet<TPaymentStatus> TPaymentStatuses { get; set; }
@@ -76,6 +82,8 @@ public partial class dbFurniMartContext : DbContext
     public virtual DbSet<TProduct> TProducts { get; set; }
 
     public virtual DbSet<TProductAsset> TProductAssets { get; set; }
+
+    public virtual DbSet<TProductPart> TProductParts { get; set; }
 
     public virtual DbSet<TProductReview> TProductReviews { get; set; }
 
@@ -301,6 +309,26 @@ public partial class dbFurniMartContext : DbContext
                 .HasColumnName("fColorName");
         });
 
+        modelBuilder.Entity<TColorOptionTexture>(entity =>
+        {
+            entity.HasKey(e => e.FTextureId).HasName("PK__tColorOp__8DAFFC863DD4880A");
+
+            entity.ToTable("tColorOptionTexture");
+
+            entity.Property(e => e.FTextureId).HasColumnName("fTextureId");
+            entity.Property(e => e.FColorOptionId).HasColumnName("fColorOptionId");
+            entity.Property(e => e.FFilePath)
+                .HasMaxLength(500)
+                .HasColumnName("fFilePath");
+            entity.Property(e => e.FTextureType)
+                .HasMaxLength(20)
+                .HasColumnName("fTextureType");
+            entity.Property(e => e.FTiling)
+                .HasMaxLength(20)
+                .HasDefaultValue("1,1")
+                .HasColumnName("fTiling");
+        });
+
         modelBuilder.Entity<TContactForm>(entity =>
         {
             entity.HasKey(e => e.FContactFormsId).HasName("PK_tContactForms");
@@ -413,6 +441,28 @@ public partial class dbFurniMartContext : DbContext
                 .HasColumnName("fPhone");
             entity.Property(e => e.FRoleId).HasColumnName("fRoleId");
             entity.Property(e => e.FStatusId).HasColumnName("fStatusId");
+        });
+
+        modelBuilder.Entity<TEmployeePasswordReset>(entity =>
+        {
+            entity.HasKey(e => e.FResetId).HasName("PK__tEmploye__11AED4F1E2CDB1AB");
+
+            entity.ToTable("tEmployeePasswordReset");
+
+            entity.Property(e => e.FResetId).HasColumnName("fResetId");
+            entity.Property(e => e.FCreatedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("fCreatedAt");
+            entity.Property(e => e.FEmployeeId).HasColumnName("fEmployeeID");
+            entity.Property(e => e.FExpiresAt)
+                .HasColumnType("datetime")
+                .HasColumnName("fExpiresAt");
+            entity.Property(e => e.FToken)
+                .HasMaxLength(100)
+                .HasColumnName("fToken");
+            entity.Property(e => e.FUsedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("fUsedAt");
         });
 
         modelBuilder.Entity<TEmployeeRole>(entity =>
@@ -665,7 +715,9 @@ public partial class dbFurniMartContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("fPaymentTime");
             entity.Property(e => e.FPickupMethod).HasColumnName("fPickupMethod");
-            entity.Property(e => e.FShippingCost).HasColumnName("fShippingCost");
+            entity.Property(e => e.FShippingCost)
+                .HasColumnType("decimal(7, 2)")
+                .HasColumnName("fShippingCost");
             entity.Property(e => e.FTaxNo)
                 .HasMaxLength(8)
                 .IsUnicode(false)
@@ -716,6 +768,35 @@ public partial class dbFurniMartContext : DbContext
             entity.Property(e => e.FEmployeeId).HasColumnName("fEmployeeId");
             entity.Property(e => e.FOrderId).HasColumnName("fOrderId");
             entity.Property(e => e.FStatusId).HasColumnName("fStatusId");
+        });
+
+        modelBuilder.Entity<TPartColorOption>(entity =>
+        {
+            entity.HasKey(e => e.FColorOptionId).HasName("PK__tPartCol__59A0F30991CE7F0B");
+
+            entity.ToTable("tPartColorOption");
+
+            entity.Property(e => e.FColorOptionId).HasColumnName("fColorOptionId");
+            entity.Property(e => e.FColorHex)
+                .HasMaxLength(7)
+                .HasColumnName("fColorHex");
+            entity.Property(e => e.FDisplayOrder)
+                .HasDefaultValue(0)
+                .HasColumnName("fDisplayOrder");
+            entity.Property(e => e.FIsDefault)
+                .HasDefaultValue(false)
+                .HasColumnName("fIsDefault");
+            entity.Property(e => e.FOptionName)
+                .HasMaxLength(50)
+                .HasColumnName("fOptionName");
+            entity.Property(e => e.FPartId).HasColumnName("fPartId");
+            entity.Property(e => e.FPriceAdjustment)
+                .HasDefaultValue(0m)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("fPriceAdjustment");
+            entity.Property(e => e.FThumbnail)
+                .HasMaxLength(500)
+                .HasColumnName("fThumbnail");
         });
 
         modelBuilder.Entity<TPaymentMethod>(entity =>
@@ -828,6 +909,25 @@ public partial class dbFurniMartContext : DbContext
             entity.Property(e => e.FUrl)
                 .HasMaxLength(500)
                 .HasColumnName("fUrl");
+        });
+
+        modelBuilder.Entity<TProductPart>(entity =>
+        {
+            entity.HasKey(e => e.FPartId).HasName("PK__tProduct__62095C7159ACAC30");
+
+            entity.ToTable("tProductPart");
+
+            entity.Property(e => e.FPartId).HasColumnName("fPartId");
+            entity.Property(e => e.FDiaplayOrder)
+                .HasDefaultValue(0)
+                .HasColumnName("fDiaplayOrder");
+            entity.Property(e => e.FPartCode)
+                .HasMaxLength(50)
+                .HasColumnName("fPartCode");
+            entity.Property(e => e.FPartName)
+                .HasMaxLength(50)
+                .HasColumnName("fPartName");
+            entity.Property(e => e.FProductId).HasColumnName("fProductId");
         });
 
         modelBuilder.Entity<TProductReview>(entity =>

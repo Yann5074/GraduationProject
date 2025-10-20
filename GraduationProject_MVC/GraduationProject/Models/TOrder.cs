@@ -37,7 +37,7 @@ public partial class TOrder
 
     public string FDeliveryAddress { get; set; }
 
-    public int? FShippingCost { get; set; }
+    public decimal? FShippingCost { get; set; }
 
     public DateTime? FDeliveryTime { get; set; }
 
