@@ -21,7 +21,7 @@ namespace GraduationProject.ViewModels
         [Display(Name = "運送地址")]
         public string? DeliveryAddress { get; set; }
         [Display(Name = "運費")]
-        public int? ShippingCost { get; set; }
+        public decimal? ShippingCost { get; set; }
         [Display(Name = "送達時間")]
         public DateTime? DeliveryTime { get; set; }
         [Display(Name = "貨運公司")]

@@ -5,6 +5,6 @@ namespace ApiProject.Models
     public partial class TCart
     {
         [ForeignKey(nameof(FCartId))]
-        public ICollection<TCartItem> CartItem { get; set; }
+        public ICollection<TCartItem> CartItem { get; set; } = new List<TCartItem>();
     }
 }

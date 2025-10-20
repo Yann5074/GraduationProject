@@ -14,7 +14,9 @@ namespace ApiProject.Interfaces
 
         public Task<ResultDTO> EditTaxNoAsync(int orderId, ReqTaxNoDTO reqDTO);
 
-        public Task<ResultDTO> CreateOrderAsync(CartToOrderDTO dto);
+        public Task<ResultDTO> CreateOrderFromCartAsync(int memberId, ReqCreateOrderDTO dto);
+
+        public Task<ResultDTO> CreateOrderFromGuestAsync(ReqGuestOrderDTO reqDto);
 
     }
 }

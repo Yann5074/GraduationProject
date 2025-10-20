@@ -18,6 +18,7 @@ namespace ApiProject.Controllers
             _orderService = orderService;
         }
 
+        // 列出所有訂單 -V
         // GET:api/Order
         [HttpGet]
         public async Task<List<ResOrderDTO>> GetAllOrders()
@@ -26,6 +27,7 @@ namespace ApiProject.Controllers
             return order;
         }
 
+        // 找尋指定訂單 -V
         // GET:api/Order/keyword
         [HttpGet("{keyword}")]
         public async Task<List<ResOrderDTO>> GetOrdersByIdAndProdName(string? keyword)
@@ -36,6 +38,7 @@ namespace ApiProject.Controllers
             return result;
         }
 
+        // 刪除指定訂單 -V
         // DELETE:api/Order/{orderId}
         [HttpDelete("{orderId}")]
         public async Task<IActionResult> DeleteOrder(int orderId)
@@ -43,17 +46,15 @@ namespace ApiProject.Controllers
             var result = await _orderService.DeleteOrderAsync(orderId);
             if (!result.Ok)
             {
-                switch (result.Code)
-                {
-                    case StatusCodes.Status404NotFound:
-                        return NotFound();
-                    default:
-                        return StatusCode(StatusCodes.Status500InternalServerError);
-                }
+                if (result.Code < 500)
+                    return StatusCode(result.Code, result);
+                else
+                    return StatusCode(StatusCodes.Status500InternalServerError, "伺服器內部錯誤");
             }
             return NoContent();
         }
 
+        // 更改訂單地址 -V
         // Patch:api/Order/address/orderId
         [HttpPatch("address/{orderId}")]
         public async Task<IActionResult> EditDeliveryAddress(int orderId, ReqDeliveryAddressDTO reqDTO)
@@ -61,19 +62,15 @@ namespace ApiProject.Controllers
             var result = await _orderService.EditDeliveryAddressAsync(orderId, reqDTO);
             if (!result.Ok)
             {
-                switch (result.Code)
-                {
-                    case StatusCodes.Status400BadRequest:
-                        return BadRequest();
-                    case StatusCodes.Status404NotFound:
-                        return NotFound();
-                    default:
-                        return StatusCode(StatusCodes.Status500InternalServerError);
-                }
+                if (result.Code < 500)
+                    return StatusCode(result.Code, result);
+                else
+                    return StatusCode(StatusCodes.Status500InternalServerError, "伺服器內部錯誤");
             }
-            return Ok();
+            return Ok(result);
         }
 
+        // 更改統編 -V
         // Patch:api/Order/taxno/{orderId}
         [HttpPatch("taxno/{orderId}")]
         public async Task<IActionResult> EditTaxNoAsync(int orderId, ReqTaxNoDTO reqDTO)
@@ -81,25 +78,31 @@ namespace ApiProject.Controllers
             var result = await _orderService.EditTaxNoAsync(orderId, reqDTO);
             if (!result.Ok)
             {
-                switch (result.Code)
-                {
-                    case StatusCodes.Status400BadRequest:
-                        return BadRequest();
-                    case StatusCodes.Status404NotFound:
-                        return NotFound();
-                    default:
-                        return StatusCode(StatusCodes.Status500InternalServerError);
-                }
+                if (result.Code < 500)
+                    return StatusCode(result.Code, result);
+                else
+                    return StatusCode(StatusCodes.Status500InternalServerError, "伺服器內部錯誤");
             }
-            return Ok();
+            return Ok(result);
         }
 
-        //Put:api/Order
-        [HttpPut]
-        public async Task<IActionResult> CreateOrderAsync(CartToOrderDTO dto)
+        // 會員新增訂單 -V
+        // Post:api/Order
+        [HttpPost("{memberId}")]
+        public async Task<IActionResult> CreateOrderAsync(int memberId,[FromBody] ReqCreateOrderDTO reqDto)
         {
-            var result = await _orderService.CreateOrderAsync(dto);
-            return Ok();
+            var result = await _orderService.CreateOrderFromCartAsync(memberId, reqDto);
+            if (!result.Ok)
+            {
+                if (result.Code < 500)
+                    return StatusCode(result.Code, result);
+                else
+                    return StatusCode(StatusCodes.Status500InternalServerError, "伺服器內部錯誤");
+            }
+            return Ok(result);
         }
+
+        // 訪客新增訂單
+        // Post:api/Order/guest
     }
 }

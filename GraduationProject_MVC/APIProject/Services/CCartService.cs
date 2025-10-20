@@ -51,6 +51,13 @@ namespace ApiProject.Services
         // 刪除購物車
         public async Task<ResultDTO> DeleteCartAsync(int cartId)
         {
+            if (cartId <= 0)
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status400BadRequest,
+                    Message = "購物車資訊錯誤，請重新操作"
+                };
             TCart cart = await _context.TCarts
                 .FirstOrDefaultAsync(c => c.FCartId == cartId);
             if (cart == null)
@@ -58,6 +65,7 @@ namespace ApiProject.Services
                 {
                     Ok = false,
                     Code = StatusCodes.Status404NotFound,
+                    Message = "查無此購物車，請重新操作"
                 };
             cart.FIsDeleted = 1;
             var cartItem = await _context.TCartItems
@@ -76,14 +84,35 @@ namespace ApiProject.Services
         }
 
         // 編輯購物車物品數量
-        public async Task<ResultDTO> EditCartItemNumAsync(ReqEditCartItemNumDTO reqDto)
+        public async Task<ResultDTO> EditCartItemNumAsync(int cartItemId, ReqEditCartItemNumDTO reqDto)
         {
+            // 判斷Req購物車明細是否正確
+            if (cartItemId <= 0 || cartItemId != reqDto.CartItemId)
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status400BadRequest,
+                    Message = "資料資訊錯誤，請重新確認"
+                };
+
+            // 判斷是否有該購物車明細
             var cartItem = await _context.TCartItems.FirstOrDefaultAsync(ci => ci.FCartItemId == reqDto.CartItemId);
             if (cartItem == null)
                 return new ResultDTO
                 {
                     Ok = false,
                     Code = StatusCodes.Status404NotFound,
+                    Message = "查無此資料，請重新操作"
+                };
+
+            // 判斷更改數量是否超過庫存或奇怪數字
+            var pv = await _context.TProductVariants.FirstOrDefaultAsync(pv => pv.FProductVariantId == cartItem.FProductVariantId);
+            if (reqDto.Qty > pv.FStock || reqDto.Qty < 0)
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status400BadRequest,
+                    Message = "商品數量錯誤或超過庫存，請重新操作"
                 };
             cartItem.FQuantity = reqDto.Qty;
             await _context.SaveChangesAsync();
@@ -98,12 +127,14 @@ namespace ApiProject.Services
         // 刪除購物車內某商品
         public async Task<ResultDTO> DeleteCartItemAsync(int cartItemId)
         {
+
             TCartItem item = await _context.TCartItems.FirstOrDefaultAsync(i => i.FCartItemId == cartItemId);
             if (item == null)
                 return new ResultDTO
                 {
                     Ok = false,
                     Code = StatusCodes.Status404NotFound,
+                    Message = "查無此商品，請重新操作"
                 };
             item.FIsDeleted = 1;
             await _context.SaveChangesAsync();
@@ -113,10 +144,11 @@ namespace ApiProject.Services
             {
                 Ok = true,
                 Code = StatusCodes.Status200OK,
+                Message = "商品刪除成功"
             };
         }
 
-        // 建立購物車
+        // 商品加入購物車
         public async Task<ResultDTO> CreateCartAsync(ReqCartDTO reqDto)
         {
             // 確認是否有該商品
@@ -125,14 +157,16 @@ namespace ApiProject.Services
                 return new ResultDTO
                 {
                     Ok = false,
-                    Code = StatusCodes.Status404NotFound
+                    Code = StatusCodes.Status404NotFound,
+                    Message = "查無此商品，請重新操作"
                 };
             // 確認商品數量正確
             if (prod.FStock <= reqDto.Qty || reqDto.Qty <= 0)
                 return new ResultDTO
                 {
                     Ok = false,
-                    Code = StatusCodes.Status400BadRequest
+                    Code = StatusCodes.Status400BadRequest,
+                    Message = "商品數量錯誤，請重新操作"
                 };
 
             //確認是否有購物車
@@ -148,7 +182,6 @@ namespace ApiProject.Services
                     FIsDeleted = 0,
                     FTotalPrice = 0,
                     FMemberId = reqDto.MemberId,
-
                 };
                 _context.TCarts.Add(query);
                 await _context.SaveChangesAsync(); // 先進行儲存以產生CartId
@@ -196,9 +229,13 @@ namespace ApiProject.Services
             return new ResultDTO
             {
                 Ok = true,
-                Code = StatusCodes.Status200OK
+                Code = StatusCodes.Status200OK,
+                Message = "商品成功加入購物車"
             };
         }
+
+        // 登入後將 pinia 購物車轉入SQL 
+
 
         // 計算購物車金額 (內部邏輯)
         private async Task UpdatePriceAsync(int? cartItemId = null, int? cartId = null)
