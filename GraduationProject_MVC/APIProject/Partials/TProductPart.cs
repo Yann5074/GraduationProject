@@ -8,9 +8,14 @@ namespace ApiProject.Models
         //[ForeignKey(nameof(FPartId))]
         //public TProductPart PartId { get; set; }
 
+        public int? FDiaplayOrder { get; set; }
+
         [ForeignKey(nameof(FProductId))]
         public TProduct ProductId { get; set; }
         public virtual ICollection<TPartColorOption> ColorOptions { get; set; }
-
+        public TProductPart()
+        {
+            ColorOptions = new HashSet<TPartColorOption>();
+        }
     }
 }

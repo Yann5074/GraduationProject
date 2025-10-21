@@ -2,8 +2,38 @@
 {
     public class ResProductDetailDTO: ResProductListDTO
     {
-        public string FAssemblyPart { get; set; }
-        public List<ResProductVariantDTO> Variants { get; set; }
+        public int FProductId { get; set; }
+        public string FName { get; set; }
+        public string FDescription { get; set; }
+        public int? FCategoryId { get; set; }
+        public string CategoryName { get; set; }
+        public int? FWarrantyMonth { get; set; }
+        public bool? FAssemblyRequired { get; set; }
+        public int? FDiscount { get; set; }
+
+        // ===== 素材 =====
         public List<ResProductAssetDTO> Assets { get; set; }
+
+        // ===== 變體和庫存 =====
+        public List<ResProductVariantDTO> Variants { get; set; }
+        public int TotalStock { get; set; }
+        public bool IsAvailable { get; set; }
+        public decimal? MinPrice { get; set; }
+        public decimal? MaxPrice { get; set; }
+
+        // ===== 自訂資訊（可選） =====
+        /// <summary>
+        /// 是否為可自訂產品
+        /// </summary>
+        public bool IsCustomizable { get; set; }
+
+        /// <summary>
+        /// 自訂部位（僅當 includeCustomization = true 時載入）
+        /// </summary>
+        public List<ResPartDTO>? CustomizationParts { get; set; }
+
+        // ===== 時間 =====
+        public DateTime? FCreateTime { get; set; }
+        public DateTime? FUpdateTime { get; set; }
     }
 }
