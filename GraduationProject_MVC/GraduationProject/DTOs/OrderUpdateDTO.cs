@@ -23,7 +23,7 @@ namespace GraduationProject.DTOs
 
         public string? DeliveryAddress { get; set; }
 
-        public int? ShippingCost { get; set; }
+        public decimal? ShippingCost { get; set; }
 
         public DateTime? DeliveryTime { get; set; }
 

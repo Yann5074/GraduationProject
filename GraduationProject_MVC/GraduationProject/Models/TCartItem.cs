@@ -5,19 +5,19 @@ using System.Collections.Generic;
 
 namespace GraduationProject.Models;
 
-public partial class TShoppingCart
+public partial class TCartItem
 {
-    public int FId { get; set; }
+    public int FCartItemId { get; set; }
 
-    public string FDate { get; set; }
+    public int FCartId { get; set; }
 
     public int FIsDeleted { get; set; }
 
-    public int FCustomerId { get; set; }
-
     public int FProductVariantId { get; set; }
 
-    public int FCount { get; set; }
+    public int FQuantity { get; set; }
 
-    public decimal FPrice { get; set; }
+    public decimal FUnitPrice { get; set; }
+
+    public decimal FSubtotal { get; set; }
 }

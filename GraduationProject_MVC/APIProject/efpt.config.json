@@ -24,6 +24,14 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[tCart]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tCartItem]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[tCategory]",
          "ObjectType": 0
       },
@@ -40,6 +48,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[tColorOptionTexture]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[tContactForm]",
          "ObjectType": 0
       },
@@ -53,6 +65,10 @@
       },
       {
          "Name": "[dbo].[tEmployee]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tEmployeePasswordReset]",
          "ObjectType": 0
       },
       {
@@ -116,6 +132,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[tPartColorOption]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[tPaymentMethod]",
          "ObjectType": 0
       },
@@ -133,6 +153,10 @@
       },
       {
          "Name": "[dbo].[tProductAsset]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tProductPart]",
          "ObjectType": 0
       },
       {
@@ -157,10 +181,6 @@
       },
       {
          "Name": "[dbo].[tSalary]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[tShoppingCart]",
          "ObjectType": 0
       },
       {

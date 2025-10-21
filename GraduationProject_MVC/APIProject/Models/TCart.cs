@@ -5,19 +5,17 @@ using System.Collections.Generic;
 
 namespace ApiProject.Models;
 
-public partial class TShoppingCart
+public partial class TCart
 {
-    public int FId { get; set; }
+    public int FCartId { get; set; }
 
     public string FDate { get; set; }
 
     public int FIsDeleted { get; set; }
 
-    public int FCustomerId { get; set; }
+    public int FIsCheckOut { get; set; }
 
-    public int FProductVariantId { get; set; }
+    public int FMemberId { get; set; }
 
-    public int FCount { get; set; }
-
-    public decimal FPrice { get; set; }
+    public decimal FTotalPrice { get; set; }
 }
