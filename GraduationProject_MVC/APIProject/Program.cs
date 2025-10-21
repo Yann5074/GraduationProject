@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using ApiProject.Infrastructure; // ← 放 SessionAuthHandler 的 namespace
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,9 +73,36 @@ builder.Services.AddDbContext<dbFurniMartContext>(options =>
 });
 
 builder.Services.AddDbContext<dbFurniMartContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart")));
+
+// DI
+builder.Services.AddScoped<IOrderService, COrderService>();
+builder.Services.AddScoped<IMemberService, CMemberServices>();
+builder.Services.AddScoped<IPasswordHasher<TMember>, PasswordHasher<TMember>>();
+
+// ✅ Session 需要「分散式快取」實作
+builder.Services.AddDistributedMemoryCache();
+
+// ✅ 啟用 Session
+builder.Services.AddSession(o =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart"));
+    o.IdleTimeout = TimeSpan.FromMinutes(30);
+    o.Cookie.HttpOnly = true;
+    o.Cookie.IsEssential = true;
+
+    // ★ 跨站 XHR 需要這兩行
+    o.Cookie.SameSite = SameSiteMode.None;
+    o.Cookie.SecurePolicy = CookieSecurePolicy.Always; // 需 HTTPS
 });
+
+// ✅ 只用 Session 作為驗證方案（重點：不要同時再呼叫 Cookie 的 AddAuthentication）
+builder.Services.AddAuthentication("SessionAuth")
+    .AddScheme<AuthenticationSchemeOptions, SessionAuthHandler>("SessionAuth", _ => { });
+
+builder.Services.AddAuthorization();
+
+// 讓 Service 可取到 HttpContext（若有用到）
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
