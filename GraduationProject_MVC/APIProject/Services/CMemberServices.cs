@@ -80,6 +80,9 @@ namespace ApiProject.Services
             // 1) 查帳號
             var member = await _context.TMembers
                 .AsNoTracking()
+                .Include(m => m.FGenderNavigation)
+                .Include(m => m.FStatusNavigation)
+                .Include(m => m.FLeveIdNavigation)
                 .FirstOrDefaultAsync(m => m.FAccount == reqdto.Account, ct);
             if (member == null)
                 return null; // 或丟 InvalidOperationException 也可
@@ -105,14 +108,17 @@ namespace ApiProject.Services
                 DisplayName = member.FDisplayName,
                 Name = member.FName,
                 Gender = member.FGender,
+                GenderName = member.FGenderNavigation?.FGenderName,   // ← 依你的欄位名
                 BirthDate = member.FBirthDate,
                 Phone = member.FPhone,
                 Email = member.FEmail,       // 若你已新增欄位
                 Address = member.FAddress,
                 MemberImage = member.FMemberImage,
                 LevelId = member.FLeveId,
+                LevelName = member.FLeveIdNavigation?.FLevelName,
                 MoneySum = member.FMoneySum,
                 Status = member.FStatus,
+                StatusName = member.FStatusNavigation?.FStatusName,   // ← 依你的欄位名
                 CreateTime = member.FCreatTime,
                 UpdateTime = member.FUpdateTime
             };
@@ -163,6 +169,9 @@ namespace ApiProject.Services
             // 1️⃣ 先查會員
             var member = await _context.TMembers
                 .AsNoTracking()
+                .Include(m => m.FGenderNavigation)
+                .Include(m => m.FStatusNavigation)
+                .Include(m => m.FLeveIdNavigation)
                 .FirstOrDefaultAsync(m => m.FMemberId == memberId, ct);
 
             // 2️⃣ 沒找到就拋出錯誤
@@ -177,13 +186,17 @@ namespace ApiProject.Services
                 DisplayName = member.FDisplayName,
                 Name = member.FName,
                 Gender = member.FGender,
+                GenderName = member.FGenderNavigation?.FGenderName,   // ← 依你的欄位名
                 BirthDate = member.FBirthDate,
                 Phone = member.FPhone,
+                Email = member.FEmail,       // 若你已新增欄位
                 Address = member.FAddress,
-                //MemberImage = member.FMemberImage,
+                MemberImage = member.FMemberImage,
                 LevelId = member.FLeveId,
+                LevelName = member.FLeveIdNavigation?.FLevelName,
                 MoneySum = member.FMoneySum,
                 Status = member.FStatus,
+                StatusName = member.FStatusNavigation?.FStatusName,   // ← 依你的欄位名
                 CreateTime = member.FCreatTime,
                 UpdateTime = member.FUpdateTime
             };
