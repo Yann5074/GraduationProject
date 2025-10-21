@@ -3,103 +3,94 @@ using ApiProject.Interfaces;
 using ApiProject.Models;
 using ApiProject.Services;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using ApiProject.Infrastructure; // ← 放 SessionAuthHandler 的 namespace
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
+// MVC/Controllers
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// CORS：允許前端帶 Cookie（Session）
 builder.Services.AddCors(option =>
 {
-    option.AddPolicy(name: "VueClient", policy =>
+    option.AddPolicy("VueClient", policy =>
     {
-        policy.WithOrigins(
-            "http://localhost:5173" //�������ҥ��ӥi��ɤW�u����
-            )
-        .AllowAnyHeader()
-        .AllowAnyMethod();
+        policy.WithOrigins("http://localhost:5176")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();  // ← 必須，才能帶 .AspNetCore.Session
     });
 });
 
-builder.Services.AddDbContext<dbFurniMartContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart")));
+// DbContext（保留一次即可）
+builder.Services.AddDbContext<dbFurniMartContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart")));
 
-// COrderService
+// DI
 builder.Services.AddScoped<IOrderService, COrderService>();
-// CMemberServices
 builder.Services.AddScoped<IMemberService, CMemberServices>();
-// 密碼雜湊器
 builder.Services.AddScoped<IPasswordHasher<TMember>, PasswordHasher<TMember>>();
-// 設定 Cookie 驗證（重點）
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(opt =>
-    {
-        opt.Cookie.Name = "app.auth";
-        opt.Cookie.HttpOnly = true;
-        opt.Cookie.SameSite = SameSiteMode.Lax;   // 同站 Swagger 測試可用 Lax；跨站要 None+Secure
-        opt.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        // API 不要 302 轉導
-        opt.Events = new CookieAuthenticationEvents
-        {
-            OnRedirectToLogin = ctx => { ctx.Response.StatusCode = 401; return Task.CompletedTask; },
-            OnRedirectToAccessDenied = ctx => { ctx.Response.StatusCode = 403; return Task.CompletedTask; }
-        };
-    });
-// 用記憶體做分散式快取（本機/單機最方便）
+
+// ✅ Session 需要「分散式快取」實作
 builder.Services.AddDistributedMemoryCache();
 
-// builder
+// ✅ 啟用 Session
 builder.Services.AddSession(o =>
 {
     o.IdleTimeout = TimeSpan.FromMinutes(30);
     o.Cookie.HttpOnly = true;
     o.Cookie.IsEssential = true;
+
+    // ★ 跨站 XHR 需要這兩行
+    o.Cookie.SameSite = SameSiteMode.None;
+    o.Cookie.SecurePolicy = CookieSecurePolicy.Always; // 需 HTTPS
 });
 
-// ③ 用「Session 驗證」作為預設驗證機制
-builder.Services.AddAuthentication("Session")
-    .AddScheme<AuthenticationSchemeOptions, SessionAuthHandler>("Session", _ => { });
+// ✅ 只用 Session 作為驗證方案（重點：不要同時再呼叫 Cookie 的 AddAuthentication）
+builder.Services.AddAuthentication("SessionAuth")
+    .AddScheme<AuthenticationSchemeOptions, SessionAuthHandler>("SessionAuth", _ => { });
 
-// 用於在 Service 內取得 HttpContext
+builder.Services.AddAuthorization();
+
+// 讓 Service 可取到 HttpContext（若有用到）
 builder.Services.AddHttpContextAccessor();
-
-builder.Services.AddDbContext<dbFurniMartContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart"));
-});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Swagger（開發用）
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-
-
 app.UseHttpsRedirection();
+
+// CORS（在 Auth 之前即可）
 app.UseCors("VueClient");
 
-// 讓 wwwroot 可被存取（預設用 wwwroot）
-app.UseStaticFiles(); // 確保能讀到 /MemberHeadImages/檔名
-// 讓 /MemberHeadImages 指到「方案根目錄/SharedStorage/MemberHeadImages」
+// 靜態檔案（wwwroot）
+app.UseStaticFiles();
+
+// 映射共用圖片資料夾：<方案根>/SharedStorage/MemberHeadImages
 var apiSharedImagesPath = Path.GetFullPath(
     Path.Combine(builder.Environment.ContentRootPath, "..", "SharedStorage", "MemberHeadImages")
 );
-Directory.CreateDirectory(apiSharedImagesPath); // 確保存在
-
+Directory.CreateDirectory(apiSharedImagesPath);
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(apiSharedImagesPath),
     RequestPath = "/MemberHeadImages"
 });
+
+// ✅ 順序：Session → Authentication → Authorization
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
