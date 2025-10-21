@@ -215,30 +215,30 @@ namespace GraduationProject.Services
             .AsNoTracking()
             .Where(e => e.FEmployeeId == id)
             .Select(e => new CEmployeeDetailDTO
-                {
-                    FEmployeeId = e.FEmployeeId,
-                    FHeadShot = e.FHeadShot,
+            {
+                FEmployeeId = e.FEmployeeId,
+                FHeadShot = e.FHeadShot,
 
-                    FName = e.FName,
-                    FPhone = e.FPhone,
-                    FEmail = e.FEmail,
+                FName = e.FName,
+                FPhone = e.FPhone,
+                FEmail = e.FEmail,
 
-                    FBloodType = e.FBloodType,
-                    FHireDate = e.FHireDate,
+                FBloodType = e.FBloodType,
+                FHireDate = e.FHireDate,
 
-                    FGender = e.FGender,
-                    FGenderName = e.FGenderNavigation != null ? e.FGenderNavigation.FGenderName : null,
+                FGender = e.FGender,
+                FGenderName = e.FGenderNavigation != null ? e.FGenderNavigation.FGenderName : null,
 
-                    FRoleId = e.FRoleId,
-                    FRoleClass = e.FRole != null ? e.FRole.FRoleClass : null,
+                FRoleId = e.FRoleId,
+                FRoleClass = e.FRole != null ? e.FRole.FRoleClass : null,
 
-                    FStatusId = e.FStatusId,
-                    FStatus = e.FStatus != null ? e.FStatus.FStatus : null,
+                FStatusId = e.FStatusId,
+                FStatus = e.FStatus != null ? e.FStatus.FStatus : null,
 
-                    FAccount = e.FAccount,
-                    FLoginTime = e.FLoginTime,
-                    FChangePasswordTime = e.FChangePasswordTime
-                })
+                FAccount = e.FAccount,
+                FLoginTime = e.FLoginTime,
+                FChangePasswordTime = e.FChangePasswordTime
+            })
                 .FirstOrDefaultAsync(ct);
         }
     }

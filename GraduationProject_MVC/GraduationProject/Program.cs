@@ -35,6 +35,9 @@ builder.Services.Configure<CEmployeeEmailOptions>(builder.Configuration.GetSecti
 builder.Services.AddScoped<IEmployeeEmailSender, CMailSenderService>();
 //圖表分析
 builder.Services.AddScoped<IAnalyticsService, CAnalyticsService>();
+//取得登入員工資料
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUserContextService, CUserContextService>();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession(o =>
