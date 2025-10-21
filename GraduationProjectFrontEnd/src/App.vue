@@ -58,7 +58,6 @@ onMounted(() => {
     <!-- 自己加的聊天室浮動元件 -->
     <ChatWidget />
  
-  </div>
 
     <nav
       class="custom-navbar navbar navbar navbar-expand-md navbar-dark bg-dark"
