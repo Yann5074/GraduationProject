@@ -109,5 +109,22 @@ namespace ApiProject.Controllers
             }
             return NoContent();
         }
+
+        //登入時購物車轉換 -V
+        // Post: api/Cart/sync
+        [HttpPost("sync")]
+        public async Task<IActionResult> SyncCart([FromBody] ReqSyncCartDTO reqDto)
+        {
+            
+            var result = await _cartService.SyncCartAsync(reqDto);
+            if (!result.Ok)
+            {
+                if (result.Code < 500)
+                    return StatusCode(result.Code, result);
+                else
+                    return StatusCode(StatusCodes.Status500InternalServerError, "伺服器內部錯誤");
+            }
+            return NoContent();
+        }
     }
 }

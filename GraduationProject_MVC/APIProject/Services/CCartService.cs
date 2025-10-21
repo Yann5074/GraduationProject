@@ -4,6 +4,7 @@ using ApiProject.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using System.Diagnostics;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ApiProject.Services
 {
@@ -289,15 +290,79 @@ namespace ApiProject.Services
             };
         }
 
+        // 登入後將 pinia 加入購物車/同步購物車
+        public async Task<ResultDTO> SyncCartAsync(ReqSyncCartDTO reqDto)
+        {
+            var cart = await _context.TCarts
+                .Include(c => c.CartItem)
+                .FirstOrDefaultAsync(c => c.FMemberId == reqDto.MemberId && c.FIsDeleted == 0 && c.FIsCheckOut == 0);
+
+            if (cart == null)
+            {
+                cart = new TCart
+                {
+                    FMemberId = reqDto.MemberId,
+                    FDate = DateTime.Now.ToString(),
+                    FIsDeleted = 0,
+                    FIsCheckOut = 0,
+                    FTotalPrice = 0
+                };
+                _context.TCarts.Add(cart);
+                await _context.SaveChangesAsync();
+            }
+
+            // 購物車不為空時的處理
+            foreach(var item in reqDto.CartItem)
+            {
+                // 尋找指定商品的資訊
+                var pro = await _context.TProductVariants.FirstOrDefaultAsync(ci => ci.FProductVariantId == item.ProductVariantId && ci.FPstatus == 1);
+
+                if (pro == null)
+                    continue;
+
+                // 尋找是否有該購物車明細
+                var existing = cart.CartItem.FirstOrDefault(ci => ci.FProductVariantId == item.ProductVariantId);
+
+                if (existing != null)
+                {
+                    //將數量改為使用者這次的數量
+                    existing.FIsDeleted = 0;
+                    existing.FQuantity = item.Quantity;
+                    existing.FUnitPrice = (decimal)pro.FPrice;
+                    existing.FSubtotal = item.Quantity * (decimal)pro.FPrice;
+                }
+                else
+                {
+                    var cartItem = new TCartItem
+                    {
+                        FCartId = cart.FCartId,
+                        FProductVariantId = item.ProductVariantId,
+                        FIsDeleted = 0,
+                        FQuantity = item.Quantity,
+                        FUnitPrice = (decimal)pro.FPrice,
+                        FSubtotal = item.Quantity * (decimal)pro.FPrice,
+                    };
+                    cart.CartItem.Add(cartItem);
+                }
+            }
+
+            cart.FDate = DateTime.Now.ToString();
+            await UpdatePriceAsync(cartId: cart.FCartId);
+            await _context.SaveChangesAsync();
+            return new ResultDTO
+            {
+                Ok = true,
+                Code = StatusCodes.Status204NoContent
+            };
+            
+        }
+
         // 確認購物車狀態 (內部邏輯)
         private bool IsCartEmpty(TCart cart)
         {
             var result = (cart == null || cart.CartItem == null || !cart.CartItem.Any(ci => ci.FIsDeleted == 0)); //若購物車不完整存在，回傳true
             return result;
         }
-
-        // 登入後將 pinia 購物車轉入SQL 
-
 
         // 計算購物車金額 (內部邏輯)
         private async Task UpdatePriceAsync(int? cartItemId = null, int? cartId = null)
@@ -342,7 +407,6 @@ namespace ApiProject.Services
                 await _context.SaveChangesAsync();
             }
         }
-
 
     }
 }
