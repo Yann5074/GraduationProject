@@ -4,7 +4,9 @@ import { onMounted, ref } from 'vue'
 import { Dropdown } from 'bootstrap'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
+import ChatRoom from "@/components/chat/ChatRoom.vue";
 
+const showChat = ref(false);
 const route = useRoute()
 const router = useRouter()
 const isActive = (path) => route.path === path
@@ -52,6 +54,13 @@ onMounted(() => {
 
 <template>
   <main>
+
+  <button @click="showChat = !showChat">💬 開啟聊天室</button>
+
+  <div v-if="showChat" class="chat-popup">
+    <ChatRoom />
+  </div>
+
     <nav
       class="custom-navbar navbar navbar navbar-expand-md navbar-dark bg-dark"
       arial-label="Furni navigation bar"
