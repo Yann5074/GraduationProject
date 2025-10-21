@@ -13,9 +13,11 @@ namespace ApiProject.Controllers
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _orderService;
-        public OrderController(IOrderService orderService)
+        private readonly ICartService _cartService;
+        public OrderController(IOrderService orderService, ICartService cartService)
         {
             _orderService = orderService;
+            _cartService = cartService;
         }
 
         // 列出所有訂單 -V
@@ -91,6 +93,16 @@ namespace ApiProject.Controllers
         [HttpPost("{memberId}")]
         public async Task<IActionResult> CreateOrderAsync(int memberId,[FromBody] ReqCreateOrderDTO reqDto)
         {
+            //判斷購物車資料正確性
+            var check = await _cartService.ValidateCartAsync(memberId);
+            if (!check.Ok)
+            {
+                if (check.Code < 500)
+                    return StatusCode(check.Code, check);
+                else
+                    return StatusCode(StatusCodes.Status500InternalServerError, "伺服器內部錯誤");
+            }
+
             var result = await _orderService.CreateOrderFromCartAsync(memberId, reqDto);
             if (!result.Ok)
             {
@@ -104,5 +116,8 @@ namespace ApiProject.Controllers
 
         // 訪客新增訂單
         // Post:api/Order/guest
+
+
+
     }
 }
