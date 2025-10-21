@@ -180,7 +180,7 @@ namespace ApiProject.Services
 
             // 確認會員是否正常狀態
             var mem = await _context.TMembers
-                .Include(c => c.Level)
+                .Include(c => c.FLeveIdNavigation)
                 .FirstOrDefaultAsync(m => m.FMemberId == memberId && m.FStatus == 1);
             if (mem == null)
                 return new ResultDTO
@@ -204,7 +204,7 @@ namespace ApiProject.Services
                 FMemberId = memberId,
                 FEmployeeId = reqDto.EmployeeId, // 畫面給予可填入ID的欄位
                 FTotalPrice = cart.FTotalPrice,
-                FDiscount = mem.Level.FDiscount,
+                FDiscount = mem.FLeveIdNavigation.FDiscount,
                 FTaxNo = reqDto.TaxNo,
                 FOrderTime = DateTime.Now,
                 FOrderStatus = 1,
