@@ -1,10 +1,7 @@
 ﻿using ApiProject.DTOs;
 using ApiProject.Interfaces;
-using ApiProject.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using System.Collections;
 
 namespace ApiProject.Controllers
 {

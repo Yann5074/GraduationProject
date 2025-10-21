@@ -90,11 +90,13 @@ namespace ApiProject.Controllers
                 .AsTracking()
                 .FirstOrDefaultAsync(r => r.FChatRoomId == chatRoomId);
             string senderId = null;
+            string SenderType = null;
             TMessage msg = new TMessage
             {
                 FChatRoomId = chatRoomId,
                 FSenderId = senderId,   // ← string
                 FContent = content,
+                FSenderType = SenderType,
                 FCreatedAt = DateTime.Now
             };
 
@@ -111,9 +113,25 @@ namespace ApiProject.Controllers
             return Ok(new { redirectedTo = "Index", chatRoomId });
         }
 
-       
-        
 
+        [HttpPost("SubmitForm")]
+        public async Task<IActionResult> SubmitForm([FromBody] TContactForm form)
+        {
+            if (string.IsNullOrEmpty(form.FContactName) ||
+                string.IsNullOrEmpty(form.FCompanyName) ||
+                string.IsNullOrEmpty(form.FPhone) ||
+                string.IsNullOrEmpty(form.FEmail))
+            {
+                return BadRequest("表單欄位不能為空");
+            }
+
+            form.FCreatedAt = DateTime.Now;
+
+            _context.TContactForms.Add(form);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "表單提交成功" });
+        }
 
 
 
