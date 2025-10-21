@@ -16,5 +16,7 @@ namespace ApiProject.Interfaces
         public Task<ResultDTO> CreateCartAsync(ReqCartDTO reqDto);
 
         public Task<ResultDTO> ValidateCartAsync(int memberId);
+
+        public Task<ResultDTO> SyncCartAsync(ReqSyncCartDTO reqDto);
     }
 }
