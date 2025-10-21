@@ -10,5 +10,9 @@ namespace ApiProject.Models
         public virtual TProductPart Part { get; set; }
 
         public virtual ICollection<TColorOptionTexture> Textures { get; set; }
+        public TPartColorOption()
+        {
+            Textures = new HashSet<TColorOptionTexture>();
+        }
     }
 }

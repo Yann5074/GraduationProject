@@ -780,7 +780,7 @@ public partial class dbFurniMartContext : DbContext
             entity.Property(e => e.FColorHex)
                 .HasMaxLength(7)
                 .HasColumnName("fColorHex");
-            entity.Property(e => e.FDisplayOrder)
+            entity.Property(e => e.fDisplayOrder)
                 .HasDefaultValue(0)
                 .HasColumnName("fDisplayOrder");
             entity.Property(e => e.FIsDefault)

@@ -19,7 +19,7 @@ public partial class TPartColorOption
 
     public decimal? FPriceAdjustment { get; set; }
 
-    public bool FIsDefault { get; set; }
+    public bool? FIsDefault { get; set; }
 
-    public int? FDisplayOrder { get; set; }
+    public int? fDisplayOrder { get; set; }
 }
