@@ -174,23 +174,5 @@ namespace GraduationProject.Controllers
                 TempData["createSuccessMessage"] = "訂單建立成功";
             return RedirectToAction("List");
         }
-
-        //圖表分析
-        public async Task<IActionResult> Dashboard(CancellationToken ct)
-        {
-            var dto = await _anylyticsService.GetDashboardAsync(ct);
-
-            var vm = new COrderDashboardViewModel
-            {
-                MonthlyLabels = dto.MonthlyLabels,
-                MonthlySales = dto.MonthlySales,
-                StatusLabels = dto.StatusLabels,
-                StatusCounts = dto.StatusCounts,
-                PaymentLabels = dto.PaymentLabels,
-                PaymentCounts = dto.PaymentCounts
-            };
-           
-            return View(vm);
-        }
     }
 }
