@@ -1,15 +1,47 @@
 <script setup>
-import { RouterLink, RouterView, useRoute } from 'vue-router'
-import { onMounted } from 'vue'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
+import { onMounted, ref } from 'vue'
 import { Dropdown } from 'bootstrap'
+import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
+const router = useRouter()
 const isActive = (path) => route.path === path
-
 const auth = useAuthStore()
 
-// 保險：初始化所有 dropdown（若純 data-attrs 就可運作，可刪這段）
+// 建立 axios（要帶 cookie 才能讓後端清 session）
+const http = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE || 'https://localhost:7131',
+  withCredentials: true,
+  timeout: 10000,
+})
+
+const loggingOut = ref(false)
+
+async function handleLogout() {
+  if (loggingOut.value) return
+  loggingOut.value = true
+  try {
+    // 1) 呼叫後端登出（空 body 即可）
+    await http.post('/api/Member/logout')
+
+    // 2) 清前端登入狀態
+    auth.logout()
+
+    // 3) 導回登入頁或首頁（擇一）
+    router.push('/') // 或改成 '/'
+  } catch (err) {
+    console.error('logout failed:', err?.response || err)
+    // 就算後端失敗，仍清前端並導頁（避免卡住）
+    auth.logout()
+    router.push('/signin')
+  } finally {
+    loggingOut.value = false
+  }
+}
+
+// Dropdown 初始化（保險）
 onMounted(() => {
   document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((el) => {
     // eslint-disable-next-line no-new
@@ -85,7 +117,11 @@ onMounted(() => {
               <ul class="dropdown-menu dropdown-menu-end">
                 <li><RouterLink class="dropdown-item" to="/account">我的帳戶</RouterLink></li>
                 <li><hr class="dropdown-divider" /></li>
-                <li><button class="dropdown-item" @click="auth.logout()">登出</button></li>
+                <li>
+                  <button class="dropdown-item" @click="handleLogout" :disabled="loggingOut">
+                    {{ loggingOut ? '登出中…' : '登出' }}
+                  </button>
+                </li>
               </ul>
             </li>
           </ul>
