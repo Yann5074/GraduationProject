@@ -13,7 +13,7 @@ public partial class TMessage
 
     public string FSenderType { get; set; }
 
-    public string? FSenderId { get; set; }
+    public string FSenderId { get; set; }
 
     public string FContent { get; set; }
 

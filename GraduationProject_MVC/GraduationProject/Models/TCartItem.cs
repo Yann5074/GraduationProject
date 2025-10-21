@@ -11,7 +11,7 @@ public partial class TCartItem
 
     public int FCartId { get; set; }
 
-    public int? FCustomerId { get; set; }
+    public int FIsDeleted { get; set; }
 
     public int FProductVariantId { get; set; }
 
