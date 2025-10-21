@@ -81,39 +81,14 @@ onMounted(() => {
             </li>
           </ul>
 
-          < class="custom-navbar-cta navbar-nav mb-2 mb-md-0 ms-5">
-          <!-- 購物車 icon -->
-          <li class="nav-item">
-            <RouterLink class="nav-link" to="/cart">
-              <img src="/asset/images/cart.svg" />
-            </RouterLink>
-          </li>
+          <div class="custom-navbar-cta navbar-nav mb-2 mb-md-0 ms-5">
+            <!-- 購物車 icon -->
+            <li class="nav-item">
+              <RouterLink class="nav-link" to="/cart">
+                <img src="/asset/images/cart.svg" />
+              </RouterLink>
+            </li>
 
-          <!-- Menu -->
-          <div class="collapse navbar-collapse" id="navbarsFurni">
-            <ul class="custom-navbar-nav navbar-nav ms-auto mb-2 mb-md-0">
-              <li class="nav-item" :class="{ active: isActive('/') }">
-                <RouterLink class="nav-link" to="/">首頁</RouterLink>
-              </li>
-              <li class="nav-item" :class="{ active: isActive('/shop') }">
-                <RouterLink class="nav-link" to="/shop">購物</RouterLink>
-              </li>
-              <li class="nav-item" :class="{ active: isActive('/about') }">
-                <RouterLink class="nav-link" to="/about">關於我們</RouterLink>
-              </li>
-              <li class="nav-item" :class="{ active: isActive('/services') }">
-                <RouterLink class="nav-link" to="/services">服務項目</RouterLink>
-              </li>
-              <li class="nav-item" :class="{ active: isActive('/design') }">
-                <RouterLink class="nav-link" to="/design">布置靈感</RouterLink>
-              </li>
-              <li class="nav-item" :class="{ active: isActive('/Contact') }">
-                <RouterLink class="nav-link" to="/Contact">聯絡我們</RouterLink>
-              </li>
-              <li class="nav-item" :class="{ active: isActive('/Order') }">
-                <RouterLink class="nav-link" to="/Order">訂單測試</RouterLink>
-              </li>
-            </ul>
             <!-- 未登入 -->
             <li v-if="!auth.isLoggedIn" class="nav-item">
               <RouterLink class="nav-link" to="/signin">
