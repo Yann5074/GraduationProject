@@ -28,7 +28,7 @@ namespace ApiProject.Controllers
         }
 
         // 1) 註冊
-        // POST /api/members/create
+        // POST /api/Member/create
         [HttpPost("create")]
         public async Task<IActionResult> Create([FromBody] ReqMemberCreateAccountDTO req, CancellationToken ct)
         {
@@ -57,7 +57,7 @@ namespace ApiProject.Controllers
         }
 
         // 2) 填寫會員資料及可改手機和Email
-        // PUT /api/members/UpdateMe
+        // PUT /api/Member/UpdateMe
         [Authorize]
         [HttpPut("UpdateMe")]
         public async Task<IActionResult> UpdateMe([FromBody] ReqMemberUpdateDTO req, CancellationToken ct)
@@ -69,6 +69,11 @@ namespace ApiProject.Controllers
             try
             {
                 await _memberService.MemberUpdateMeAsync(memberId, req, ct);
+
+                var refreshed = await _memberService.GetMemberMeAsync(memberId, ct);
+                if (refreshed != null)
+                    HttpContext.Session.SetObject(CMemberDictionary.SK_LOGIN_OBJECT, refreshed);
+
                 return NoContent(); // 204：更新成功無內容
             }
             catch (InvalidOperationException ex)
@@ -79,7 +84,7 @@ namespace ApiProject.Controllers
         }
 
         // 3) 登入
-        // POST /api/members/login
+        // POST /api/Member/login
         [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] ReqMemberLoginDTO req, CancellationToken ct)
@@ -117,7 +122,7 @@ namespace ApiProject.Controllers
         }
 
         // 4) 登出
-        // POST /api/members/logout
+        // POST /api/Member/logout
         [Authorize]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout(CancellationToken ct)
@@ -127,34 +132,39 @@ namespace ApiProject.Controllers
             return StatusCode(result.Code, result); // 這裡選擇 200 + 訊息，前端好顯示
         }
 
+
+
         // 5) 取得個資
-        // GET /api/members/me
+        // GET /api/Member/me
+        [Authorize] // ✅ 只用 Session 時，SessionAuthHandler 會把 Session 轉成 Claims
         [HttpGet("me")]
-        public IActionResult GetMe()
+        public async Task<ActionResult<ResMemberDTO>> GetMe(CancellationToken ct)
         {
-            var dto = HttpContext.Session.GetObject<ResMemberDTO>(CMemberDictionary.SK_LOGIN_OBJECT);
-            if (dto != null)
-                return Ok(dto);
-
-            // 萬一只存了簡單欄位，備用
-            var idStr = HttpContext.Session.GetString(CMemberDictionary.SK_LOGIN_ID);
-            var acct = HttpContext.Session.GetString(CMemberDictionary.SK_LOGIN_ACCOUNT);
-            var display = HttpContext.Session.GetString(CMemberDictionary.SK_LOGIN_NAME);
-
+            // 1) 從 Claims 取登入者 Id（由 SessionAuthHandler 建立）
+            var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(idStr))
-                return Unauthorized(new { message = "Session 過期，請重新登入" });
+                return Unauthorized(new { message = "Session 過期或未登入" });
 
-            return Ok(new
-            {
-                MemberId = int.Parse(idStr),
-                Account = acct,
-                DisplayName = display
-            });
+            // 2) 若 Session 有整包 DTO，就直接回（快）
+            var cached = HttpContext.Session.GetObject<ResMemberDTO>(CMemberDictionary.SK_LOGIN_OBJECT);
+            if (cached != null)
+                return Ok(cached);
 
+            // 3) 若沒有整包 DTO：為了最新資料，回 DB 取（建議在 Service 實作）
+            var memberId = int.Parse(idStr);
+            var dto = await _memberService.GetMemberMeAsync(memberId, ct);
+            if (dto == null)
+                return NotFound(new { message = "找不到會員資料" });
+
+            // （可選）把最新資料塞回 Session，下次就不用查 DB
+            HttpContext.Session.SetObject(CMemberDictionary.SK_LOGIN_OBJECT, dto);
+
+            return Ok(dto);
         }
 
+
         // 6) 修改密碼
-        // PUT /api/members/me/UpdatePassword
+        // PUT /api/Member/me/UpdatePassword
         [Authorize]
         [HttpPut("me/UpdatePassword")]
         public async Task<IActionResult> UpdatePassword([FromBody] ReqMemberUpdatePasswordDTO req, CancellationToken ct)
@@ -195,7 +205,7 @@ namespace ApiProject.Controllers
         //}
 
         // 7) 上傳大頭貼
-        // POST /api/member/me/uploadphoto
+        // POST /api/Member/me/uploadphoto
         [Authorize]
         [HttpPost("me/uploadphoto")]
         [Consumes("multipart/form-data")]
@@ -257,6 +267,11 @@ namespace ApiProject.Controllers
             member.FUpdateTime = DateTime.Now;
             await _db.SaveChangesAsync(ct);
 
+            // ✅ 緊接著加這兩行
+            var refreshed = await _memberService.GetMemberMeAsync(memberId, ct);
+            if (refreshed != null)
+                HttpContext.Session.SetObject(CMemberDictionary.SK_LOGIN_OBJECT, refreshed);
+
             // 8) 回傳路徑
             //    只要兩個專案 Program.cs 都把 /MemberHeadImages 映射到 sharedRoot，
             //    這裡可以回相對路徑，也可以回完整 URL（都能用）
@@ -265,8 +280,6 @@ namespace ApiProject.Controllers
 
             return Ok(new { url = absolute, relative, fileName });
         }
-
-
 
     }
 }

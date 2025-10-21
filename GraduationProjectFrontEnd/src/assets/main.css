@@ -33,3 +33,13 @@ a,
     padding: 0 2rem;
   }
 } */
+
+/* 讓導覽列的下拉選單顯示在最上層，且不要被裁切 */
+.custom-navbar {
+  position: relative;
+  z-index: 1030; /* 比 hero 區塊高 */
+  overflow: visible;
+}
+.custom-navbar .dropdown-menu {
+  z-index: 1050; /* 比 Navbar 再高一點 */
+}

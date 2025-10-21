@@ -1,38 +1,65 @@
-<!-- src/views/SignIn.vue -->
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { useAuthStore } from '@/stores/auth'
 
-export const http = axios.create({
-  baseURL: 'https://localhost:7131', // 你的 API 根網址
-  withCredentials: true, // ✅ 讓瀏覽器帶上/保存 Cookie
+const router = useRouter()
+const auth = useAuthStore()
+
+const http = axios.create({
+  baseURL: 'https://localhost:7131',
+  withCredentials: true,
   timeout: 10000,
 })
 
-const router = useRouter()
+http.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) auth.logout()
+    return Promise.reject(err)
+  },
+)
 
-/* =============== 2) 登入 API 封裝（同檔案） =============== */
+/* ===== API ===== */
 async function loginAPI(account, password) {
-  // 後端期望的是 { account, password }
   return http.post('/api/Member/login', { account, password })
 }
 async function meAPI() {
-  return http.get('/api/member/me')
+  return http.get('/api/Member/me')
 }
 
-/* =============== 3) 表單狀態 =============== */
-const account = ref('') // ✅ 用 account，不是 email
+/* ===== 表單狀態與驗證（原樣） ===== */
+const account = ref('')
 const password = ref('')
-const remember = ref(true) // 若後端需要可一併傳給 loginAPI
+const remember = ref(true)
 const showPassword = ref(false)
 const loading = ref(false)
 const errorMsg = ref('')
 
-/* 簡單驗證 */
 const accountValid = computed(() => account.value.trim().length > 0)
 const passwordValid = computed(() => password.value.length >= 6)
 const canSubmit = computed(() => accountValid.value && passwordValid.value && !loading.value)
+const showPwdTip = computed(() => password.value.length > 0 && password.value.length < 6)
+
+/* ✅ 新增：把 /me 的資料標準化成我們要的結構（一定有 user.avatar） */
+function normalizeUser(me) {
+  // 👉 這裡列出可能的欄位名稱（看到真實欄位後，把不需要的刪掉）
+  const avatarCandidate =
+    me.avatar ??
+    me.avatarUrl ??
+    me.photo ??
+    me.memberImage ??
+    me.imageFileName ??
+    me.headImageFile ??
+    me.image ??
+    '' // 沒有就給空字串
+
+  return {
+    ...me,
+    avatar: avatarCandidate, // 前端 store 會依這個欄位去組完整圖片 URL
+  }
+}
 
 /* 送出 */
 const onSubmit = async (e) => {
@@ -44,16 +71,26 @@ const onSubmit = async (e) => {
   }
   loading.value = true
   try {
-    // ✅ 登入：後端會回 Set-Cookie，Axios（withCredentials）會自動保存
+    // 1) 登入（建立 Session Cookie）
     await loginAPI(account.value, password.value)
 
-    // 可選：立即取得登入者資料確認
-    await meAPI()
+    // 2) 拿目前登入者
+    const { data: me } = await meAPI()
+    console.log('[meAPI] 回傳資料 =', me) // ✅ 看清楚後端真實欄位
 
-    // 導頁
+    // 3) ✅ 標準化後再寫進 Pinia
+    const normalizedUser = normalizeUser(me)
+    console.log('[normalizeUser] 之後 =', normalizedUser) // ✅ 確認 avatar 有沒有值
+    await auth.login({ token: null, user: normalizedUser })
+
+    // 4) 導頁
     router.push('/')
   } catch (err) {
-    errorMsg.value = err?.response?.data?.message || '登入失敗，請再試一次'
+    const status = err?.response?.status
+    errorMsg.value =
+      status === 401
+        ? '尚未登入或 Session 過期（請檢查 CORS/Cookie 設定）'
+        : err?.response?.data?.message || '登入失敗，請再試一次'
   } finally {
     loading.value = false
   }
@@ -62,7 +99,7 @@ const onSubmit = async (e) => {
 
 <template>
   <!-- 你的畫面保持不變，只把 Email 欄位改成 Account（帳號） -->
-  <div class="hero">
+  <!-- <div class="hero">
     <div class="container">
       <div class="row justify-content-between">
         <div class="col-lg-5">
@@ -71,7 +108,7 @@ const onSubmit = async (e) => {
         <div class="col-lg-7"></div>
       </div>
     </div>
-  </div>
+  </div> -->
 
   <div
     class="min-vh-100 d-flex align-items-center"
@@ -82,7 +119,7 @@ const onSubmit = async (e) => {
         <div class="col-12 col-md-8 col-lg-5">
           <div class="card border-0 shadow-lg">
             <div class="card-header bg-dark text-white text-center py-3">
-              <h4 class="mb-0">Sign In</h4>
+              <h4 class="mb-0">登入</h4>
             </div>
 
             <div class="card-body p-4">
@@ -91,7 +128,7 @@ const onSubmit = async (e) => {
               <form @submit="onSubmit" novalidate>
                 <!-- Account -->
                 <div class="mb-3">
-                  <label for="account" class="form-label">Account</label>
+                  <label for="account" class="form-label">帳號</label>
                   <input
                     id="account"
                     name="account"
@@ -106,35 +143,50 @@ const onSubmit = async (e) => {
                   <div class="invalid-feedback">請輸入帳號</div>
                 </div>
 
-                <!-- Password -->
+                <!-- 密碼 -->
                 <div class="mb-3">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <label for="password" class="form-label mb-0">Password</label>
+                  <label for="password" class="form-label mb-0">密碼</label>
+
+                  <div class="input-group input-group-lg has-validation">
+                    <input
+                      :type="showPassword ? 'text' : 'password'"
+                      id="password"
+                      name="password"
+                      class="form-control border-end-0 rounded-end-0"
+                      :class="{ 'is-invalid': showPwdTip }"
+                      placeholder="至少 6 碼"
+                      v-model="password"
+                      autocomplete="current-password"
+                      minlength="6"
+                      required
+                      :aria-invalid="showPwdTip ? 'true' : 'false'"
+                      :aria-describedby="showPwdTip ? 'pwdHelp' : null"
+                    />
                     <button
                       type="button"
-                      class="btn btn-sm btn-link text-decoration-none"
+                      class="btn btn-outline-secondary btn-eye border-start-0 rounded-start-0"
                       @click="showPassword = !showPassword"
+                      tabindex="-1"
+                      :aria-label="showPassword ? '隱藏密碼' : '顯示密碼'"
+                      :title="showPassword ? '隱藏密碼' : '顯示密碼'"
                     >
-                      {{ showPassword ? '隱藏' : '顯示' }}密碼
+                      <i :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
                     </button>
                   </div>
-                  <input
-                    :type="showPassword ? 'text' : 'password'"
-                    id="password"
-                    name="password"
-                    class="form-control"
-                    :class="{ 'is-invalid': password && !passwordValid }"
-                    placeholder="至少 6 碼"
-                    v-model="password"
-                    autocomplete="current-password"
-                    minlength="6"
-                    required
-                  />
-                  <div class="invalid-feedback">密碼長度至少 6 碼</div>
+
+                  <!-- 方式 A：沿用 Bootstrap 的 invalid-feedback，但用 d-block 強制顯示 -->
+                  <div v-if="showPwdTip" id="pwdHelp" class="invalid-feedback d-block">
+                    請輸入至少 6 碼的密碼
+                  </div>
+
+                  <!-- 方式 B（可選）：改用更輕量的提示樣式 -->
+                  <!-- <div v-if="showPwdTip" id="pwdHelp" class="form-text text-danger mt-1">
+                  請輸入至少 6 碼的密碼
+                  </div> -->
                 </div>
 
                 <!-- Remember me（若後端要支援可帶到 loginAPI 第三個參數） -->
-                <div class="form-check form-switch mb-3">
+                <!-- <div class="form-check form-switch mb-3">
                   <input
                     class="form-check-input"
                     type="checkbox"
@@ -142,12 +194,12 @@ const onSubmit = async (e) => {
                     v-model="remember"
                   />
                   <label class="form-check-label" for="rememberMe">Remember me</label>
-                </div>
+                </div> -->
 
                 <div class="d-grid">
                   <button type="submit" class="btn btn-success btn-lg" :disabled="!canSubmit">
                     <span v-if="loading" class="spinner-border spinner-border-sm me-2" />
-                    {{ loading ? 'Signing in...' : 'Sign In' }}
+                    {{ loading ? '登入中...' : '登入' }}
                   </button>
                 </div>
               </form>
@@ -156,7 +208,7 @@ const onSubmit = async (e) => {
             <div class="card-footer text-center bg-white py-3">
               <small class="text-muted">
                 還沒有帳號？
-                <RouterLink class="text-success fw-bold" to="/signup">Sign up</RouterLink>
+                <RouterLink class="text-success fw-bold" to="/signup">註冊</RouterLink>
               </small>
             </div>
           </div>
@@ -170,4 +222,37 @@ const onSubmit = async (e) => {
 .card {
   border-radius: 1rem;
 }
+.toggle-btn {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  padding: 0;
+  border: none;
+  background: none;
+  color: #666;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+/* 眼睛按鈕：預設灰、hover較亮；切換狀態變綠色 */
+.btn-eye {
+  color: #6c757d; /* 圖示顏色（跟 outline-secondary 文字色一致） */
+  border-color: #ced4da; /* 跟輸入框的邊線一致 */
+  background: transparent;
+}
+.btn-eye:hover {
+  background: #f8f9fa;
+  color: #495057;
+}
+
+/* showPassword = true 時套用 active：變綠、更明顯 */
+.btn-eye.active {
+  color: #198754; /* Bootstrap success 綠 */
+  border-color: #198754;
+  background: #eaf6ef; /* 淡綠底（可調） */
+}
+
+/* 如果之前還留著 .toggle-btn（position:absolute）的樣式，請刪除避免干擾 */
+
+/* 如果你之前有 .toggle-btn（position:absolute）的樣式，請刪掉避免衝突 */
 </style>

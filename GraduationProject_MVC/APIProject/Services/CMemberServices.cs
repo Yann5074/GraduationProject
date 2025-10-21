@@ -209,7 +209,7 @@ namespace ApiProject.Services
             httpCtx.Session.Clear();
 
             // ✅ 登出 Cookie（會讓 [Authorize] 失效）
-            await httpCtx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            //await httpCtx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             return new ResultDTO
             {
