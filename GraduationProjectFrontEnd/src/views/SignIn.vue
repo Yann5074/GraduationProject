@@ -89,7 +89,7 @@ const onSubmit = async (e) => {
     const status = err?.response?.status
     errorMsg.value =
       status === 401
-        ? '尚未登入或 Session 過期（請檢查 CORS/Cookie 設定）'
+        ? '帳號或密碼有誤，請再試一次'
         : err?.response?.data?.message || '登入失敗，請再試一次'
   } finally {
     loading.value = false
@@ -178,24 +178,7 @@ const onSubmit = async (e) => {
                   <div v-if="showPwdTip" id="pwdHelp" class="invalid-feedback d-block">
                     請輸入至少 6 碼的密碼
                   </div>
-
-                  <!-- 方式 B（可選）：改用更輕量的提示樣式 -->
-                  <!-- <div v-if="showPwdTip" id="pwdHelp" class="form-text text-danger mt-1">
-                  請輸入至少 6 碼的密碼
-                  </div> -->
                 </div>
-
-                <!-- Remember me（若後端要支援可帶到 loginAPI 第三個參數） -->
-                <!-- <div class="form-check form-switch mb-3">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    id="rememberMe"
-                    v-model="remember"
-                  />
-                  <label class="form-check-label" for="rememberMe">Remember me</label>
-                </div> -->
-
                 <div class="d-grid">
                   <button type="submit" class="btn btn-success btn-lg" :disabled="!canSubmit">
                     <span v-if="loading" class="spinner-border spinner-border-sm me-2" />
