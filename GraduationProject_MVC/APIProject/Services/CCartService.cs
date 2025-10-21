@@ -47,7 +47,6 @@ namespace ApiProject.Services
             return await query.ToListAsync();
         }
 
-
         // 刪除購物車
         public async Task<ResultDTO> DeleteCartAsync(int cartId)
         {
@@ -152,7 +151,7 @@ namespace ApiProject.Services
         public async Task<ResultDTO> CreateCartAsync(ReqCartDTO reqDto)
         {
             // 確認是否有該商品
-            var prod = await _context.TProductVariants.FirstOrDefaultAsync(p => p.FProductVariantId == reqDto.ProductVariantId);
+            var prod = await _context.TProductVariants.FirstOrDefaultAsync(p => p.FProductVariantId == reqDto.ProductVariantId && p.FPstatus == 1);
             if (prod == null)
                 return new ResultDTO
                 {
@@ -232,6 +231,69 @@ namespace ApiProject.Services
                 Code = StatusCodes.Status200OK,
                 Message = "商品成功加入購物車"
             };
+        }
+
+        // 進入購物車頁面時，確認購物車內容正確性
+        public async Task<ResultDTO> ValidateCartAsync(int memberId)
+        {
+            // 找出該用戶購物車
+            var cart = await _context.TCarts
+                .Include(c => c.CartItem.Where(ci => ci.FIsDeleted == 0))
+                    .ThenInclude(c => c.ProductVariant)
+                        .ThenInclude(c => c.Product)
+                .FirstOrDefaultAsync(c => c.FMemberId == memberId && c.FIsDeleted == 0 && c.FIsCheckOut == 0);
+
+            if (IsCartEmpty(cart))
+                return null;
+
+            // 確認該商品狀態與數量正常
+            var invalidItem = new List<string>();
+            foreach (var item in cart.CartItem)
+            {
+                var pro = await _context.TProductVariants
+                    .Include(p => p.Product)
+                    .FirstOrDefaultAsync(p => p.FProductVariantId == item.FProductVariantId && p.FPstatus == 1);
+                // 確認商品是否存在
+                if (pro == null)
+                {
+                    invalidItem.Add($"商品 {item.ProductVariant.Product.FName} 不存在，請重新操作");
+                    continue;
+                }
+                // 確認商品數量正常
+                if (item.FQuantity >= pro.FStock || item.FQuantity <= 0)
+                {
+                    invalidItem.Add($"商品 {item.ProductVariant.Product.FName} 數量異常，請重新操作");
+                    continue;
+                }
+
+                //確認商品價格正常
+                if (item.FUnitPrice != pro.FPrice)
+                {
+                    invalidItem.Add($"商品 {item.ProductVariant.Product.FName} 價格異常，請重新操作購物車");
+                }
+            }
+            if (invalidItem.Any())
+            {
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status400BadRequest,
+                    Message = invalidItem
+                };
+            }
+
+            return new ResultDTO
+            {
+                Ok = true,
+                Code = StatusCodes.Status204NoContent,
+            };
+        }
+
+        // 確認購物車狀態 (內部邏輯)
+        private bool IsCartEmpty(TCart cart)
+        {
+            var result = (cart == null || cart.CartItem == null || !cart.CartItem.Any(ci => ci.FIsDeleted == 0)); //若購物車不完整存在，回傳true
+            return result;
         }
 
         // 登入後將 pinia 購物車轉入SQL 

@@ -93,5 +93,21 @@ namespace ApiProject.Controllers
             }
             return Ok(result);
         }
+
+        //確認購物車是否正常 -V
+        // Get: api/Cart/{memberId}
+        [HttpGet("{memberId}")]
+        public async Task<IActionResult> CheckCart(int memberId)
+        {
+            var result = await _cartService.ValidateCartAsync(memberId);
+            if (!result.Ok)
+            {
+                if (result.Code < 500)
+                    return StatusCode(result.Code, result);
+                else
+                    return StatusCode(StatusCodes.Status500InternalServerError, "伺服器內部錯誤");
+            }
+            return NoContent();
+        }
     }
 }

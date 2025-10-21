@@ -22,7 +22,7 @@ namespace ApiProject.Services
                 .Include(o => o.PaymentStatus)
                 .Include(o => o.DeliveryStatus)
                 .Include(o => o.LogisticsProvider)
-                .Where(o => o.FIsDeleted != 1)
+                .Where(o => o.FIsDeleted != 1) //要加入僅顯示該使用者的訂單 #TODO
                 .Select(o => new ResOrderDTO
                 {
                     OrderId = o.FOrderId.ToString(),
@@ -55,7 +55,7 @@ namespace ApiProject.Services
                 .Include(o => o.OrderDetail)
                     .ThenInclude(od => od.ProductVariant)
                         .ThenInclude(pro => pro.Product)
-                .Where(o => o.FIsDeleted != 1)
+                .Where(o => o.FIsDeleted != 1) // 要加入僅顯示該使用者的訂單 #TODO
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(keyword))
@@ -194,13 +194,6 @@ namespace ApiProject.Services
             var cart = await _context.TCarts
                 .Include(c => c.CartItem.Where(ci => ci.FIsDeleted == 0))
                 .FirstOrDefaultAsync(c => c.FMemberId == memberId && c.FIsDeleted == 0 && c.FIsCheckOut == 0);
-            if (IsCartEmpty(cart))
-                return new ResultDTO
-                {
-                    Ok = false,
-                    Code = StatusCodes.Status400BadRequest,
-                    Message = "購物車為空，請加入您想購買的商品"
-                };
 
             // 將購物車內容轉成訂單，先建立訂單在建立訂單明細
 
@@ -269,13 +262,6 @@ namespace ApiProject.Services
                 Code = StatusCodes.Status200OK,
                 Message = "訂單建立成功"
             };
-        }
-
-        // 確認購物車狀態 (內部邏輯)
-        private bool  IsCartEmpty(TCart cart)
-        {
-            var result = (cart == null || cart.CartItem == null || !cart.CartItem.Any(ci => ci.FIsDeleted == 0));
-            return result;
         }
 
         // 將購物車 (不論來源) 轉成訂單 (內部邏輯)
