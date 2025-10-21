@@ -66,6 +66,7 @@ namespace GraduationProject.Services
 
             return dto;
         }
+
         // ------- 圖表方法 -------
 
         /// <summary>月營收（合計金額）</summary>

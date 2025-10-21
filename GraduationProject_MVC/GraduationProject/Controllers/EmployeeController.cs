@@ -1,5 +1,6 @@
 ﻿using GraduationProject.Dictionary;
 using GraduationProject.DTOs;
+using GraduationProject.Filter;
 using GraduationProject.Interfaces;
 using GraduationProject.Models;
 using GraduationProject.ViewModels;
@@ -44,6 +45,7 @@ namespace GraduationProject.Controllers
             return View(); // 回傳空白表單
         }
         [HttpPost]
+        [AdminOnly]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CEmployeeCreateViewModel vm, CancellationToken ct)
         {
@@ -78,28 +80,20 @@ namespace GraduationProject.Controllers
 
         //Delete
         [HttpPost]
+        [AdminOnly]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int? id)
         {
-            // 讀 Session 判斷是否管理者（RoleId==4 為管理者）
-            var json = HttpContext.Session.GetString(CEmployeeDictionary.SK_LOGINED_USER);
-            var me = json is null ? null : JsonSerializer.Deserialize<SessionUser>(json);
-            if (me?.RoleId != 4 && me?.StatusId !=1) return Forbid();
-
             var delete = await _svc.DeleteEmployeeAsync(id);
             return RedirectToAction(nameof(List));
         }
 
         //ReallyDelete
         [HttpPost]
+        [AdminOnly]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReallyDelete(int? id)
         {
-            // 讀 Session 判斷是否管理者（RoleId==4 為管理者）
-            var json = HttpContext.Session.GetString(CEmployeeDictionary.SK_LOGINED_USER);
-            var me = json is null ? null : JsonSerializer.Deserialize<SessionUser>(json);
-            if (me?.RoleId != 4 && me?.StatusId != 1) return Forbid();
-
             var delete = await _svc.ReallyDeleteEmployeeAsync(id);
             return RedirectToAction(nameof(DeletedList));
         }
