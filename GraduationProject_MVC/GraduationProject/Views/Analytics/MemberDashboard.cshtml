@@ -1,0 +1,115 @@
+﻿@model GraduationProject.ViewModels.CMemberGrowthViewModel
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "會員成長率";
+    var labels = JsonSerializer.Serialize(Model.Labels ?? new List<string>());
+    var newMembers = JsonSerializer.Serialize(Model.NewMembers ?? new List<int>());
+    var growthRates = JsonSerializer.Serialize(Model.GrowthRates ?? new List<decimal>());
+}
+
+<div class="container-xxl py-4">
+    <h2 class="h4 mb-3">會員成長</h2>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">每月新增會員數</h5>
+                    <canvas id="chartNewMembers"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">月增率（%）</h5>
+                    <canvas id="chartGrowthRate"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">目前總會員數</div>
+                    <div class="display-6">
+                        @Model.TotalMembers.ToString("N0")
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* 想顯示啟用中會員數就打開 *@
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">啟用中會員數</div>
+                    <div class="display-6">
+                        @Model.ActiveMembers.ToString("N0")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+    <script>
+        const labels = @Html.Raw(labels);
+        const newMembers = @Html.Raw(newMembers);
+        const growthRates = @Html.Raw(growthRates);
+
+        // 每月新增會員（折線）
+        new Chart(document.getElementById('chartNewMembers'), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: '新會員數',
+                    data: newMembers,
+                    fill: false,
+                    tension: 0.25
+                }]
+            },
+            options: {
+                plugins: { legend: { display: true } },
+                scales: {
+                    y: { ticks: { precision: 0, stepSize: 1 } }
+                }
+            }
+        });
+
+        // 月增率（長條）
+        new Chart(document.getElementById('chartGrowthRate'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: '月增率 (%)',
+                    data: growthRates
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `${ctx.parsed.y}%`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: (v) => v + '%'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+}
