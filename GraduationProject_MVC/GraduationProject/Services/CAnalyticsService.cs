@@ -17,6 +17,130 @@ namespace GraduationProject.Services
         private readonly dbFurniMartContext _db;
         public CAnalyticsService(dbFurniMartContext db) => _db = db;
 
+        //暢銷商品
+        public async Task<List<CBestSellerItemDTO>> GetBestSellingVariantsAsync(int top = 10, DateTime? start = null, DateTime? end = null, bool onlyCompletedOrders = true, CancellationToken ct = default)
+        {
+            var q =
+            from d in _db.TOrderDetails.AsNoTracking()
+            join o in _db.TOrders.AsNoTracking() on d.FOrderId equals o.FOrderId
+            join v in _db.TProductVariants.AsNoTracking() on d.FProductVariantId equals v.FProductVariantId
+            join p in _db.TProducts.AsNoTracking() on v.FProductId equals p.FProductId
+            where d.FIsDeleted == 0 && o.FIsDeleted == 0
+            select new
+            {
+                o.FOrderTime,
+                o.FOrderStatus,
+                ProductId = p.FProductId,
+                ProductName = p.FName,
+                VariantId = v.FProductVariantId,
+                v.FSku,
+                Qty = d.FQuantity,
+                Revenue = d.FUnitPrice * d.FQuantity
+            };
+
+            if (onlyCompletedOrders)
+                q = q.Where(x => x.FOrderStatus == 5); // 只算已完成
+
+            if (start.HasValue) q = q.Where(x => x.FOrderTime >= start.Value);
+            if (end.HasValue) q = q.Where(x => x.FOrderTime < end.Value);
+
+            var rows = await q
+                .GroupBy(x => new { x.ProductId, x.ProductName, x.VariantId, x.FSku })
+                .Select(g => new CBestSellerItemDTO
+                {
+                    ProductId = g.Key.ProductId,
+                    ProductName = g.Key.ProductName,
+                    VariantId = g.Key.VariantId,
+                    SKU = g.Key.FSku,
+                    TotalQty = g.Sum(s => s.Qty),
+                    TotalRevenue = g.Sum(s => s.Revenue)
+                })
+                .OrderByDescending(x => x.TotalQty)      // 以數量為主排序；要換營收就改成 TotalRevenue
+                .ThenByDescending(x => x.TotalRevenue)
+                .Take(top)
+                .ToListAsync(ct);
+
+            return rows;
+        }
+
+        //會員圖表
+        public async Task<CMemberGrowthDTO> GetMemberDashboardAsync(
+       DateTime? start = null, DateTime? end = null, CancellationToken ct = default)
+        {
+            // 1) 時間範圍（可選）
+            var q = _db.TMembers.AsNoTracking().Where(m => m.FCreatTime != null);
+            if (start.HasValue) q = q.Where(m => m.FCreatTime >= start.Value);
+            if (end.HasValue) q = q.Where(m => m.FCreatTime < end.Value);
+
+            // 2) 以 年/月 分組，計算「當月新註冊人數」
+            var rows = await q
+                .GroupBy(m => new { Year = m.FCreatTime!.Value.Year, Month = m.FCreatTime!.Value.Month })
+                .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
+                .OrderBy(x => x.Year).ThenBy(x => x.Month)
+                .ToListAsync(ct);
+
+            // 3) 補齊空月份（可選）：若要把期間內「沒有註冊」的月份補 0
+            // （假設 start/end 都有值才補）
+            if (start.HasValue && end.HasValue)
+            {
+                var cursor = new DateTime(start.Value.Year, start.Value.Month, 1);
+                var endMonth = new DateTime(end.Value.Year, end.Value.Month, 1);
+                var map = rows.ToDictionary(
+                    x => (x.Year, x.Month), x => x.Count);
+                var filled = new List<(int Year, int Month, int Count)>();
+                while (cursor <= endMonth)
+                {
+                    var key = (cursor.Year, cursor.Month);
+                    map.TryGetValue(key, out var c);
+                    filled.Add((cursor.Year, cursor.Month, c));
+                    cursor = cursor.AddMonths(1);
+                }
+                rows = filled.Select(x => new { x.Year, x.Month, x.Count }).ToList();
+            }
+
+            // 4) 組出 Labels / NewMembers
+            var labels = rows.Select(x => $"{x.Year}-{x.Month:00}").ToList();
+            var counts = rows.Select(x => x.Count).ToList();
+
+            // 5) 計算月增率（(本月-上月)/上月 * 100）
+            //    第一個月沒有前月 → 設為 0
+            var growth = new List<decimal>(new decimal[counts.Count]);
+            for (int i = 1; i < counts.Count; i++)
+            {
+                var prev = counts[i - 1];
+                var curr = counts[i];
+                if (prev == 0)
+                {
+                    growth[i] = curr > 0 ? 100m : 0m; // 上月 0，本月>0 就視為 100%
+                }
+                else
+                {
+                    growth[i] = Math.Round(((curr - prev) / (decimal)prev) * 100m, 2);
+                }
+            }
+
+            // 目前總會員數（全庫）
+            var totalMembers = await _db.TMembers
+                .AsNoTracking()
+                .CountAsync(ct);
+
+            // 啟用中會員數（可選，假設 1=啟用）
+            var activeMembers = await _db.TMembers
+                .AsNoTracking()
+                .Where(m => m.FStatus == 1)
+                .CountAsync(ct);
+
+            return new CMemberGrowthDTO
+            {
+                Labels = labels,
+                NewMembers = counts,
+                GrowthRates = growth,
+                TotalMembers = totalMembers,
+                ActiveMembers = activeMembers
+            };
+        }
+
+        //訂單圖表
         public async Task<COrderDashboardDTO> GetDashboardAsync(CancellationToken ct = default)
         {
             var dto = new COrderDashboardDTO();
