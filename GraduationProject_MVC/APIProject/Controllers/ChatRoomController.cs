@@ -133,6 +133,19 @@ namespace ApiProject.Controllers
             return Ok(new { message = "表單提交成功" });
         }
 
+        [HttpGet("Templates")]
+        public async Task<IActionResult> GetTemplates()
+        {
+            var templates = await _context.TMessageTemplates
+                .OrderBy(t => t.FTemplateId)
+                .Select(t => new {
+                    title = t.FTitle,
+                    desc = t.FDescription,
+                    text = t.FContentText
+                }).ToListAsync();
+
+            return Ok(templates);
+        }
 
 
 
