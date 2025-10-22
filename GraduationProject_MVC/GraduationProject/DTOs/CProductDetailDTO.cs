@@ -20,7 +20,9 @@ namespace GraduationProject.DTOs
 
             public int? PStatusId { get; set; }
 
-             [Display(Name = "狀態")]
+            public int? PStatus { get; set; }
+
+            [Display(Name = "狀態")]
             public string? PStatusName { get; set; }
 
             public decimal? PriceMin { get; set; }

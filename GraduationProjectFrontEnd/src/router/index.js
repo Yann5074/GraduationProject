@@ -69,6 +69,24 @@ const router = createRouter({
       name: 'account',
       component: () => import('@/views/Account.vue'),
     },
+    {
+      path: '/product',
+      name: 'product',
+      component: () => import('@/views/ProductListPage.vue'),
+      meta: {
+        title: '商品列表'
+      }
+    },
+
+    {
+      path: '/search',
+      name: 'Search',
+      component: () => import('@/views/ProductListPage.vue'),
+      meta: {
+        title: '搜尋結果'
+      }
+    }
+
   ],
 })
 

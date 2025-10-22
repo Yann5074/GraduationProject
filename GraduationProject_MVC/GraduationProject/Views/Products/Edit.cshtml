@@ -1,180 +1,51 @@
 ﻿@model GraduationProject.ViewModels.CProductEditViewModel
 
 @{
-    ViewData["Title"] = "Edit Product Images";
+    ViewData["Title"] = "編輯商品";
 }
+<h2>編輯商品</h2>
 
-<h2>@ViewData["Title"]</h2>
-
-<form asp-action="UpdateProduct" asp-controller="Products" method="post" enctype="multipart/form-data">
+<form asp-action="Edit" asp-route-id="@Model.ProductId" method="post">
     @Html.AntiForgeryToken()
-    <input type="hidden" name="ProductId" value="@Model.ProductId" />
 
-    <div class="card mb-4">
-        <div class="card-header">現有圖片</div>
-        <div class="card-body">
-            @if (Model.Assets != null && Model.Assets.Count > 0)
-            {
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead>
-                        <tr>
-                            <th style="width: 120px;">預覽</th>
-                            <th>圖片路徑 (可修正)</th>
-                            <th style="width: 120px;">排序</th>
-                            <th style="width: 120px;">主圖</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @for (int i = 0; i < Model.Assets.Count; i++)
-                        {
-                            var asset = Model.Assets[i];
-                            var src = asset?.FPicture;
-                            // 保證預覽可用：若 DB 存 "/xxx"，Url.Content 需補 "~"
-                            if (!string.IsNullOrWhiteSpace(src))
-                            {
-                                src = src.Replace("\\", "/");
-                                if (src.StartsWith("/")) src = "~" + src; // -> "~/" 開頭供 Url.Content 使用
-                            }
-                            <tr>
-                                <td>
-                                    @if (!string.IsNullOrWhiteSpace(src))
-                                    {
-                                        <img src="@Url.Content(src)" style="max-width:110px;max-height:110px;object-fit:cover;border-radius:6px;border:1px solid #eee;" />
-                                    }
-                                </td>
-                                <td>
-                                    <input type="hidden" name="Assets[@i].AssetId" value="@asset.AssetId" />
-                                    <input class="form-control" name="Assets[@i].FPicture" value="@asset.FPicture" />
-                                    <div class="form-text">請以 <code>/ProductImages/檔名</code> 為格式</div>
-                                </td>
-                                <td>
-                                    <input class="form-control" type="number" name="Assets[@i].SortOrder" value="@(asset.SortOrder ?? 0)" />
-                                </td>
-                                <td>
-                                    <input type="hidden" name="Assets[@i].IsPrimary" value="false" />
-                                    <input class="form-check-input js-primary" type="checkbox" name="Assets[@i].IsPrimary" value="true" @(asset.IsPrimary ? "checked" : "") />
-                                </td>
-                            </tr>
-                        }
-                        </tbody>
-                    </table>
-                </div>
-            }
-            else
-            {
-                <p class="text-muted mb-0">目前沒有圖片。</p>
-            }
+    <input type="hidden" asp-for="ProductId" />
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control"/>
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="CategoryId" class="form-label">分類</label>
+            <select asp-for="CategoryId" class="form-select" asp-items="Model.CategoryOptions">
+                <option value="">-- 未指定 --</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="PStatus" class="form-label">狀態</label>
+            <select asp-for="PStatus" class="form-select" asp-items="Model.PStatusOptions">
+                <option value="">-- 未指定 --</option>
+            </select>
+        </div>
+        <div class="col-12">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" rows="4" class="form-control"></textarea>
         </div>
     </div>
 
-    <div class="card mb-4">
-        <div class="card-header d-flex align-items-center justify-content-between">
-            <span>新增圖片</span>
-            <button type="button" class="btn btn-sm btn-outline-primary" id="btn-add-row">＋ 新增一列</button>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table align-middle" id="tbl-new">
-                    <thead>
-                    <tr>
-                        <th style="width: 320px;">檔案</th>
-                        <th style="width: 140px;">排序</th>
-                        <th style="width: 120px;">主圖</th>
-                        <th style="width: 60px;"></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <!-- 起始給一列 -->
-                    <tr>
-                        <td>
-                            <input class="form-control" type="file" name="NewPictures[0]" accept="image/*" />
-                            <div class="form-text">支援 .jpg/.jpeg/.png/.webp/.gif/.bmp</div>
-                        </td>
-                        <td>
-                            <input class="form-control" type="number" name="NewPicturesMeta[0].SortOrder" value="0" />
-                        </td>
-                        <td>
-                            <input type="hidden" name="NewPicturesMeta[0].IsPrimary" value="false" />
-                            <input class="form-check-input js-primary" type="checkbox" name="NewPicturesMeta[0].IsPrimary" value="true" />
-                        </td>
-                        <td>
-                            <button type="button" class="btn btn-outline-danger btn-sm btn-remove-row">刪</button>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
+    <hr />
 
-            <template id="row-template">
-                <tr>
-                    <td>
-                        <input class="form-control" type="file" name="NewPictures[__IDX__]" accept="image/*" />
-                        <div class="form-text">支援 .jpg/.jpeg/.png/.webp/.gif/.bmp</div>
-                    </td>
-                    <td>
-                        <input class="form-control" type="number" name="NewPicturesMeta[__IDX__].SortOrder" value="0" />
-                    </td>
-                    <td>
-                        <input type="hidden" name="NewPicturesMeta[__IDX__].IsPrimary" value="false" />
-                        <input class="form-check-input js-primary" type="checkbox" name="NewPicturesMeta[__IDX__].IsPrimary" value="true" />
-                    </td>
-                    <td>
-                        <button type="button" class="btn btn-outline-danger btn-sm btn-remove-row">刪</button>
-                    </td>
-                </tr>
-            </template>
-        </div>
-    </div>
+    @await Html.PartialAsync("_VariantsEditor_Edit", Model)
+    @await Html.PartialAsync("_AssetsEditor_Edit", Model)
+    @await Html.PartialAsync("_PartsEditor_Edit", Model)
 
-    <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary">儲存</button>
-        <a asp-action="List" asp-controller="Products" class="btn btn-secondary">返回</a>
+    <div class="mt-3">
+        <button class="btn btn-primary" type="submit">儲存</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">返回列表</a>
     </div>
 </form>
 
 @section Scripts {
-<script>
-(function () {
-    // 僅允許勾選一張主圖（前端輔助；後端仍會強制唯一）
-    document.addEventListener('change', function (e) {
-        if (e.target && e.target.classList.contains('js-primary')) {
-            if (e.target.checked) {
-                document.querySelectorAll('.js-primary').forEach(cb => {
-                    if (cb !== e.target) cb.checked = false;
-                });
-            }
-        }
-    });
-
-    // 動態新增列
-    const btnAdd = document.getElementById('btn-add-row');
-    const tbl = document.getElementById('tbl-new').querySelector('tbody');
-    const tpl = document.getElementById('row-template').innerHTML.trim();
-
-    function currentMaxIndex() {
-        const inputs = tbl.querySelectorAll('input[name^="NewPictures["]');
-        let max = -1;
-        inputs.forEach(inp => {
-            const m = inp.name.match(/^NewPictures\[(\d+)\]/);
-            if (m) max = Math.max(max, parseInt(m[1], 10));
-        });
-        return max;
-    }
-
-    btnAdd?.addEventListener('click', function () {
-        const next = currentMaxIndex() + 1;
-        const html = tpl.replaceAll('__IDX__', next.toString());
-        tbl.insertAdjacentHTML('beforeend', html);
-    });
-
-    // 刪除列
-    document.addEventListener('click', function (e) {
-        if (e.target && e.target.classList.contains('btn-remove-row')) {
-            const tr = e.target.closest('tr');
-            tr?.parentNode?.removeChild(tr);
-        }
-    });
-})();
-</script>
+    <partial name="_ValidationScriptsPartial" />
 }

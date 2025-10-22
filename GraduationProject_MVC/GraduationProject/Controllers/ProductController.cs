@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace GraduationProject.Controllers
@@ -18,13 +19,14 @@ namespace GraduationProject.Controllers
         private readonly IProductService _ProductService;
         private readonly IWebHostEnvironment _env; // 為了存圖片
         private readonly dbFurniMartContext _db;
+        private readonly ILogger<ProductsController> _logger;
 
-        public ProductsController(IProductService ProductService, IWebHostEnvironment env, dbFurniMartContext db)
+        public ProductsController(IProductService ProductService, IWebHostEnvironment env, dbFurniMartContext db, ILogger<ProductsController> logger)
         {
             _ProductService = ProductService;
             _env = env;
             _db = db;
-
+            _logger = logger;
         }
 
         [HttpGet]
@@ -38,182 +40,200 @@ namespace GraduationProject.Controllers
             return View(data);
         }
 
-        [HttpGet]
-        public IActionResult Detail(int id)
+        [HttpGet("create")]
+        public IActionResult Create()
         {
-            var dto = _ProductService.GetProductDetail(id); // 同步呼叫
-            if (dto == null) return NotFound();
-            return View(dto);
-        }
-
-        // GET: /Products/Edit/5
-        [HttpGet]
-        public IActionResult Edit(int id)
-        {
-            var vm = _ProductService.GetProductForEdit(id);
-            if (vm == null) return NotFound();
+            var vm = new CProductCreateViewModel
+            {
+                CategoryOptions = _db.TCategories
+                    .AsNoTracking()
+                    .OrderBy(c => c.FSortOrder)
+                    .Select(c => new SelectListItem { Value = c.FCategoryId.ToString(), Text = c.FName })
+                    .ToList(),
+                PStatusOptions = _db.TPstatuses
+                    .AsNoTracking()
+                    .Select(s => new SelectListItem { Value = s.FPstatus.ToString(), Text = s.FPstatusName })
+                    .ToList()
+            };
             return View(vm);
         }
 
-        [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(CProductEditViewModel vm)
+        [HttpPost("create")]
+        public IActionResult Create(CProductCreateViewModel vm)
         {
             if (!ModelState.IsValid)
             {
-                // 回填下拉與子項選單
-                var src = _ProductService.GetProductForEdit(vm.ProductId);
-                vm.CategoryOptions = src?.CategoryOptions ?? Enumerable.Empty<SelectListItem>();
-                vm.PStatusOptions = src?.PStatusOptions ?? Enumerable.Empty<SelectListItem>();
-                // 每個 Variant 的 PStatusOptions
-                var vOptions = src?.PStatusOptions ?? Enumerable.Empty<SelectListItem>();
-                vm.Variants?.ForEach(v => v.PStatusOptions = vOptions);
+                Rebind(vm);
                 return View(vm);
             }
 
-            var ok = _ProductService.UpdateProduct(vm);
-            if (!ok)
-            {
-                ModelState.AddModelError("", "更新失敗或資料不存在。");
-                var src = _ProductService.GetProductForEdit(vm.ProductId);
-                vm.CategoryOptions = src?.CategoryOptions ?? Enumerable.Empty<SelectListItem>();
-                vm.PStatusOptions = src?.PStatusOptions ?? Enumerable.Empty<SelectListItem>();
-                var vOptions = src?.PStatusOptions ?? Enumerable.Empty<SelectListItem>();
-                vm.Variants?.ForEach(v => v.PStatusOptions = vOptions);
-                return View(vm);
-            }
+            var dto = vm.ToDto();
 
-            TempData["Success"] = "更新成功";
-            return RedirectToAction("List");
+            var jsonOpts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            if (!string.IsNullOrWhiteSpace(vm.VariantsJson))
+                dto.Variants = JsonSerializer.Deserialize<List<CProductVariantDTO>>(vm.VariantsJson!, jsonOpts) ?? new();
+            if (!string.IsNullOrWhiteSpace(vm.AssetsJson))
+                dto.Assets = JsonSerializer.Deserialize<List<CProductAssetDTO>>(vm.AssetsJson!, jsonOpts) ?? new();
+            if (!string.IsNullOrWhiteSpace(vm.PartsJson))
+                dto.Parts = JsonSerializer.Deserialize<List<CProductPartDTO>>(vm.PartsJson!, jsonOpts) ?? new();
+
+            var id = _ProductService.Create(dto);
+            TempData["Toast"] = "商品已建立，接下來可於編輯頁上傳圖片/設定零件。";
+            return RedirectToAction("Edit", new { id });
         }
 
-        [HttpGet]
-        public IActionResult Create()
+        private void Rebind(CProductCreateViewModel vm)
         {
+            vm.CategoryOptions = _db.TCategories
+                .AsNoTracking().OrderBy(c => c.FSortOrder)
+                .Select(c => new SelectListItem { Value = c.FCategoryId.ToString(), Text = c.FName }).ToList();
 
-
-            // 準備下拉選單資料
-            ViewBag.Categories = GetCategorySelectList();
-            ViewBag.Colors = GetColorSelectList();
-            ViewBag.PStatus = GetPStatusSelectList();
-
-            return View(new CProductCreateDTO());
+            vm.PStatusOptions = _db.TPstatuses
+                .AsNoTracking()
+                .Select(s => new SelectListItem { Value = s.FPstatus.ToString(), Text = s.FPstatusName }).ToList();
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Create(CProductCreateDTO dto)
-        {
-            if (dto.AssemblyRequired && string.IsNullOrWhiteSpace(dto.AssemblyPart))
-                ModelState.AddModelError(nameof(dto.AssemblyPart), "勾選需要組裝時，組裝部件為必填");
 
-            // 先處理變體：移除 SKU 的必填、並給 SizeLabel 預設
-            if (dto.Variants != null)
+
+
+        [HttpGet("edit/{id:int}")]
+        public IActionResult Edit(int id)
+        {
+            // 你可以改成用 _service.GetDetail(id) 回來的 DTO，再轉 VM
+            var p = _db.TProducts
+                .Include(x => x.ProductVariants)
+                .Include(x => x.ProductAssets)
+                .Include(x => x.ProductParts).ThenInclude(pp => pp.PartColorOptions).ThenInclude(co => co.ColorOptionTextures)
+                .FirstOrDefault(x => x.FProductId == id);
+
+            if (p == null) return NotFound();
+
+            var vm = new CProductEditViewModel
             {
-                for (int i = 0; i < dto.Variants.Count; i++)
+                ProductId = p.FProductId,
+                Name = p.FName ?? "",
+                CategoryId = p.FCategoryId,
+                Description = p.FDescription,
+                PStatus = p.FPstatus,
+                WarrantyMonth = p.FWarrantyMonth,
+                AssemblyRequired = p.FAssemblyRequired,
+                AssemblyPart = p.FAssemblyPart,
+                Discount = p.FDiscount,
+                CategoryOptions = _db.TCategories
+                    .OrderBy(c => c.FSortOrder)
+                    .Select(c => new SelectListItem { Value = c.FCategoryId.ToString(), Text = c.FName })
+                    .ToList(),
+                PStatusOptions = _db.TPstatuses
+                    .Select(s => new SelectListItem { Value = s.FPstatus.ToString(), Text = s.FPstatusName })
+                    .ToList(),
+            };
+
+            // 將現有子集合序列化為 UpdateDTO 形狀給前端編輯器初始化
+            var variants = p.ProductVariants.Select(v => new CProductVariantUpdateDTO
+            {
+                ProductVariantId = v.FProductVariantId,
+                SKU = v.FSku,
+                Price = v.FPrice,
+                Cost = v.FCost,
+                Stock = v.FStock,
+                PStatus = v.FPstatus,
+                ColorId = v.FColorId,
+                Length = v.FLength,
+                Width = v.FWidth,
+                Height = v.FHeight,
+                SizeLabel = v.FSizeLabel,
+                Weight = v.FWeight
+            }).ToList();
+
+            var assets = p.ProductAssets.Select(a => new CProductAssetUpdateDTO
+            {
+                AssetId = a.FAssetId,
+                ProductVariantId = a.FProductVariantId,
+                AssetType = a.FAssetType,
+                MimeType = a.FMimeType,
+                Url = a.FUrl,
+                IsPrimary = a.FIsPrimary,
+                SortOrder = a.FSortOrder,
+                PosterUrl = a.FPosterUrl,
+                MaterialId = a.FMaterialId,
+                TexturedId = a.FTexturedId,
+                ModelId = a.FModelId,
+                MetadateJson = a.FMetadateJson
+            }).ToList();
+
+            var parts = p.ProductParts.Select(part => new CProductPartUpdateDTO
+            {
+                PartId = part.FPartId,
+                PartName = part.FPartName ?? "",
+                PartCode = part.FPartCode,
+                DisplayOrder = part.FDiaplayOrder,
+                Options = (part.PartColorOptions ?? new List<TPartColorOption>()).Select(opt => new CPartColorOptionUpdateDTO
                 {
-                    // 1) SKU 由後端產生，不要讓前端驗證擋住
-                    ModelState.Remove($"Variants[{i}].Sku");
-
-                    // 2) 尺寸標籤若沒填，就用長寬高組字串，並移除必填錯誤
-                    var v = dto.Variants[i];
-                    if (string.IsNullOrWhiteSpace(v.SizeLabel))
+                    ColorOptionId = opt.FColorOptionId,
+                    OptionName = opt.FOptionName ?? "",
+                    ColorHex = opt.FColorHex,
+                    Thumbnail = opt.FThumbnail,
+                    PriceAdjustment = opt.FPriceAdjustment,
+                    IsDefault = opt.FIsDefault,
+                    DisplayOrder = opt.FDisplayOrder,
+                    Textures = (opt.ColorOptionTextures ?? new List<TColorOptionTexture>()).Select(t => new CColorOptionTextureUpdateDTO
                     {
-                        v.SizeLabel = $"{v.Length}x{v.Width}x{v.Height}";
-                        ModelState.Remove($"Variants[{i}].SizeLabel");
-                    }
-                }
-            }
+                        TextureId = t.FTextureId,
+                        TextureType = t.FTextureType ?? "",
+                        FilePath = t.FFilePath ?? "",
+                        Tiling = t.FTiling
+                    }).ToList()
+                }).ToList()
+            }).ToList();
 
-            // 把所有錯誤打到日誌（或暫時顯示）
+            var jsonOpts = new JsonSerializerOptions { PropertyNamingPolicy = null }; // 保留大小寫
+            vm.VariantsJson = JsonSerializer.Serialize(variants, jsonOpts);
+            vm.AssetsJson = JsonSerializer.Serialize(assets, jsonOpts);
+            vm.PartsJson = JsonSerializer.Serialize(parts, jsonOpts);
+
+            return View(vm);
+        }
+
+        [ValidateAntiForgeryToken]
+        [HttpPost("edit/{id:int}")]
+        public IActionResult Edit(int id, CProductEditViewModel vm)
+        {
+            if (id != vm.ProductId) return BadRequest();
             if (!ModelState.IsValid)
             {
-                ViewBag.DebugErrors = ModelState
-                   .Where(kv => kv.Value.Errors.Count > 0)
-                   .Select(kv => $"{kv.Key}: {string.Join(" | ", kv.Value.Errors.Select(e => e.ErrorMessage))}")
-                   .ToList();
-
-
-                ViewBag.Categories = GetCategorySelectList();
-                ViewBag.Colors = GetColorSelectList();
-                ViewBag.PStatus = GetPStatusSelectList();
-                return View(dto);
-            }
-        
-
-            // 呼叫服務
-            var (success, message, productId) = _ProductService.CreateProduct(dto);
-            if (success)
-            {
-                TempData["SuccessMessage"] = message;
-                return RedirectToAction("Detail", new { id = productId }); // 確認你的 Action 名稱是否叫 Detail 或 Details
+                Rebind(vm);
+                return View(vm);
             }
 
-            // 服務失敗 → 顯示錯誤
-            ModelState.AddModelError(string.Empty, message);
-            ViewBag.Categories = GetCategorySelectList();
-            ViewBag.Colors = GetColorSelectList();
-            ViewBag.PStatus = GetPStatusSelectList();
-            return View(dto);
+            var dto = vm.ToUpdateDto();
+            var jsonOpts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+            if (!string.IsNullOrWhiteSpace(vm.VariantsJson))
+                dto.Variants = JsonSerializer.Deserialize<List<CProductVariantUpdateDTO>>(vm.VariantsJson!, jsonOpts) ?? new();
+
+            if (!string.IsNullOrWhiteSpace(vm.AssetsJson))
+                dto.Assets = JsonSerializer.Deserialize<List<CProductAssetUpdateDTO>>(vm.AssetsJson!, jsonOpts) ?? new();
+
+            if (!string.IsNullOrWhiteSpace(vm.PartsJson))
+                dto.Parts = JsonSerializer.Deserialize<List<CProductPartUpdateDTO>>(vm.PartsJson!, jsonOpts) ?? new();
+
+            var pid = _ProductService.Update(dto);
+            TempData["Toast"] = "已更新商品";
+            return RedirectToAction("Edit", new { id = pid });
         }
 
-
-        //取得分類下拉選單
-        private SelectList GetCategorySelectList()
+        private void Rebind(CProductEditViewModel vm)
         {
-            var categories = _db.TCategories
-                .Where(c => c.FIsActive == true)
+            vm.CategoryOptions = _db.TCategories
                 .OrderBy(c => c.FSortOrder)
-                .Select(c => new { c.FCategoryId, c.FName })
+                .Select(c => new SelectListItem { Value = c.FCategoryId.ToString(), Text = c.FName })
                 .ToList();
-
-            return new SelectList(categories, "FCategoryId", "FName");
-        }
-
-        //取得顏色下拉選單
-        private SelectList GetColorSelectList()
-        {
-            var colors = _db.TColors
-                .OrderBy(c => c.FColorName)
-                .Select(c => new { c.FColorId, c.FColorName })
+            vm.PStatusOptions = _db.TPstatuses
+                .Select(s => new SelectListItem { Value = s.FPstatus.ToString(), Text = s.FPstatusName })
                 .ToList();
-
-            return new SelectList(colors, "FColorId", "FColorName");
         }
 
-        //取得產品狀態下拉選單
-        private SelectList GetPStatusSelectList()
-        {
-            var statuses = _db.TPstatuses
-                .Select(s => new { s.FPstatus, s.FPStatusName })
-                .ToList();
-
-            return new SelectList(statuses, "FPstatus", "FPStatusName");
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Delete(int? id)
-        {
-            if (id == null) return RedirectToAction("List");
-
-            var prod = _db.TProducts.FirstOrDefault(p => p.FProductId == id.Value);
-            if (prod == null) return RedirectToAction("List");
-
-            // 軟刪除
-            prod.FPstatus = 4;                   // 4 = 刪除
-            prod.FUpdateTime = DateTime.Now;
-
-            _db.SaveChanges();
-
-            TempData["Msg"] = "商品已刪除（軟刪除）。";
-            return RedirectToAction("List");
-        }
-
-
-
-
-       
     }
 
 }
