@@ -26,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Interfaces\" />
     <Folder Include="Wraps\" />
     <Folder Include="Api\" />
     <Folder Include="Tools\" />

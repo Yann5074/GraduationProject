@@ -1,15 +1,40 @@
 ﻿using GraduationProject.DTOs;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.ComponentModel.DataAnnotations;
 
 namespace GraduationProject.ViewModels
 {
     public class CProductCreateViewModel
     {
-  
-        public CProductCreateDTO Product { get; set; } = new();
 
-        public IEnumerable<SelectListItem> CategoryOptions { get; set; } = new List<SelectListItem>();
-        public IEnumerable<SelectListItem> PStatusOptions { get; set; } = new List<SelectListItem>();
-        public IEnumerable<SelectListItem> ColorOptions { get; set; } = new List<SelectListItem>();
+        [Required, Display(Name = "商品名稱")] public string Name { get; set; } = default!;
+        [Display(Name = "分類")] public int? CategoryId { get; set; }
+        [Display(Name = "說明")] public string? Description { get; set; }
+        [Display(Name = "狀態")] public int? PStatus { get; set; }
+        public int? WarrantyMonth { get; set; }
+        public bool? AssemblyRequired { get; set; }
+        public string? AssemblyPart { get; set; }
+        public int? Discount { get; set; }
+
+        // 子集合以 JSON 承載
+        public string? VariantsJson { get; set; }
+        public string? AssetsJson { get; set; }
+        public string? PartsJson { get; set; }
+
+        // 下拉
+        public List<SelectListItem> CategoryOptions { get; set; } = new();
+        public List<SelectListItem> PStatusOptions { get; set; } = new();
+
+        public CProductCreateDTO ToDto() => new CProductCreateDTO
+        {
+            Name = Name,
+            CategoryId = CategoryId,
+            Description = Description,
+            PStatus = PStatus,
+            WarrantyMonth = WarrantyMonth,
+            AssemblyRequired = AssemblyRequired,
+            AssemblyPart = AssemblyPart,
+            Discount = Discount
+        };
     }
 }

@@ -1,9 +1,11 @@
 ﻿namespace GraduationProject.DTOs
 {
-    public class CProductAssetDTO
+    public class CProductAssetUpdateDTO
     {
-        public int? ProductVariantId { get; set; } // 若掛在變體上
-        public string? AssetType { get; set; }     // Image/Model/Texture...
+        public int? AssetId { get; set; }   // null = 新增
+        public bool? Deleted { get; set; }
+        public int? ProductVariantId { get; set; }
+        public string? AssetType { get; set; }
         public string? MimeType { get; set; }
         public string? Url { get; set; }
         public bool? IsPrimary { get; set; }

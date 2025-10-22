@@ -1,0 +1,46 @@
+﻿
+<div class="card my-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>規格／變體</strong>
+        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addVariant()">＋新增變體</button>
+    </div>
+    <div class="card-body" id="variant-rows"></div>
+    <input type="hidden" name="VariantsJson" id="VariantsJson" />
+</div>
+
+<script>
+    const variants = [];
+
+    function addVariant(){
+      variants.push({ sku:"", price:null, cost:null, stock:null, pStatus:null, colorId:null, sizeLabel:"" });
+      renderVariants();
+    }
+    function removeVariant(i){ variants.splice(i,1); renderVariants(); }
+
+    function renderVariants(){
+      const el = document.getElementById('variant-rows');
+      el.innerHTML = variants.map((v,i)=>`
+        <div class="row g-2 align-items-end border-bottom pb-2 mb-2">
+          <div class="col-md-2"><label class="form-label">SKU</label>
+            <input class="form-control" value="${v.sku||""}" oninput="variants[${i}].sku=this.value" />
+          </div>
+          <div class="col-md-2"><label class="form-label">售價</label>
+            <input class="form-control" type="number" step="0.01" value="${v.price??""}" oninput="variants[${i}].price=parseFloat(this.value)||null" />
+          </div>
+          <div class="col-md-2"><label class="form-label">庫存</label>
+            <input class="form-control" type="number" value="${v.stock??""}" oninput="variants[${i}].stock=parseInt(this.value)||null" />
+          </div>
+          <div class="col-md-2"><label class="form-label">尺寸</label>
+            <input class="form-control" value="${v.sizeLabel||""}" oninput="variants[${i}].sizeLabel=this.value" />
+          </div>
+          <div class="col-md-2"><label class="form-label">顏色Id</label>
+            <input class="form-control" type="number" value="${v.colorId??""}" oninput="variants[${i}].colorId=parseInt(this.value)||null" />
+          </div>
+          <div class="col-md-2 text-end">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVariant(${i})">刪除</button>
+          </div>
+        </div>`).join('');
+      document.getElementById('VariantsJson').value = JSON.stringify(variants);
+    }
+</script>
+

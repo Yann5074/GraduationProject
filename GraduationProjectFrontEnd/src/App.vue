@@ -60,8 +60,8 @@ onMounted(() => {
             <li class="nav-item" :class="{ active: isActive('/') }">
               <RouterLink class="nav-link" to="/">首頁</RouterLink>
             </li>
-            <li class="nav-item" :class="{ active: isActive('/shop') }">
-              <RouterLink class="nav-link" to="/shop">購物</RouterLink>
+            <li class="nav-item" :class="{ active: isActive('/product') }">
+              <RouterLink class="nav-link" to="/product">購物</RouterLink>
             </li>
             <li class="nav-item" :class="{ active: isActive('/about') }">
               <RouterLink class="nav-link" to="/about">關於我們</RouterLink>

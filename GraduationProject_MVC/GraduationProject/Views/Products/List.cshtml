@@ -97,7 +97,7 @@
                                     <div class="row align-items-center w-100">
                                         <!-- 狀態 -->
                                         <div class="col-1 text-center">
-                                            @switch (item.PStatus)
+                                            @switch (item.FPStatusName)
                                             {
                                                 case "上架中":
                                                     <span class="badge bg-success">上架中</span>
@@ -236,7 +236,7 @@
                                                     @* <td>@variant.VariantId</td> *@
 
                                                     <td class="text-center">
-                                                        @switch (variant.PStatus)
+                                                        @switch (variant.PStatusName)
                                                         {
                                                             case "上架中":
                                                                 <span class="badge bg-success">上架中</span>

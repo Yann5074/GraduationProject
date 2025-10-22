@@ -1,4 +1,5 @@
 ﻿
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Net.NetworkInformation;
 
@@ -6,15 +7,18 @@ namespace GraduationProject.Models
 {
     public partial class TProduct
     {
-        public virtual ICollection<TProductVariant> ProductVariants { get; set; } = new List<TProductVariant>();
-        public virtual ICollection<TProductAsset> ProductAssets { get; set; } = new List<TProductAsset>();
 
+
+        // 導航屬性
         [ForeignKey(nameof(FCategoryId))]
-        public TCategory Category  { get; set; }
-
+        public virtual TCategory FCategory { get; set; }
 
         [ForeignKey(nameof(FPstatus))]
-        public virtual TPstatus PStatus { get; set; }
+        public virtual TPstatus FPstatusNavigation { get; set; }
+
+        public virtual ICollection<TProductAsset> ProductAssets { get; set; }
+        public virtual ICollection<TProductVariant> ProductVariants { get; set; }
+        public virtual ICollection<TProductPart> ProductParts { get; set; }
 
 
     }

@@ -1,4 +1,5 @@
 ﻿using GraduationProject.DTOs;
+using GraduationProject.Models;
 using GraduationProject.ViewModels;
 
 
@@ -8,13 +9,9 @@ namespace GraduationProject.Interfaces
     {
         IEnumerable<CProductDTO> SearchProduct(CProductSearchKeywordViewModel vm);
 
-        CProductDetailDTO GetProductDetail(int id); // 同步
-
-        CProductEditViewModel GetProductForEdit(int id); // 讀取資料進編輯頁
-        bool UpdateProduct(CProductEditViewModel vm);    // 寫回資料庫
-
-        (bool Success, string Message, int? ProductId) CreateProduct(CProductCreateDTO dto);
-        bool Delete(int id); 
+        int Create(CProductCreateDTO dto);
+        CProductDetailDTO? GetDetail(int productId); // 給 Edit GET 使用（你可自定）
+        int Update(CProductUpdateDTO dto);
     }
 
 }

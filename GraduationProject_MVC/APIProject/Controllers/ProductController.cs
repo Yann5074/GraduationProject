@@ -1,5 +1,6 @@
 ﻿using ApiProject.DTOs;
 using ApiProject.Interfaces;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -7,6 +8,7 @@ namespace ApiProject.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors("AllowFrontend")]
     public class ProductController : ControllerBase
     {
         private readonly IProductService _ProductService;

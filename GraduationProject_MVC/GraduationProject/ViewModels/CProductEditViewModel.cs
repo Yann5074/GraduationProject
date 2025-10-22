@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using GraduationProject.DTOs;
+using GraduationProject.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
 
@@ -7,30 +9,37 @@ namespace GraduationProject.ViewModels
 {
     public class CProductEditViewModel
     {
-        // 商品本體
-        public int ProductId { get; set; }
-        public string Name { get; set; }          // 原有
-        public string Description { get; set; }   // 原有
-        public int? CategoryId { get; set; }      // 原有
-        public int? PStatusId { get; set; }       // 原有（商品狀態）
+        [Required] public int ProductId { get; set; }
+        [Required, Display(Name = "商品名稱")] public string Name { get; set; } = default!;
+        [Display(Name = "分類")] public int? CategoryId { get; set; }
+        [Display(Name = "說明")] public string? Description { get; set; }
+        [Display(Name = "狀態")] public int? PStatus { get; set; }
+        public int? WarrantyMonth { get; set; }
+        public bool? AssemblyRequired { get; set; }
+        public string? AssemblyPart { get; set; }
+        public int? Discount { get; set; }
 
-        //新增：保固 / 組裝
-        public int? WarrantyMonth { get; set; }        // fWarrantyMonth
-        public bool? AssemblyRequired { get; set; }    // fAssemblyRequired
-        public string AssemblyPart { get; set; }       // fAssemblyPart
+        // 前端編輯器的 JSON（載入初始值 + 編輯後送出）
+        public string? VariantsJson { get; set; }
+        public string? AssetsJson { get; set; }
+        public string? PartsJson { get; set; }
 
         // 下拉
-        public IEnumerable<SelectListItem> CategoryOptions { get; set; } = Enumerable.Empty<SelectListItem>();
-        public IEnumerable<SelectListItem> PStatusOptions { get; set; } = Enumerable.Empty<SelectListItem>();
+        public List<SelectListItem> CategoryOptions { get; set; } = new();
+        public List<SelectListItem> PStatusOptions { get; set; } = new();
 
-        //變體（可多筆）
-        public List<CProductVariantEditItem> Variants { get; set; } = new();
-
-        //圖片資產（現有）
-        public List<CProductAssetEditItem> Assets { get; set; } = new();
-
-        //新增上傳（多檔）
-        public List<IFormFile> NewPictures { get; set; } = new();
-        public List<CProductPictureViewModel> NewPicturesMeta { get; set; } = new();  // 與 NewPictures 同順序填入
+        public CProductUpdateDTO ToUpdateDto() => new CProductUpdateDTO
+        {
+            ProductId = ProductId,
+            Name = Name,
+            CategoryId = CategoryId,
+            Description = Description,
+            PStatus = PStatus,
+            WarrantyMonth = WarrantyMonth,
+            AssemblyRequired = AssemblyRequired,
+            AssemblyPart = AssemblyPart,
+            Discount = Discount
+            // 子集合由 Controller 反序列化填入
+        };
     }
 }
