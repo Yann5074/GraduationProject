@@ -1,5 +1,5 @@
 ﻿@using GraduationProject.DTOs
-@model IEnumerable<CEmployeeListItemDTO>
+@model PagedList<GraduationProject.DTOs.CEmployeeListItemDTO>
 @using GraduationProject.Dictionary
 @using System.Text.Json
 
@@ -18,11 +18,13 @@
     </div>
 
     <!-- Search -->
-    @using (Html.BeginForm(null, null, FormMethod.Post, new { @class = "mb-3" }))
+    @using (Html.BeginForm("DeletedList", "Employee", FormMethod.Post))
     {
-        <div class="input-group">
-            @Html.TextBox("Keyword", ViewBag.Keyword as string, new { @class = "form-control", placeholder = "輸入關鍵字" })
-            <button type="submit" class="btn btn-outline-secondary">查詢</button>
+        <div class="input-group mb-3">
+            <input type="text" name="Keyword" class="form-control" value="@(ViewBag.Keyword as string)" placeholder="輸入關鍵字" />
+            <input type="hidden" name="Page" value="1" />
+            <input type="hidden" name="Size" value="@ViewBag.Size" />
+            <button class="btn btn-outline-secondary" type="submit">查詢</button>
         </div>
     }
 
@@ -58,8 +60,8 @@
 
                     <tbody>
                         @{
-                            int count = 0;
-                            foreach (var item in Model)
+                            int count = (Model.Page - 1) * Model.PageSize;
+                            foreach (var item in Model.Items)
                             {
                                 count++;
                                 <tr>
@@ -116,6 +118,27 @@
                         }
                     </tbody>
                 </table>
+                <!-- 分頁按鈕 -->
+                <nav class="d-flex justify-content-between align-items-center">
+                    <div>共 @Model.TotalCount 筆，第 @Model.Page / @Model.TotalPages 頁</div>
+                    <ul class="pagination mb-0">
+                        <li class="page-item @(Model.HasPrev ? "" : "disabled")">
+                            <a class="page-link"
+                               asp-action="List"
+                               asp-route-Keyword="@(ViewBag.Keyword)"
+                               asp-route-Page="@(Model.Page - 1)"
+                               asp-route-Size="@(Model.PageSize)">上一頁</a>
+                        </li>
+
+                        <li class="page-item @(Model.HasNext ? "" : "disabled")">
+                            <a class="page-link"
+                               asp-action="List"
+                               asp-route-Keyword="@(ViewBag.Keyword)"
+                               asp-route-Page="@(Model.Page + 1)"
+                               asp-route-Size="@(Model.PageSize)">下一頁</a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>

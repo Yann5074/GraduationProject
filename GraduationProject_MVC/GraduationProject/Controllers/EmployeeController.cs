@@ -25,16 +25,31 @@ namespace GraduationProject.Controllers
         //List
         public async Task<IActionResult> List(CEmplKeywordViewModel vm, CancellationToken ct)
         {
-            //呼叫 service 取得資料清單
-            //把 vm.Keyword 傳進去當搜尋關鍵字，並把 ct 傳遞下去，整條查詢可被取消
-            var items = await _svc.GetEmployeeListAsync(vm.Keyword, ct);
-            return View(items);
+            // 正規化分頁參數
+            var page = vm.Page <= 0 ? 1 : vm.Page;
+            var size = vm.Size <= 0 ? 10 : Math.Min(vm.Size, 100); // 最多 100/頁
+
+            var result = await _svc.GetEmployeeListAsync(vm.Keyword, page, size, ct);
+
+            // 保留搜尋框內容
+            ViewBag.Keyword = vm.Keyword;
+            ViewBag.Page = result.Page;
+            ViewBag.Size = result.PageSize;
+
+            return View(result);
         }
 
         //DeletedList
         public async Task<IActionResult> DeletedList(CEmplKeywordViewModel vm, CancellationToken ct)
         {
-            var items = await _svc.GetEmployeeDeletedListAsync(vm.Keyword, ct);
+            var page = vm.Page <= 0 ? 1 : vm.Page;
+            var size = vm.Size <= 0 ? 10 : Math.Min(vm.Size, 100);
+
+            var items = await _svc.GetEmployeeDeletedListAsync(vm.Keyword, page, size);
+
+            ViewBag.Keyword = vm.Keyword;
+            ViewBag.Page = items.Page;
+            ViewBag.Size = items.PageSize;
             return View(items);
         }
 

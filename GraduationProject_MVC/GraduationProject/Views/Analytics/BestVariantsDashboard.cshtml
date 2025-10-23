@@ -1,7 +1,35 @@
 ﻿@model IEnumerable<GraduationProject.ViewModels.CBestSellerItemViewModel>
+@{
+    var action = ViewContext.RouteData.Values["Action"]?.ToString();
+}
 <div class="container-xxl py-4">
+    <!-- 標題列 -->
     <div class="d-flex align-items-center justify-content-between mb-3">
-        <h2 class="h4 mb-0">熱銷排行（Top N）</h2>
+        <h2 class="h4 mb-0">商品圖表</h2>
+
+        <ul class="nav nav-pills">
+            <li class="nav-item">
+                <a class="nav-link @(action == "OrderDashboard" ? "active" : "")"
+                   asp-controller="Analytics" asp-action="OrderDashboard">
+                    <i class="bx bx-line-chart me-1"></i> 訂單圖表
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(action == "MemberDashboard" ? "active" : "")"
+                   asp-controller="Analytics" asp-action="MemberDashboard">
+                    <i class="bx bx-user-plus me-1"></i> 會員圖表
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(action == "BestVariantsDashboard" ? "active" : "")"
+                   asp-controller="Analytics" asp-action="BestVariantsDashboard">
+                    <i class="bx bx-pie-chart-alt me-1"></i> 商品圖表
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="h4 mb-0">熱銷排行（Top 10）</h2>
         <div class="text-muted small">依銷售數量排序</div>
     </div>
 
