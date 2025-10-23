@@ -14,7 +14,7 @@ namespace GraduationProject.Filter
             var json = http.Session.GetString(CEmployeeDictionary.SK_LOGINED_USER);
             var me = string.IsNullOrEmpty(json) ? null : JsonSerializer.Deserialize<SessionUser>(json);
 
-            // 你的規則：RoleId==4 而且在職 StatusId==1 才允許
+            // RoleId==4(管理職) 而且在職 StatusId==1 才允許
             if (me?.RoleId != 4 || me?.StatusId != 1)
             {
                 // 沒權限 → 403 
