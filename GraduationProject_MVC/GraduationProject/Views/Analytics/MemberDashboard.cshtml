@@ -6,29 +6,34 @@
     var labels = JsonSerializer.Serialize(Model.Labels ?? new List<string>());
     var newMembers = JsonSerializer.Serialize(Model.NewMembers ?? new List<int>());
     var growthRates = JsonSerializer.Serialize(Model.GrowthRates ?? new List<decimal>());
+    var action = ViewContext.RouteData.Values["Action"]?.ToString();
 }
 
 <div class="container-xxl py-4">
-    <h2 class="h4 mb-3">會員成長</h2>
+    <!-- 標題列 -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="h4 mb-0">會員圖表</h2>
 
-    <div class="row g-4">
-        <div class="col-lg-6">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">每月新增會員數</h5>
-                    <canvas id="chartNewMembers"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-6">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">月增率（%）</h5>
-                    <canvas id="chartGrowthRate"></canvas>
-                </div>
-            </div>
-        </div>
+        <ul class="nav nav-pills">
+            <li class="nav-item">
+                <a class="nav-link @(action == "OrderDashboard" ? "active" : "")"
+                   asp-controller="Analytics" asp-action="OrderDashboard">
+                    <i class="bx bx-line-chart me-1"></i> 訂單圖表
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(action == "MemberDashboard" ? "active" : "")"
+                   asp-controller="Analytics" asp-action="MemberDashboard">
+                    <i class="bx bx-user-plus me-1"></i> 會員圖表
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(action == "BestVariantsDashboard" ? "active" : "")"
+                   asp-controller="Analytics" asp-action="BestVariantsDashboard">
+                    <i class="bx bx-pie-chart-alt me-1"></i> 商品圖表
+                </a>
+            </li>
+        </ul>
     </div>
     <div class="row g-3 mb-3">
         <div class="col-12 col-md-6 col-lg-4">
@@ -50,6 +55,25 @@
                     <div class="display-6">
                         @Model.ActiveMembers.ToString("N0")
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">每月新增會員數</h5>
+                    <canvas id="chartNewMembers"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">月增率（%）</h5>
+                    <canvas id="chartGrowthRate"></canvas>
                 </div>
             </div>
         </div>

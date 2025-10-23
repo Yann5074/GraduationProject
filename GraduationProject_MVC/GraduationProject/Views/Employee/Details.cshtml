@@ -37,8 +37,6 @@
             <dd class="col-sm-9">@Model.FGenderName</dd>
             <dt class="col-sm-3">血型</dt>
             <dd class="col-sm-9">@Model.FBloodType</dd>
-            @* <dt class="col-sm-3">職稱/權限</dt>
-            <dd class="col-sm-9">@Model.FRoleClass</dd> *@
             <dt class="col-sm-3">到職日</dt>
             <dd class="col-sm-9">@Model.FHireDate</dd>
             <dt class="col-sm-3">註冊時間</dt>
@@ -56,6 +54,9 @@
             {
                 <a asp-action="DeletedList" class="btn btn-outline-secondary">返回註銷員工清單</a>
             }
+            <a asp-action="Edit" asp-route-id="@Model.FEmployeeId" class="btn btn-outline-secondary">
+                <i class="bi bi-pencil"></i> 修改
+            </a>
         </div>
     </div>
 </div>

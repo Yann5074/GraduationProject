@@ -1,4 +1,5 @@
 ﻿using GraduationProject.DTOs;
+using GraduationProject.Models;
 using GraduationProject.ViewModels;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -6,10 +7,9 @@ namespace GraduationProject.Interfaces
 {
     public interface IEmployeeService
     {
-        Task<List<CEmployeeListItemDTO>> GetEmployeeListAsync(
-        string? keyword, CancellationToken ct = default);
-        Task<List<CEmployeeListItemDTO>> GetEmployeeDeletedListAsync(
-        string? keyword, CancellationToken ct = default);
+        Task<PagedList<CEmployeeListItemDTO>> GetEmployeeListAsync(string? keyword, int page = 1, int pageSize = 10, CancellationToken ct = default);
+        Task<PagedList<CEmployeeListItemDTO>> GetEmployeeDeletedListAsync(
+        string? keyword, int page = 1, int pageSize = 10, CancellationToken ct = default);
         Task<int> CreateEmployeeAsync(CEmployeeCreateDTO dto, CancellationToken ct = default);
         Task<bool> DeleteEmployeeAsync(int? id);
         Task<bool> ReallyDeleteEmployeeAsync(int? id);

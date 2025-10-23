@@ -1,10 +1,13 @@
 ﻿using GraduationProject.DTOs;
 using GraduationProject.Enum;
+using GraduationProject.Extensions;
 using GraduationProject.Interfaces;
 using GraduationProject.Models;
 using GraduationProject.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Drawing.Printing;
 
 namespace GraduationProject.Services
 {
@@ -38,8 +41,7 @@ namespace GraduationProject.Services
         }
 
         //List
-        public async Task<List<CEmployeeListItemDTO>> GetEmployeeListAsync(
-            string? keyword, CancellationToken ct = default)
+        public async Task<PagedList<CEmployeeListItemDTO>> GetEmployeeListAsync(string? keyword, int page = 1, int pageSize = 10, CancellationToken ct = default)
         {
             // 基底查詢：不含 Include
             IQueryable<TEmployee> q = _db.TEmployees
@@ -49,7 +51,7 @@ namespace GraduationProject.Services
             // 關鍵字方法
             q = KeywordFilter(q, keyword);
 
-            return await q.OrderBy(e => e.FEmployeeId)
+            var list = q.OrderBy(e => e.FEmployeeId)
                           .Select(e => new CEmployeeListItemDTO
                           {
                               Id = e.FEmployeeId,
@@ -62,13 +64,13 @@ namespace GraduationProject.Services
                               GenderName = e.FGenderNavigation != null ? e.FGenderNavigation.FGenderName : null,
                               RoleClass = e.FRole != null ? e.FRole.FRoleClass : null,
                               Status = e.FStatus != null ? e.FStatus.FStatus : null
-                          })
-                          .ToListAsync(ct);
+                          });
+            return await list.ToPagedListAsync(page, pageSize, ct);
         }
 
         //Deleted List
-        public async Task<List<CEmployeeListItemDTO>> GetEmployeeDeletedListAsync(
-           string? keyword, CancellationToken ct = default)
+        public async Task<PagedList<CEmployeeListItemDTO>> GetEmployeeDeletedListAsync(
+           string? keyword, int page = 1, int pageSize = 10, CancellationToken ct = default)
         {
             IQueryable<TEmployee> q = _db.TEmployees
                .AsNoTracking()
@@ -77,7 +79,7 @@ namespace GraduationProject.Services
             // 關鍵字方法
             q = KeywordFilter(q, keyword);
 
-            return await q.OrderBy(e => e.FEmployeeId)
+            var deleted = q.OrderBy(e => e.FEmployeeId)
                           .Select(e => new CEmployeeListItemDTO
                           {
                               Id = e.FEmployeeId,
@@ -90,8 +92,8 @@ namespace GraduationProject.Services
                               GenderName = e.FGenderNavigation != null ? e.FGenderNavigation.FGenderName : null,
                               RoleClass = e.FRole != null ? e.FRole.FRoleClass : null,
                               Status = e.FStatus != null ? e.FStatus.FStatus : null
-                          })
-                          .ToListAsync(ct);
+                          });
+            return await deleted.ToPagedListAsync(page, pageSize, ct);
         }
 
         //Create

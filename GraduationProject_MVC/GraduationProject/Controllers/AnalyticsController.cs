@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis;
 
 namespace GraduationProject.Controllers
 {
-    public class AnalyticsController : Controller
+    public class AnalyticsController : SuperController
     {
         private readonly IAnalyticsService _anylyticsService;
         public AnalyticsController(IAnalyticsService anylyticsService)
