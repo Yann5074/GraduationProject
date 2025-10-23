@@ -86,7 +86,7 @@ namespace ApiProject.Services
             };
         }
 
-        // 編輯購物車物品數量 -?
+        // 編輯購物車物品數量 -o
         public async Task<ResultDTO> EditCartItemNumAsync(int cartItemId, ReqEditCartItemNumDTO reqDto)
         {
             // 判斷Req購物車明細是否正確
@@ -151,9 +151,19 @@ namespace ApiProject.Services
             };
         }
 
-        // 商品加入購物車 -?
-        public async Task<ResultDTO> CreateCartAsync(ReqCartDTO reqDto)
+        // 商品加入購物車 (登入成功時) -o
+        public async Task<ResultDTO> CreateCartAsync(ReqCartDTO reqDto, ClaimsPrincipal user, CancellationToken ct)
         {
+            // 確認使用者登入狀態
+            var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
+            if (idCheck.Ok == false)
+                return new ResultDTO
+                {
+                    Ok = idCheck.Ok,
+                    Code = idCheck.Code,
+                    Message = idCheck.Message,
+                };
+
             // 確認是否有該商品
             var prod = await _context.TProductVariants.FirstOrDefaultAsync(p => p.FProductVariantId == reqDto.ProductVariantId && p.FPstatus == 1);
             if (prod == null)
@@ -163,6 +173,7 @@ namespace ApiProject.Services
                     Code = StatusCodes.Status404NotFound,
                     Message = "查無此商品，請重新操作"
                 };
+
             // 確認商品數量正確
             if (prod.FStock <= reqDto.Qty || reqDto.Qty <= 0)
                 return new ResultDTO

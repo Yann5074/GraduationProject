@@ -78,12 +78,13 @@ namespace ApiProject.Controllers
             return NoContent();
         }
 
-        // 商品加入購物車 -V
+        // 商品加入購物車 (登入成功時) -V
         // Post: api/Cart/item
+        [Authorize]
         [HttpPost("item")]
-        public async Task<IActionResult> AddToCart([FromBody] ReqCartDTO reqDto)
+        public async Task<IActionResult> AddToCart([FromBody] ReqCartDTO reqDto, CancellationToken ct)
         {
-            var result = await _cartService.CreateCartAsync(reqDto);
+            var result = await _cartService.CreateCartAsync(reqDto, User, ct);
             if (!result.Ok)
             {
                 if (result.Code < 500)
