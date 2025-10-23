@@ -40,6 +40,8 @@ builder.Services.AddScoped<ICartService, CCartService>();
 // CMemberServices
 builder.Services.AddScoped<IMemberService, CMemberServices>();
 builder.Services.AddScoped<IPasswordHasher<TMember>, PasswordHasher<TMember>>();
+// 加入 CMemberAuthService
+builder.Services.AddScoped<IHelpToolService, CMemberAuthService>();
 
 // ✅ Session 需要「分散式快取」實作
 builder.Services.AddDistributedMemoryCache();

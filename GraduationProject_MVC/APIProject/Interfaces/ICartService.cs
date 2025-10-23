@@ -1,5 +1,6 @@
 ﻿using ApiProject.DTOs;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using System.Security.Claims;
 
 namespace ApiProject.Interfaces
 {
@@ -15,7 +16,7 @@ namespace ApiProject.Interfaces
 
         public Task<ResultDTO> CreateCartAsync(ReqCartDTO reqDto);
 
-        public Task<ResultDTO> ValidateCartAsync(int memberId);
+        public Task<ResultDTO> ValidateCartAsync(ClaimsPrincipal user, CancellationToken ct);
 
         public Task<ResultDTO> SyncCartAsync(ReqSyncCartDTO reqDto);
     }
