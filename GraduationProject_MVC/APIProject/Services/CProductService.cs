@@ -63,7 +63,7 @@ namespace ApiProject.Services
                         .Where(a => a.FIsPrimary == true)
                         .OrderBy(a => a.FSortOrder)
                         .Select(a => a.FUrl)
-                        .FirstOrDefault() ?? "/images/default.png",
+                        .FirstOrDefault() ?? "/ProductImages/default.png",
                     TotalStock = p.ProductVariants.Sum(v => v.FStock ?? 0),
                     IsAvailable = p.FPstatus == 1 && p.ProductVariants.Sum(v => v.FStock ?? 0) > 0,
                     MinPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Min(v => v.FPrice),
@@ -398,7 +398,7 @@ namespace ApiProject.Services
                         .Where(a => a.FIsPrimary == true)
                         .OrderBy(a => a.FSortOrder)
                         .Select(a => a.FUrl)
-                        .FirstOrDefault() ?? "/images/default.png",
+                        .FirstOrDefault() ?? "/ProductImages/default.png",
                     TotalStock = p.ProductVariants.Sum(v => v.FStock ?? 0),
                     IsAvailable = p.FPstatus == 1 && p.ProductVariants.Sum(v => v.FStock ?? 0) > 0,
                     MinPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Min(v => v.FPrice),
@@ -473,7 +473,7 @@ namespace ApiProject.Services
                     .Where(a => a.FIsPrimary == true)
                     .OrderBy(a => a.FSortOrder)
                     .Select(a => a.FUrl)
-                    .FirstOrDefault() ?? "/images/default.png",
+                    .FirstOrDefault() ?? "/ProductImages/default.png",
                 IsCustomizable = variant.Product.ProductParts.Any(),
                 ColorCombinationDescription = colorDescription,
                 CartColorOptions = CartcolorOptions
