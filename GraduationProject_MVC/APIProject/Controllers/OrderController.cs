@@ -1,5 +1,8 @@
 ﻿using ApiProject.DTOs;
 using ApiProject.Interfaces;
+using ApiProject.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -19,30 +22,33 @@ namespace ApiProject.Controllers
 
         // 列出所有訂單 -V
         // GET:api/Order
+        [Authorize]
         [HttpGet]
-        public async Task<List<ResOrderDTO>> GetAllOrders()
+        public async Task<List<ResOrderDTO>> GetAllOrders(CancellationToken ct)
         {
-            var order = await _orderService.GetAllOrdersAsync();
+            var order = await _orderService.GetAllOrdersAsync(User, ct);
             return order;
         }
 
         // 找尋指定訂單 -V
         // GET:api/Order/keyword
+        [Authorize]
         [HttpGet("{keyword}")]
-        public async Task<List<ResOrderDTO>> GetOrdersByIdAndProdName(string? keyword)
+        public async Task<List<ResOrderDTO>> GetOrdersByIdAndProdName(string? keyword, CancellationToken ct)
         {
             if (keyword.IsNullOrEmpty())
-                return null;
-            var result = await _orderService.GetOrdersByIdAndProdNameAsync(keyword);
+                return new List<ResOrderDTO>();
+            var result = await _orderService.GetOrdersByIdAndProdNameAsync(keyword, User, ct);
             return result;
         }
 
         // 刪除指定訂單 -V
         // DELETE:api/Order/{orderId}
+        [Authorize]
         [HttpDelete("{orderId}")]
-        public async Task<IActionResult> DeleteOrder(int orderId)
+        public async Task<IActionResult> DeleteOrder(int orderId, CancellationToken ct)
         {
-            var result = await _orderService.DeleteOrderAsync(orderId);
+            var result = await _orderService.DeleteOrderAsync(orderId, User, ct);
             if (!result.Ok)
             {
                 if (result.Code < 500)
@@ -55,10 +61,11 @@ namespace ApiProject.Controllers
 
         // 更改訂單地址 -V
         // Patch:api/Order/address/orderId
+        [Authorize]
         [HttpPatch("address/{orderId}")]
-        public async Task<IActionResult> EditDeliveryAddress(int orderId, ReqDeliveryAddressDTO reqDTO)
+        public async Task<IActionResult> EditDeliveryAddress(int orderId, ReqDeliveryAddressDTO reqDTO, CancellationToken ct)
         {
-            var result = await _orderService.EditDeliveryAddressAsync(orderId, reqDTO);
+            var result = await _orderService.EditDeliveryAddressAsync(orderId, reqDTO, User, ct);
             if (!result.Ok)
             {
                 if (result.Code < 500)
@@ -71,10 +78,11 @@ namespace ApiProject.Controllers
 
         // 更改統編 -V
         // Patch:api/Order/taxno/{orderId}
+        [Authorize]
         [HttpPatch("taxno/{orderId}")]
-        public async Task<IActionResult> EditTaxNoAsync(int orderId, ReqTaxNoDTO reqDTO)
+        public async Task<IActionResult> EditTaxNoAsync(int orderId, ReqTaxNoDTO reqDTO, CancellationToken ct)
         {
-            var result = await _orderService.EditTaxNoAsync(orderId, reqDTO);
+            var result = await _orderService.EditTaxNoAsync(orderId, reqDTO, User, ct);
             if (!result.Ok)
             {
                 if (result.Code < 500)
@@ -85,13 +93,14 @@ namespace ApiProject.Controllers
             return Ok(result);
         }
 
-        // 會員新增訂單 -V
-        // Post:api/Order
-        [HttpPost("{memberId}")]
-        public async Task<IActionResult> CreateOrderAsync(int memberId,[FromBody] ReqCreateOrderDTO reqDto)
+        // 會員結帳 -V
+        // Post:api/Order/CheckOut
+        [Authorize]
+        [HttpPost("CheckOut")]
+        public async Task<IActionResult> CreateOrderAsync([FromBody] ReqCreateOrderDTO reqDto, CancellationToken ct)
         {
             //判斷購物車資料正確性
-            var check = await _cartService.ValidateCartAsync(memberId);
+            var check = await _cartService.ValidateCartAsync(User, ct);
             if (!check.Ok)
             {
                 if (check.Code < 500)
@@ -100,7 +109,7 @@ namespace ApiProject.Controllers
                     return StatusCode(StatusCodes.Status500InternalServerError, "伺服器內部錯誤");
             }
 
-            var result = await _orderService.CreateOrderFromCartAsync(memberId, reqDto);
+            var result = await _orderService.CreateOrderFromCartAsync(reqDto, User, ct);
             if (!result.Ok)
             {
                 if (result.Code < 500)
@@ -112,7 +121,7 @@ namespace ApiProject.Controllers
         }
 
         // 訪客新增訂單
-        // Post:api/Order/guest
+        // Post:api/Order/GuestCheckOut
 
 
 

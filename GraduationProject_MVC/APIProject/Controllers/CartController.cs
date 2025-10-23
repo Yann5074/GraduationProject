@@ -97,9 +97,9 @@ namespace ApiProject.Controllers
         //確認購物車是否正常 -V
         // Get: api/Cart/{memberId}
         [HttpGet("{memberId}")]
-        public async Task<IActionResult> CheckCart(int memberId)
+        public async Task<IActionResult> CheckCart(CancellationToken ct)
         {
-            var result = await _cartService.ValidateCartAsync(memberId);
+            var result = await _cartService.ValidateCartAsync(User, ct);
             if (!result.Ok)
             {
                 if (result.Code < 500)

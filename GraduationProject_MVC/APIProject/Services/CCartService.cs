@@ -4,6 +4,7 @@ using ApiProject.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using System.Diagnostics;
+using System.Security.Claims;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ApiProject.Services
@@ -11,9 +12,11 @@ namespace ApiProject.Services
     public class CCartService : ICartService
     {
         private readonly dbFurniMartContext _context;
-        public CCartService(dbFurniMartContext context)
+        private readonly IHelpToolService _memberAuth;
+        public CCartService(dbFurniMartContext context, IHelpToolService memberAuth)
         {
             _context = context;
+            _memberAuth = memberAuth;
         }
 
         // 列出購物車內容
@@ -234,15 +237,24 @@ namespace ApiProject.Services
             };
         }
 
-        // 進入購物車頁面時，確認購物車內容正確性
-        public async Task<ResultDTO> ValidateCartAsync(int memberId)
+        // 進入購物車頁面時，確認購物車內容正確性 (有登入時)
+        public async Task<ResultDTO> ValidateCartAsync(ClaimsPrincipal user, CancellationToken ct)
         {
+            var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
+            if (idCheck.Ok == false)
+                return new ResultDTO
+                {
+                    Ok = idCheck.Ok,
+                    Code = idCheck.Code,
+                    Message = idCheck.Message,
+                };
+
             // 找出該用戶購物車
             var cart = await _context.TCarts
                 .Include(c => c.CartItem.Where(ci => ci.FIsDeleted == 0))
                     .ThenInclude(c => c.ProductVariant)
                         .ThenInclude(c => c.Product)
-                .FirstOrDefaultAsync(c => c.FMemberId == memberId && c.FIsDeleted == 0 && c.FIsCheckOut == 0);
+                .FirstOrDefaultAsync(c => c.FMemberId == idCheck.Member.FMemberId && c.FIsDeleted == 0 && c.FIsCheckOut == 0);
 
             if (IsCartEmpty(cart))
                 return null;

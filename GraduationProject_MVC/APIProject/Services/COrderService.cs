@@ -2,38 +2,47 @@
 using ApiProject.Interfaces;
 using ApiProject.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 using System.ComponentModel;
+using System.Security.Claims;
 
 namespace ApiProject.Services
 {
     public class COrderService:IOrderService
     {
         private readonly dbFurniMartContext _context;
-        public COrderService(dbFurniMartContext context)
+        private readonly IHelpToolService _memberAuth;
+        public COrderService(dbFurniMartContext context, IHelpToolService memberAuth)
         {
             _context = context;
+            _memberAuth = memberAuth;
         }
-        //列出訂單
-        public async Task<List<ResOrderDTO>> GetAllOrdersAsync()
+
+        //列出訂單 -o
+        public async Task<List<ResOrderDTO>> GetAllOrdersAsync(ClaimsPrincipal user, CancellationToken ct)
         {
+            var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
+            if (idCheck.Ok != true)
+                return new List<ResOrderDTO>();
             var query = _context.TOrders
                 .Include(o => o.Employee)
                 .Include(o => o.OrderStatus)
                 .Include(o => o.PaymentStatus)
                 .Include(o => o.DeliveryStatus)
                 .Include(o => o.LogisticsProvider)
-                .Where(o => o.FIsDeleted != 1) //要加入僅顯示該使用者的訂單 #TODO
+                .Where(o => o.FMemberId == idCheck.Member.FMemberId) 
                 .Select(o => new ResOrderDTO
                 {
                     OrderId = o.FOrderId.ToString(),
                     EmployeeId = o.FEmployeeId,
                     //EmployeeName = o.Employee == null? "未指定員工": o.Employee.FName,
-                    EmployeeName = o.Employee.FName,
+                    EmployeeName = o.Employee.FName,                    
                     OrderTime = o.FOrderTime.ToString(),
                     OrderStatusId = o.FOrderStatus,
                     OrderStatus = o.OrderStatus.FStatusName,
                     TotalPrice = o.FTotalPrice,
-                    OrderDetail = o.OrderDetail.Select(od => new ResOrderDetailDTO
+                    OrderDetail = o.OrderDetail
+                    .Select(od => new ResOrderDetailDTO
                     {
                         ProductName = od.ProductVariant.Product.FName,
                         ProductInfo = od.ProductVariant.FLength.ToString() + " x" + od.ProductVariant.FWidth.ToString() + " x" + od.ProductVariant.FHeight.ToString() + " / " + od.ProductVariant.FWeight.ToString() + "Kg",
@@ -45,9 +54,12 @@ namespace ApiProject.Services
             return await query.ToListAsync();
         }
 
-        //搜尋訂單
-        public async Task<List<ResOrderDTO>> GetOrdersByIdAndProdNameAsync(string? keyword)
+        //搜尋訂單 -o
+        public async Task<List<ResOrderDTO>> GetOrdersByIdAndProdNameAsync(string? keyword, ClaimsPrincipal user, CancellationToken ct)
         {
+            var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
+            if (idCheck.Ok != true)
+                return new List<ResOrderDTO>();
             var query = _context.TOrders
                 .Include(o => o.OrderDetail)
                     .ThenInclude(od => od.ProductVariant)
@@ -55,7 +67,7 @@ namespace ApiProject.Services
                 .Include(o => o.OrderDetail)
                     .ThenInclude(od => od.ProductVariant)
                         .ThenInclude(pro => pro.Product)
-                .Where(o => o.FIsDeleted != 1) // 要加入僅顯示該使用者的訂單 #TODO
+                .Where(o => o.FMemberId == idCheck.Member.FMemberId)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(keyword))
@@ -72,7 +84,8 @@ namespace ApiProject.Services
                 OrderStatusId = o.FOrderStatus,
                 OrderStatus = o.OrderStatus.FStatusName,
                 TotalPrice = o.FTotalPrice,
-                OrderDetail = o.OrderDetail.Select(od => new ResOrderDetailDTO
+                OrderDetail = o.OrderDetail
+                .Select(od => new ResOrderDetailDTO
                 {
                     ProductName = od.ProductVariant.Product.FName,
                     ProductInfo = od.ProductVariant.FLength.ToString() + " x" + od.ProductVariant.FWidth.ToString() + " x" + od.ProductVariant.FHeight.ToString() + " / " + od.ProductVariant.FWeight.ToString() + "Kg",
@@ -87,10 +100,20 @@ namespace ApiProject.Services
             return result;
         }
 
-        // 刪除訂單
-        public async Task<ResultDTO> DeleteOrderAsync(int orderId)
+        // 刪除訂單 -o
+        public async Task<ResultDTO> DeleteOrderAsync(int orderId, ClaimsPrincipal user, CancellationToken ct)
         {
-            TOrder order =  await _context.TOrders.FirstOrDefaultAsync(o => o.FOrderId == orderId);
+            var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
+            if (idCheck.Ok == false)
+                return new ResultDTO
+                {
+                    Ok = idCheck.Ok,
+                    Code = idCheck.Code,
+                    Message = idCheck.Message,
+                };
+            TOrder order =  await _context.TOrders
+                .Include(o => o.OrderDetail)
+                .FirstOrDefaultAsync(o => o.FOrderId == orderId && o.FMemberId == idCheck.Member.FMemberId);
             if (order == null)
                 return new ResultDTO
                 {
@@ -98,8 +121,15 @@ namespace ApiProject.Services
                     Code = StatusCodes.Status404NotFound, //ASP.NET Core 常數
                     Message = "查無此訂單，請重新操作"
                 };
-            //_context.TOrders.Remove(query); //硬刪寫法
+
             order.FIsDeleted = 1;
+            // 連動刪除訂單明細
+            var od = await _context.TOrderDetails.Where(od => od.FOrderId == order.FOrderId).ToListAsync();
+            foreach (var item in od)
+            {
+                item.FIsDeleted = 1;
+            }
+
             await _context.SaveChangesAsync();
             return new ResultDTO
             {
@@ -108,9 +138,17 @@ namespace ApiProject.Services
             };
         }
 
-        // 修改訂單配送地址
-        public async Task<ResultDTO> EditDeliveryAddressAsync(int orderId, ReqDeliveryAddressDTO reqDTO)
+        // 修改訂單配送地址 -o
+        public async Task<ResultDTO> EditDeliveryAddressAsync(int orderId, ReqDeliveryAddressDTO reqDTO, ClaimsPrincipal user, CancellationToken ct)
         {
+            var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
+            if (idCheck.Ok == false)
+                return new ResultDTO
+                {
+                    Ok = idCheck.Ok,
+                    Code = idCheck.Code,
+                    Message = idCheck.Message,
+                };
             if (orderId != reqDTO.OrderId)
                 return new ResultDTO
                 {
@@ -118,7 +156,7 @@ namespace ApiProject.Services
                     Code = StatusCodes.Status400BadRequest,
                     Message = "訂單資訊錯誤，請重新操作"
                 };
-            var od = await _context.TOrders.FirstOrDefaultAsync(o => o.FOrderId == orderId);
+            var od = await _context.TOrders.FirstOrDefaultAsync(o => o.FOrderId == orderId && o.FMemberId == idCheck.Member.FMemberId);
             if (od == null)
                 return new ResultDTO
                 {
@@ -136,9 +174,18 @@ namespace ApiProject.Services
             };
         }
 
-        // 修改統編
-        public async Task<ResultDTO> EditTaxNoAsync(int orderId, ReqTaxNoDTO reqDTO)
+        // 修改統編 -o
+        public async Task<ResultDTO> EditTaxNoAsync(int orderId, ReqTaxNoDTO reqDTO, ClaimsPrincipal user, CancellationToken ct)
         {
+            var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
+            if (idCheck.Ok == false)
+                return new ResultDTO
+                {
+                    Ok = idCheck.Ok,
+                    Code = idCheck.Code,
+                    Message = idCheck.Message,
+                };
+
             if (orderId != reqDTO.OrderId)
                 return new ResultDTO
                 {
@@ -147,7 +194,7 @@ namespace ApiProject.Services
                     Message = "訂單資訊錯誤，請重新操作"
 
                 };
-            TOrder order = _context.TOrders.FirstOrDefault(o => o.FOrderId == orderId);
+            TOrder order = _context.TOrders.FirstOrDefault(o => o.FOrderId == orderId && o.FMemberId == idCheck.Member.FMemberId);
             if (order == null)
                 return new ResultDTO
                 {
@@ -166,11 +213,21 @@ namespace ApiProject.Services
             };
         }
 
-        // 從購物車建立訂單
-        public async Task<ResultDTO> CreateOrderFromCartAsync(int memberId, ReqCreateOrderDTO reqDto)
+        // 從購物車建立訂單 -o
+        public async Task<ResultDTO> CreateOrderFromCartAsync(ReqCreateOrderDTO reqDto, ClaimsPrincipal user, CancellationToken ct)
         {
+            // 確認使用者登入狀態
+            var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
+            if (idCheck.Ok == false)
+                return new ResultDTO
+                {
+                    Ok = idCheck.Ok,
+                    Code = idCheck.Code,
+                    Message = idCheck.Message,
+                };
+
             // 確認是否為該會員購買
-            if (reqDto.MemberId != memberId)
+            if (reqDto.MemberId != idCheck.Member.FMemberId)
                 return new ResultDTO
                 {
                     Ok = false,
@@ -178,22 +235,13 @@ namespace ApiProject.Services
                     Message = "訂單資訊錯誤，請重新操作"
                 };
 
-            // 確認會員是否正常狀態
-            var mem = await _context.TMembers
-                .Include(c => c.FLeveIdNavigation)
-                .FirstOrDefaultAsync(m => m.FMemberId == memberId && m.FStatus == 1);
-            if (mem == null)
-                return new ResultDTO
-                {
-                    Ok = false,
-                    Code = StatusCodes.Status404NotFound,
-                    Message = "查無此會員或會員狀態異常，請洽客服"
-                };
+            // 判斷會員折扣
+            var memLv = await _context.TLevels.FirstOrDefaultAsync(l => l.FLevelId == idCheck.Member.FLeveId);
 
             // 找出該用戶購物車
             var cart = await _context.TCarts
                 .Include(c => c.CartItem.Where(ci => ci.FIsDeleted == 0))
-                .FirstOrDefaultAsync(c => c.FMemberId == memberId && c.FIsDeleted == 0 && c.FIsCheckOut == 0);
+                .FirstOrDefaultAsync(c => c.FMemberId == idCheck.Member.FMemberId && c.FIsDeleted == 0 && c.FIsCheckOut == 0);
 
             // 將購物車內容轉成訂單，先建立訂單在建立訂單明細
 
@@ -201,10 +249,10 @@ namespace ApiProject.Services
             TOrder order = new TOrder
             {
                 FIsDeleted = 0,
-                FMemberId = memberId,
+                FMemberId = idCheck.Member.FMemberId,
                 FEmployeeId = reqDto.EmployeeId, // 畫面給予可填入ID的欄位
                 FTotalPrice = cart.FTotalPrice,
-                FDiscount = mem.FLeveIdNavigation.FDiscount,
+                FDiscount = memLv.FDiscount,
                 FTaxNo = reqDto.TaxNo,
                 FOrderTime = DateTime.Now,
                 FOrderStatus = 1,
@@ -253,7 +301,7 @@ namespace ApiProject.Services
             };
         }
 
-        // 從localstorage建立訂單
+        // 從localstorage建立訂單 #TODO
         public async Task<ResultDTO> CreateOrderFromGuestAsync(ReqGuestOrderDTO reqDto)
         {
             return new ResultDTO
@@ -264,7 +312,7 @@ namespace ApiProject.Services
             };
         }
 
-        // 將購物車 (不論來源) 轉成訂單 (內部邏輯)
+        // 將購物車 (不論來源) 轉成訂單 (內部邏輯) #TODO
         private async Task CreateOrder(CartToOrderDTO dto)
         {
             var order = new TOrder
