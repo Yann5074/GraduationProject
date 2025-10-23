@@ -18,6 +18,6 @@ namespace ApiProject.Interfaces
 
         public Task<ResultDTO> ValidateCartAsync(ClaimsPrincipal user, CancellationToken ct);
 
-        public Task<ResultDTO> SyncCartAsync(ReqSyncCartDTO reqDto);
+        public Task<ResultDTO> SyncCartAsync(ReqSyncCartDTO reqDto, ClaimsPrincipal user, CancellationToken ct);
     }
 }

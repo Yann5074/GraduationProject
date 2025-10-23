@@ -95,8 +95,8 @@ namespace ApiProject.Controllers
         }
 
         //確認購物車是否正常 -V
-        // Get: api/Cart/{memberId}
-        [HttpGet("{memberId}")]
+        // Get: api/Cart/Check
+        [HttpGet("Check")]
         public async Task<IActionResult> CheckCart(CancellationToken ct)
         {
             var result = await _cartService.ValidateCartAsync(User, ct);
@@ -112,11 +112,12 @@ namespace ApiProject.Controllers
 
         //登入時購物車轉換 -V
         // Post: api/Cart/sync
+        [Authorize]
         [HttpPost("sync")]
-        public async Task<IActionResult> SyncCart([FromBody] ReqSyncCartDTO reqDto)
+        public async Task<IActionResult> SyncCart([FromBody] ReqSyncCartDTO reqDto, CancellationToken ct)
         {
             
-            var result = await _cartService.SyncCartAsync(reqDto);
+            var result = await _cartService.SyncCartAsync(reqDto, User, ct);
             if (!result.Ok)
             {
                 if (result.Code < 500)

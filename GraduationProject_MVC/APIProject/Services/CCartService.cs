@@ -19,7 +19,7 @@ namespace ApiProject.Services
             _memberAuth = memberAuth;
         }
 
-        // 列出購物車內容
+        // 列出購物車內容 #TODO 要加入訪客的ID判斷與僅列出自己的購物車
         public async Task<List<ResCartDTO>> GetAllCartAsync()
         {
             var query = _context.TCarts
@@ -51,7 +51,7 @@ namespace ApiProject.Services
             return await query.ToListAsync();
         }
 
-        // 刪除購物車
+        // 刪除購物車 -o
         public async Task<ResultDTO> DeleteCartAsync(int cartId)
         {
             if (cartId <= 0)
@@ -86,7 +86,7 @@ namespace ApiProject.Services
             };
         }
 
-        // 編輯購物車物品數量
+        // 編輯購物車物品數量 -?
         public async Task<ResultDTO> EditCartItemNumAsync(int cartItemId, ReqEditCartItemNumDTO reqDto)
         {
             // 判斷Req購物車明細是否正確
@@ -127,7 +127,7 @@ namespace ApiProject.Services
             };
         }
 
-        // 刪除購物車內某商品
+        // 刪除購物車內某商品 -o
         public async Task<ResultDTO> DeleteCartItemAsync(int cartItemId)
         {
 
@@ -151,7 +151,7 @@ namespace ApiProject.Services
             };
         }
 
-        // 商品加入購物車
+        // 商品加入購物車 -?
         public async Task<ResultDTO> CreateCartAsync(ReqCartDTO reqDto)
         {
             // 確認是否有該商品
@@ -237,7 +237,7 @@ namespace ApiProject.Services
             };
         }
 
-        // 進入購物車頁面時，確認購物車內容正確性 (有登入時)
+        // 進入購物車頁面時，確認購物車內容正確性 (登入成功時) -o
         public async Task<ResultDTO> ValidateCartAsync(ClaimsPrincipal user, CancellationToken ct)
         {
             var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
@@ -257,7 +257,12 @@ namespace ApiProject.Services
                 .FirstOrDefaultAsync(c => c.FMemberId == idCheck.Member.FMemberId && c.FIsDeleted == 0 && c.FIsCheckOut == 0);
 
             if (IsCartEmpty(cart))
-                return null;
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status404NotFound,
+                    Message = "購物車為空"
+                };
 
             // 確認該商品狀態與數量正常
             var invalidItem = new List<string>();
@@ -302,12 +307,21 @@ namespace ApiProject.Services
             };
         }
 
-        // 登入後將 pinia 加入購物車/同步購物車
-        public async Task<ResultDTO> SyncCartAsync(ReqSyncCartDTO reqDto)
+        // 登入後將 pinia 加入購物車/同步購物車 (登入成功時) -o
+        public async Task<ResultDTO> SyncCartAsync(ReqSyncCartDTO reqDto, ClaimsPrincipal user, CancellationToken ct)
         {
+            var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
+            if (idCheck.Ok == false)
+                return new ResultDTO
+                {
+                    Ok = idCheck.Ok,
+                    Code = idCheck.Code,
+                    Message = idCheck.Message,
+                };
+
             var cart = await _context.TCarts
                 .Include(c => c.CartItem)
-                .FirstOrDefaultAsync(c => c.FMemberId == reqDto.MemberId && c.FIsDeleted == 0 && c.FIsCheckOut == 0);
+                .FirstOrDefaultAsync(c => c.FMemberId == idCheck.Member.FMemberId && c.FIsDeleted == 0 && c.FIsCheckOut == 0);
 
             if (cart == null)
             {
