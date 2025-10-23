@@ -14,7 +14,7 @@ namespace ApiProject.Interfaces
 
         public Task<ResultDTO> EditCartItemNumAsync(int cartItemId, ReqEditCartItemNumDTO reqDto);
 
-        public Task<ResultDTO> CreateCartAsync(ReqCartDTO reqDto);
+        public Task<ResultDTO> CreateCartAsync(ReqCartDTO reqDto, ClaimsPrincipal user, CancellationToken ct);
 
         public Task<ResultDTO> ValidateCartAsync(ClaimsPrincipal user, CancellationToken ct);
 
