@@ -8,6 +8,7 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+
     },
     {
       path: '/shop',
@@ -65,23 +66,25 @@ const router = createRouter({
       component: () => import('@/views/SignUp.vue'),
     },
     {
-      path: '/account',
-      name: 'account',
-      component: () => import('@/views/Account.vue'),
-    },
-    {
-      path: '/product',
-      name: 'product',
-      component: () => import('@/views/ProductListPage.vue'),
+      path: '/products',
+      name: 'ProductList',
+      component: () => import('../views/ProductListPage.vue'),
       meta: {
-        title: '商品列表'
+        title: '產品列表'
       }
     },
-
+    // {
+    //   path: '/products/:id',
+    //   name: 'ProductDetail',
+    //   component: () => import('../views/ProductDetailPage.vue'),
+    //   meta: {
+    //     title: '產品詳情'
+    //   }
+    // },
     {
       path: '/search',
-      name: 'Search',
-      component: () => import('@/views/ProductListPage.vue'),
+      name: 'ProductSearch',
+      component: () => import('../views/ProductListPage.vue'),
       meta: {
         title: '搜尋結果'
       }

@@ -8,7 +8,7 @@ namespace ApiProject.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [EnableCors("AllowFrontend")]
+    [EnableCors("VueClient")]
     public class ProductController : ControllerBase
     {
         private readonly IProductService _ProductService;

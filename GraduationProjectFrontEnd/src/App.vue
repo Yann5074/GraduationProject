@@ -60,8 +60,8 @@ onMounted(() => {
             <li class="nav-item" :class="{ active: isActive('/') }">
               <RouterLink class="nav-link" to="/">首頁</RouterLink>
             </li>
-            <li class="nav-item" :class="{ active: isActive('/product') }">
-              <RouterLink class="nav-link" to="/product">購物</RouterLink>
+            <li class="nav-item" :class="{ active: isActive('/products') }">
+              <RouterLink class="nav-link" to="/products">購物</RouterLink>
             </li>
             <li class="nav-item" :class="{ active: isActive('/about') }">
               <RouterLink class="nav-link" to="/about">關於我們</RouterLink>
@@ -126,9 +126,9 @@ onMounted(() => {
     <!-- Footer（把 public 圖片改成 / 開頭） -->
     <footer class="footer-section">
       <div class="container relative">
-        <div class="sofa-img">
+        <!-- <div class="sofa-img">
           <img src="/asset/images/sofa.png" alt="Image" class="img-fluid" />
-        </div>
+        </div> -->
 
         <div class="row">
           <div class="col-lg-8">

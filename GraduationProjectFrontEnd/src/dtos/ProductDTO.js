@@ -1,72 +1,163 @@
 /**
- * 商品篩選請求 DTO
+ * 產品篩選請求 DTO
  */
-export interface ReqProductFilterDTO {
-    pageNumber: number;        // 頁碼（從 1 開始）
-    pageSize: number;          // 每頁筆數
-    keyword?: string;          // 搜尋關鍵字
-    categoryId?: number;       // 分類 ID
-    minPrice?: number;         // 最低價格
-    maxPrice?: number;         // 最高價格
-    inStockOnly?: boolean;     // 只顯示有庫存
-    customizableOnly?: boolean; // 只顯示可自訂
-    sortBy?: string;           // 排序方式
+export class ReqProductFilterDTO {
+    constructor(data = {}) {
+        this.categoryId = data.categoryId || null
+        this.minPrice = data.minPrice || null
+        this.maxPrice = data.maxPrice || null
+        this.statusId = data.statusId || null
+        this.keyword = data.keyword || ''
+        this.sortBy = data.sortBy || 'created_desc'
+        this.pageNumber = data.pageNumber || 1
+        this.pageSize = data.pageSize || 12
+    }
 }
 
 /**
- * 商品列表項目 DTO
+ * 產品列表項 DTO
  */
-export interface ResProductListDTO {
-    fProductId: number;
-    fName: string;
-    fDescription: string;
-    fCategoryId?: number;
-    categoryName: string;
-    fPstatus?: number;
-    statusName: string;
-    fWarrantyMonth?: number;
-    fAssemblyRequired?: boolean;
-    fDiscount?: number;
+export class ResProductListDTO {
+    constructor(data = {}) {
+        this.fProductId = data.fProductId || 0
+        this.fName = data.fName || ''
+        this.fDescription = data.fDescription || ''
+        this.fCategoryId = data.fCategoryId || null
+        this.categoryName = data.categoryName || ''
+        this.fPstatus = data.fPstatus || null
+        this.statusName = data.statusName || ''
+        this.fWarrantyMonth = data.fWarrantyMonth || null
+        this.fAssemblyRequired = data.fAssemblyRequired || false
+        this.fDiscount = data.fDiscount || null
+        this.mainImageUrl = data.mainImageUrl || ''
+        this.totalStock = data.totalStock || 0
+        this.isAvailable = data.isAvailable || false
+        this.minPrice = data.minPrice || null
+        this.maxPrice = data.maxPrice || null
+        this.isCustomizable = data.isCustomizable || false
+        this.customizablePartsCount = data.customizablePartsCount || 0
+        this.availableCombinationsCount = data.availableCombinationsCount || 0
+        this.fCreateTime = data.fCreateTime || null
+        this.fUpdateTime = data.fUpdateTime || null
+    }
+}
 
-    // 圖片
-    mainImageUrl: string;
-
-    // 庫存
-    totalStock: number;
-    isAvailable: boolean;
-
-    // 價格
-    minPrice?: number;
-    maxPrice?: number;
-
-    // 自訂資訊
-    isCustomizable: boolean;
-    customizablePartsCount: number;
-    availableCombinationsCount: number;
-
-    // 時間
-    fCreateTime?: string;
-    fUpdateTime?: string;
+/**
+ * 分頁資訊 DTO
+ */
+export class ResPaginationDTO {
+    constructor(data = {}) {
+        this.currentPage = data.currentPage || 1
+        this.pageSize = data.pageSize || 12
+        this.totalPages = data.totalPages || 0
+        this.totalCount = data.totalCount || 0
+        this.hasNext = data.hasNext || false
+        this.hasPrevious = data.hasPrevious || false
+    }
 }
 
 /**
  * 分頁結果 DTO
  */
-export interface ResultPagedDTO<T> {
-    items: T[];              // 資料列表
-    totalCount: number;      // 總筆數
-    pageNumber: number;      // 當前頁碼
-    pageSize: number;        // 每頁筆數
-    totalPages: number;      // 總頁數
-    hasPreviousPage: boolean; // 是否有上一頁
-    hasNextPage: boolean;    // 是否有下一頁
+export class ResultPagedDTO {
+    constructor(data = {}) {
+        this.data = (data.data || []).map(item => new ResProductListDTO(item))
+        this.pagination = new ResPaginationDTO(data.pagination || {})
+    }
 }
 
 /**
- * API 回應格式
+ * API 回應 DTO
  */
-export interface ApiResponse<T> {
-    success: boolean;
-    message: string;
-    data: T;
+export class ResApiResponseDTO {
+    constructor(data = {}) {
+        this.success = data.success || false
+        this.message = data.message || ''
+        this.data = data.data || null
+    }
+}
+
+/**
+ * 類別選項 DTO
+ */
+export class ResCategoryOptionDTO {
+    constructor(data = {}) {
+        this.categoryId = data.categoryId || 0
+        this.name = data.name || ''
+        this.parentCategoryId = data.parentCategoryId || null
+        this.isActive = data.isActive || false
+        this.sortOrder = data.sortOrder || 0
+    }
+}
+
+/**
+ * 價格範圍 DTO
+ */
+export class ResPriceRangeDTO {
+    constructor(data = {}) {
+        this.minPrice = data.minPrice || 0
+        this.maxPrice = data.maxPrice || 0
+    }
+}
+
+/**
+ * 狀態選項 DTO
+ */
+export class ResStatusOptionDTO {
+    constructor(data = {}) {
+        this.statusId = data.statusId || 0
+        this.statusName = data.statusName || ''
+    }
+}
+
+/**
+ * 篩選選項 DTO
+ */
+export class ResFilterOptionsDTO {
+    constructor(data = {}) {
+        this.categories = (data.categories || []).map(c => new ResCategoryOptionDTO(c))
+        this.priceRange = new ResPriceRangeDTO(data.priceRange || {})
+        this.statusOptions = (data.statusOptions || []).map(s => new ResStatusOptionDTO(s))
+    }
+}
+
+/**
+ * 產品 DTO（搜尋用）
+ */
+export class ResProductDTO {
+    constructor(data = {}) {
+        this.productId = data.productId || 0
+        this.name = data.name || ''
+        this.categoryId = data.categoryId || null
+        this.categoryName = data.categoryName || ''
+        this.minPrice = data.minPrice || null
+        this.maxPrice = data.maxPrice || null
+        this.primaryImageUrl = data.primaryImageUrl || ''
+        this.variants = data.variants || []
+        this.assets = data.assets || []
+    }
+}
+
+// 排序選項常數
+export const SORT_OPTIONS = [
+    { value: 'created_desc', label: '最新上架' },
+    { value: 'created_asc', label: '最早上架' },
+    { value: 'price_asc', label: '價格由低到高' },
+    { value: 'price_desc', label: '價格由高到低' },
+    { value: 'name_asc', label: '名稱 A-Z' },
+    { value: 'name_desc', label: '名稱 Z-A' }
+]
+
+export default {
+    ReqProductFilterDTO,
+    ResProductListDTO,
+    ResPaginationDTO,
+    ResultPagedDTO,
+    ResApiResponseDTO,
+    ResCategoryOptionDTO,
+    ResPriceRangeDTO,
+    ResStatusOptionDTO,
+    ResFilterOptionsDTO,
+    ResProductDTO,
+    SORT_OPTIONS
 }
