@@ -10,15 +10,15 @@ namespace GraduationProject.Services
         private readonly IHttpContextAccessor _http;
         public CUserContextService(IHttpContextAccessor http) => _http = http;
 
-        public int GetEmployeeId()
+        public int? GetEmployeeId()
         {
             var json = _http.HttpContext?.Session.GetString(CEmployeeDictionary.SK_LOGINED_USER);
             var user = string.IsNullOrEmpty(json) ? null : JsonSerializer.Deserialize<SessionUser>(json);
 
-            return user.Id;
+            return user?.Id;
         }
 
-        public string GetEmployeeName()
+        public string? GetEmployeeName()
         {
             var json = _http.HttpContext?.Session.GetString(CEmployeeDictionary.SK_LOGINED_USER);
             var user = string.IsNullOrEmpty(json) ? null : JsonSerializer.Deserialize<SessionUser>(json);
