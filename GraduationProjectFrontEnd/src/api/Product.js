@@ -84,16 +84,37 @@ export const ProductAPI = {
         return apiClient.get(`/Product/search/${encodeURIComponent(keyword)}`)
     },
 
-    /**
-     * 取得產品詳情
-     * @param {number} id - 產品 ID
-     * @param {boolean} includeCustomization - 是否包含自訂資訊
-     * @returns {Promise<Object>} 產品詳情
-     */
-    getProductById(id, includeCustomization = false) {
-        return apiClient.get(`/Product/${id}`, {
-            params: { includeCustomization }
-        })
+    // 取得產品詳情
+    async getProductById(productId) {
+        const response = await apiClient.get(`/Product/${productId}`)
+        const data = response.data
+
+        // 如果後端已經有 success 包裝 → 直接回傳
+        if (data.hasOwnProperty('success')) {
+            return data
+        }
+
+        // 如果後端直接回傳產品物件 → 包裝後回傳
+        if (data.fProductId) {
+            return {
+                success: true,
+                message: '取得產品詳情成功',
+                data: data  // ← 包裝在 data 中
+            }
+        }
+
+        // 其他情況視為失敗
+        return {
+            success: false,
+            message: '產品資料格式錯誤',
+            data: null
+        }
+    },
+
+    // 取得產品變體
+    async getProductVariants(productId) {
+        const response = await apiClient.get(`/Product/${productId}/variants`)
+        return response.data
     },
 
     /**
