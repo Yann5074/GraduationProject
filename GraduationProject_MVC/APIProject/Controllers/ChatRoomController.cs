@@ -25,18 +25,46 @@ namespace ApiProject.Controllers
             _memberAuth = memberAuth;
         }
 
+        // Controller Action
         [Authorize]
         [HttpPost("Index")]
-        public async Task<IActionResult> Index(CancellationToken ct,[FromBody] ReqGetChartRoomDTO reqDto)
+        public async Task<IActionResult> Index(
+            CancellationToken ct,
+            [FromBody] ReqGetChartRoomDTO reqDto)
         {
+            // 1) 取登入者（會員）
             var idCheck = await _memberAuth.ValidateAndGetMemberAsync(User, ct);
-            var ctId = await _context.TChatRooms.FirstOrDefaultAsync(cr => cr.FMemberId == idCheck.Member.FMemberId);
+            if (idCheck?.Member == null) return Unauthorized();
+
+            var memberId = idCheck.Member.FMemberId;
+
+            // 2) 以會員ID找專屬聊天室（前端不需送 chatRoomId）
+            var myRoom = await _context.TChatRooms
+                .AsTracking()
+                .FirstOrDefaultAsync(cr => cr.FMemberId == memberId, ct);
+
+            // （可選）沒有就建立一間
+            if (myRoom == null)
+            {
+                myRoom = new TChatRoom
+                {
+                    FMemberId = memberId,
+                    FCreatedAt = DateTime.Now,
+                    FLastMessageAt = null
+                };
+                _context.TChatRooms.Add(myRoom);
+                await _context.SaveChangesAsync(ct);
+            }
+
+            // 3) 會員端：只列出自己的聊天室（通常一間）
+            //    🔑 這裡的 last 子查詢一定要綁 c.FChatRoomId（每間各查自己的最後訊息）
             var roomsQuery = await (
                 from c in _context.TChatRooms
+                where c.FMemberId == memberId
                 join m in _context.TMembers on c.FMemberId equals m.FMemberId into gm
-                from m in gm.DefaultIfEmpty() // ← left join
+                from m in gm.DefaultIfEmpty()
                 let last = _context.TMessages
-                    .Where(x => x.FChatRoomId == ctId.FChatRoomId)
+                    .Where(x => x.FChatRoomId == c.FChatRoomId)                  // ✅ 關鍵：每個 c 自己的最後訊息
                     .OrderByDescending(x => x.FCreatedAt)
                     .Select(x => new { x.FCreatedAt, x.FContent })
                     .FirstOrDefault()
@@ -44,37 +72,35 @@ namespace ApiProject.Controllers
                 {
                     FChatRoomId = c.FChatRoomId,
                     image = (m != null && !string.IsNullOrEmpty(m.FMemberImage))
-            ? m.FMemberImage
-            : "/MemberHeadImages/default.png",
-
+                        ? m.FMemberImage
+                        : "/MemberHeadImages/default.png",
                     FName = (m != null && !string.IsNullOrEmpty(m.FName))
-           ? m.FName
-            : (c.FMemberId == null ? "訪客" : c.FMemberId.ToString()),
-
+                        ? m.FName
+                        : (c.FMemberId == null ? "訪客" : c.FMemberId.ToString()),
                     FLastMessageTime = last != null ? (DateTime?)last.FCreatedAt : null,
                     FLastMessage = last != null ? last.FContent : null
                 })
                 .OrderByDescending(x => x.FLastMessageTime)
-                .ToListAsync();
+                .ToListAsync(ct);
 
+            // 4)（可選）搜尋
             if (!string.IsNullOrWhiteSpace(reqDto.q))
             {
                 var qTrim = reqDto.q.Trim();
-                roomsQuery = roomsQuery.Where(r =>
-                    r.FName.Contains(qTrim) ||
-                    r.FChatRoomId.ToString() == qTrim
-                ).ToList(); // ← 記憶體篩選，用 ToList()
+                roomsQuery = roomsQuery
+                    .Where(r => r.FName.Contains(qTrim) || r.FChatRoomId.ToString() == qTrim)
+                    .ToList();
             }
 
-            var rooms = roomsQuery
-                .OrderByDescending(x => x.FLastMessageTime)
-                .ToList(); // ← 記憶體排序，用 ToList()，不要 Async
+            // 5) 決定選中的聊天室：前端若沒送，就用會員自己的
+            int? selectedId = reqDto.chatRoomId ?? myRoom?.FChatRoomId;
 
-            List<ResMessageDto> messages = new();
-            if (reqDto.chatRoomId.HasValue)
+            // 6) 撈該聊天室訊息
+            var messages = new List<ResMessageDto>();
+            if (selectedId.HasValue)
             {
                 messages = await _context.TMessages
-                    .Where(m => m.FChatRoomId == reqDto.chatRoomId)
+                    .Where(m => m.FChatRoomId == selectedId.Value)
                     .OrderBy(m => m.FCreatedAt)
                     .Select(m => new ResMessageDto
                     {
@@ -84,12 +110,20 @@ namespace ApiProject.Controllers
                         Content = m.FContent,
                         CreatedAt = m.FCreatedAt
                     })
-                    .ToListAsync();
+                    .ToListAsync(ct);
             }
 
-            var vm = new ResChatRoomsPageDTO { Rooms = rooms, SelectedId = reqDto.chatRoomId, Messages = messages };
+            // 7) 組回傳
+            var vm = new ResChatRoomsPageDTO
+            {
+                Rooms = roomsQuery.OrderByDescending(x => x.FLastMessageTime).ToList(),
+                SelectedId = selectedId,
+                Messages = messages
+            };
+
             return Ok(vm);
         }
+
 
         /// <summary>
         /// 傳送訊息
