@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7131'
 
-// 建立 axios 實例
+//  axios 實例
 const apiClient = axios.create({
     baseURL: `${API_BASE}/api`,
     timeout: 10000,
@@ -54,7 +54,6 @@ export const ProductAPI = {
             pageSize: filter.pageSize || 12
         }
 
-        // 移除 undefined 或 null 的參數
         Object.keys(params).forEach(key => {
             if (params[key] === undefined || params[key] === null || params[key] === '') {
                 delete params[key]
@@ -89,17 +88,16 @@ export const ProductAPI = {
         const response = await apiClient.get(`/Product/${productId}`)
         const data = response.data
 
-        // 如果後端已經有 success 包裝 → 直接回傳
         if (data.hasOwnProperty('success')) {
             return data
         }
 
-        // 如果後端直接回傳產品物件 → 包裝後回傳
+
         if (data.fProductId) {
             return {
                 success: true,
                 message: '取得產品詳情成功',
-                data: data  // ← 包裝在 data 中
+                data: data
             }
         }
 
