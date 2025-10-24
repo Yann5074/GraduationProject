@@ -30,12 +30,13 @@ namespace ApiProject.Controllers
         public async Task<IActionResult> Index(CancellationToken ct,[FromBody] ReqGetChartRoomDTO reqDto)
         {
             var idCheck = await _memberAuth.ValidateAndGetMemberAsync(User, ct);
+            var ctId = await _context.TChatRooms.FirstOrDefaultAsync(cr => cr.FMemberId == idCheck.Member.FMemberId);
             var roomsQuery = await (
                 from c in _context.TChatRooms
                 join m in _context.TMembers on c.FMemberId equals m.FMemberId into gm
                 from m in gm.DefaultIfEmpty() // ← left join
                 let last = _context.TMessages
-                    .Where(x => x.FChatRoomId == c.FChatRoomId)
+                    .Where(x => x.FChatRoomId == ctId.FChatRoomId)
                     .OrderByDescending(x => x.FCreatedAt)
                     .Select(x => new { x.FCreatedAt, x.FContent })
                     .FirstOrDefault()
