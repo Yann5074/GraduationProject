@@ -13,7 +13,7 @@ public partial class TMessage
 
     public string FSenderType { get; set; }
 
-    public string? FSenderId { get; set; }
+    public string FSenderId { get; set; }
 
     public string FContent { get; set; }
 
@@ -26,7 +26,4 @@ public partial class TMessage
     public string FMetaJson { get; set; }
 
     public DateTime? FCreatedAt { get; set; }
-
-    public virtual TChatRoom ChatRoom { get; set; } = null!;
-
 }
