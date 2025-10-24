@@ -6,51 +6,50 @@ using ApiProject.Dictionary;
 
 namespace ApiProject.Infrastructure
 {
-    // 自訂 Authentication Handler，讓 [Authorize] 可用 Session 驗證
+    // 讓 [Authorize(AuthenticationSchemes = "SessionAuth")] 或全域預設使用 Session 做驗證
     public class SessionAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {
-        private readonly IHttpContextAccessor _http;
-
         public SessionAuthHandler(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
             UrlEncoder encoder,
-            ISystemClock clock,
-            IHttpContextAccessor http) : base(options, logger, encoder, clock)
-        {
-            _http = http;
-        }
+            ISystemClock clock) : base(options, logger, encoder, clock)
+        { }
 
-        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+        // ★ 這裡可以是 async，載入 Session
+        protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            var context = _http.HttpContext!;
-            var session = context.Session;
+            // 1) CORS 預檢請求直接略過，不要擋住
+            if (HttpMethods.IsOptions(Request.Method))
+                return AuthenticateResult.NoResult();
 
-            // 看 Session 是否有存登入資訊（你之前在登入時寫的那些 key）
-            var memberId = session.GetString(CMemberDictionary.SK_LOGIN_ID);
-            var account = session.GetString(CMemberDictionary.SK_LOGIN_ACCOUNT);
-            var displayName = session.GetString(CMemberDictionary.SK_LOGIN_NAME);
+            // 2) 確認 Session 中介軟體有啟用
+            if (Context.Session == null)
+                return AuthenticateResult.Fail("Session middleware not enabled.");
+
+            // 3) 載入 Session 後再讀取
+            await Context.Session.LoadAsync();
+
+            var memberId = Context.Session.GetString(CMemberDictionary.SK_LOGIN_ID);
+            var account = Context.Session.GetString(CMemberDictionary.SK_LOGIN_ACCOUNT) ?? "";
+            var displayName = Context.Session.GetString(CMemberDictionary.SK_LOGIN_NAME) ?? "";
 
             if (string.IsNullOrEmpty(memberId))
-            {
-                // ❌ 沒登入
-                return Task.FromResult(AuthenticateResult.Fail("No session"));
-            }
+                return AuthenticateResult.Fail("No session."); // → 觸發 401
 
-            // ✅ 登入成功，建立 ClaimsPrincipal
-            var claims = new List<Claim>
+            // 4) 建立 ClaimsPrincipal
+            var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, memberId),
-                new Claim(ClaimTypes.Name, account ?? ""),
-                new Claim("displayName", displayName ?? "")
+                new Claim(ClaimTypes.Name, account),
+                new Claim("displayName", displayName),
             };
 
             var identity = new ClaimsIdentity(claims, Scheme.Name);
             var principal = new ClaimsPrincipal(identity);
             var ticket = new AuthenticationTicket(principal, Scheme.Name);
 
-            return Task.FromResult(AuthenticateResult.Success(ticket));
+            return AuthenticateResult.Success(ticket);
         }
     }
 }
-

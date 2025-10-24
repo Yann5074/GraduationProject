@@ -92,25 +92,8 @@ namespace ApiProject.Controllers
             //呼叫 Service 驗證帳密
             var m = await _memberService.MemberLoginAsync(req, ct);
             if (m == null) return Unauthorized(new { message = "帳號或密碼錯誤" });
-
-            ////建立「Claims」（身分資訊）
-            //var claims = new List<Claim>
-            //    {
-            //        new Claim(ClaimTypes.NameIdentifier, m.MemberId.ToString()),
-            //        new Claim(ClaimTypes.Name, m.Account),
-            //        new Claim("displayName", m.DisplayName ?? string.Empty),
-            //    };
-            ////建立「身份（Identity）」與「主體（Principal）」
-            //var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            //var principal = new ClaimsPrincipal(identity);
-            ////寫入 Cookie（登入成功）
-
-            //await HttpContext.SignInAsync(
-            //    CookieAuthenticationDefaults.AuthenticationScheme,
-            //    principal,
-            //    new AuthenticationProperties { IsPersistent = true });
-
-            // (B) ✅ CDictionary + Session：把常用資訊放進去
+           
+            // ✅ CDictionary + Session：把常用資訊放進去
             HttpContext.Session.Clear(); // ✅ 防 session 固定攻擊
             HttpContext.Session.SetString(CMemberDictionary.SK_LOGIN_ID, m.MemberId.ToString());
             HttpContext.Session.SetString(CMemberDictionary.SK_LOGIN_ACCOUNT, m.Account);
@@ -132,36 +115,34 @@ namespace ApiProject.Controllers
             return StatusCode(result.Code, result); // 這裡選擇 200 + 訊息，前端好顯示
         }
 
-
-
         // 5) 取得個資
         // GET /api/Member/me
         [Authorize] // ✅ 只用 Session 時，SessionAuthHandler 會把 Session 轉成 Claims
         [HttpGet("me")]
         public async Task<ActionResult<ResMemberDTO>> GetMe(CancellationToken ct)
         {
-            // 1) 從 Claims 取登入者 Id（由 SessionAuthHandler 建立）
             var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(idStr))
                 return Unauthorized(new { message = "Session 過期或未登入" });
 
-            // 2) 若 Session 有整包 DTO，就直接回（快）
             var cached = HttpContext.Session.GetObject<ResMemberDTO>(CMemberDictionary.SK_LOGIN_OBJECT);
-            if (cached != null)
-                return Ok(cached);
+            if (cached != null) return Ok(cached);
 
-            // 3) 若沒有整包 DTO：為了最新資料，回 DB 取（建議在 Service 實作）
-            var memberId = int.Parse(idStr);
-            var dto = await _memberService.GetMemberMeAsync(memberId, ct);
-            if (dto == null)
-                return NotFound(new { message = "找不到會員資料" });
+            try
+            {
+                var memberId = int.Parse(idStr);
+                var dto = await _memberService.GetMemberMeAsync(memberId, ct);
+                if (dto == null) return NotFound(new { message = "找不到會員資料" });
 
-            // （可選）把最新資料塞回 Session，下次就不用查 DB
-            HttpContext.Session.SetObject(CMemberDictionary.SK_LOGIN_OBJECT, dto);
-
-            return Ok(dto);
+                HttpContext.Session.SetObject(CMemberDictionary.SK_LOGIN_OBJECT, dto);
+                return Ok(dto);
+            }
+            catch (InvalidOperationException ex)
+            {
+                // 將 service 的邏輯錯誤轉成 400/404，而不是讓它拋出到 pipeline
+                return BadRequest(new { message = ex.Message });
+            }
         }
-
 
         // 6) 修改密碼
         // PUT /api/Member/me/UpdatePassword
@@ -184,26 +165,7 @@ namespace ApiProject.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-
-        // 6) 上傳大頭貼
-        //// POST /api/members/UploadPhoto
-        //[Authorize]
-        //[HttpPost("me/UploadPhoto")]
-        //public async Task<ActionResult<ResMemberUploadPhotoDTO>> UploadPhoto([FromForm] UploadPhotoForm form, CancellationToken ct)
-        //{
-        //    try
-        //    {
-        //        //從登入者的 Cookie（Claims）取得會員 ID
-        //        var memberId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        //        var res = await _memberService.MemberUploadPhotoAsync(memberId, file, ct);
-        //        return Ok(res); // { url, fileName }
-        //    }
-        //    catch (InvalidOperationException ex)
-        //    {
-        //        return BadRequest(new { message = ex.Message });
-        //    }
-        //}
-
+       
         // 7) 上傳大頭貼
         // POST /api/Member/me/uploadphoto
         [Authorize]

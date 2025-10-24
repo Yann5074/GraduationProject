@@ -1,12 +1,11 @@
-using Microsoft.Extensions.FileProviders;
+using ApiProject.Infrastructure; // ✅ SessionAuthHandler 的命名空間
 using ApiProject.Interfaces;
 using ApiProject.Models;
 using ApiProject.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,31 +21,26 @@ builder.Services.AddCors(option =>
 {
     option.AddPolicy("VueClient", policy =>
     {
-        policy.WithOrigins(
-            "http://localhost:5173"
-  
-            )
+        policy.WithOrigins("http://localhost:5173") // 你的前端埠號
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials();  // ← 必須，才能帶 .AspNetCore.Session
+              .AllowCredentials(); // ✅ 必須，才能帶 .AspNetCore.Session
     });
 });
 
-// DbContext（保留一次即可）
+// DbContext（只保留一次）
 builder.Services.AddDbContext<dbFurniMartContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart")));
 
-// DI
+// DI（各一次）
 builder.Services.AddScoped<IOrderService, COrderService>();
-// 加入 CCartService
 builder.Services.AddScoped<ICartService, CCartService>();
-// CMemberServices
 builder.Services.AddScoped<IMemberService, CMemberServices>();
 builder.Services.AddScoped<IPasswordHasher<TMember>, PasswordHasher<TMember>>();
 // 加入 CMemberAuthService
 builder.Services.AddScoped<IHelpToolService, CMemberAuthService>();
 
-// ✅ Session 需要「分散式快取」實作
+// ✅ Session 需要「分散式快取」
 builder.Services.AddDistributedMemoryCache();
 
 // ✅ 啟用 Session
@@ -55,13 +49,12 @@ builder.Services.AddSession(o =>
     o.IdleTimeout = TimeSpan.FromMinutes(30);
     o.Cookie.HttpOnly = true;
     o.Cookie.IsEssential = true;
-
-    // ★ 跨站 XHR 需要這兩行
-    o.Cookie.SameSite = SameSiteMode.None;
-    o.Cookie.SecurePolicy = CookieSecurePolicy.Always; // 需 HTTPS
+    o.Cookie.SameSite = SameSiteMode.None;         // 跨站 XHR 必須 None
+    o.Cookie.SecurePolicy = CookieSecurePolicy.Always; // ✅ 必須 Secure，否則瀏覽器會丟棄 Cookie
 });
 
-// ✅ 只用 Session 作為驗證方案（重點：不要同時再呼叫 Cookie 的 AddAuthentication）
+
+// ✅ 只用 Session 作為驗證方案（不要再同時註冊 Cookie Auth）
 builder.Services.AddAuthentication("SessionAuth")
     .AddScheme<AuthenticationSchemeOptions, SessionAuthHandler>("SessionAuth", _ => { });
 
@@ -118,7 +111,6 @@ else
 
 // CORS（在 Auth 之前即可）
 app.UseCors("VueClient");
-
 
 
 // 映射共用圖片資料夾：<方案根>/SharedStorage/MemberHeadImages
