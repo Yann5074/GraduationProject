@@ -298,7 +298,7 @@ namespace ApiProject.Services
                             FPartCode = part.FPartCode,
                             fDisplayOrder = part.FDiaplayOrder,
                             ColorOptions = part.ColorOptions
-                                .OrderBy(o => o.fDisplayOrder)
+                                .OrderBy(o => o.FDisplayOrder)
                                 .Select(option => new ResColorOptionDTO 
                                 {
                                     FColorOptionId = option.FColorOptionId,
@@ -306,7 +306,7 @@ namespace ApiProject.Services
                                     FColorHex = option.FColorHex,
                                     FThumbnail = option.FThumbnail,
                                     FIsDefault = option.FIsDefault,
-                                    fDisplayOrder = option.fDisplayOrder,
+                                    fDisplayOrder = option.FDisplayOrder,
                                     Textures = option.Textures
                                         .Select(t => new ResTextureDTO
                                         {

@@ -165,7 +165,7 @@ namespace GraduationProject.Controllers
 
 
             //判定 訊息回覆者為 訪客 會員 bot 並給予值 
-            string senderType;
+            string senderType = null;
             string? senderKey;
 
 

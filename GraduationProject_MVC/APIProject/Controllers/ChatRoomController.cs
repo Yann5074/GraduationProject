@@ -1,27 +1,35 @@
 ﻿using ApiProject.DTOs;
+using ApiProject.Interfaces;
 using ApiProject.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NuGet.DependencyResolver;
+using System.Security.Claims;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace ApiProject.Controllers
 {
+    
     [Route("api/[controller]")]
     [ApiController]
     public class ChatRoomController : ControllerBase
     {
         dbFurniMartContext _context;
-        public ChatRoomController(dbFurniMartContext context)
+        IHelpToolService _memberAuth;
+        public ChatRoomController(dbFurniMartContext context, IHelpToolService memberAuth)
         {
             _context = context;
+            _memberAuth = memberAuth;
         }
 
-        [HttpGet("Index")]
-        public async Task<IActionResult> Index(string? q, int? chatRoomId)
+        [Authorize]
+        [HttpPost("Index")]
+        public async Task<IActionResult> Index(CancellationToken ct,[FromBody] ReqGetChartRoomDTO reqDto)
         {
+            var idCheck = await _memberAuth.ValidateAndGetMemberAsync(User, ct);
             var roomsQuery = await (
                 from c in _context.TChatRooms
                 join m in _context.TMembers on c.FMemberId equals m.FMemberId into gm
@@ -48,9 +56,9 @@ namespace ApiProject.Controllers
                 .OrderByDescending(x => x.FLastMessageTime)
                 .ToListAsync();
 
-            if (!string.IsNullOrWhiteSpace(q))
+            if (!string.IsNullOrWhiteSpace(reqDto.q))
             {
-                var qTrim = q.Trim();
+                var qTrim = reqDto.q.Trim();
                 roomsQuery = roomsQuery.Where(r =>
                     r.FName.Contains(qTrim) ||
                     r.FChatRoomId.ToString() == qTrim
@@ -62,10 +70,10 @@ namespace ApiProject.Controllers
                 .ToList(); // ← 記憶體排序，用 ToList()，不要 Async
 
             List<ResMessageDto> messages = new();
-            if (chatRoomId.HasValue)
+            if (reqDto.chatRoomId.HasValue)
             {
                 messages = await _context.TMessages
-                    .Where(m => m.FChatRoomId == chatRoomId)
+                    .Where(m => m.FChatRoomId == reqDto.chatRoomId)
                     .OrderBy(m => m.FCreatedAt)
                     .Select(m => new ResMessageDto
                     {
@@ -78,7 +86,7 @@ namespace ApiProject.Controllers
                     .ToListAsync();
             }
 
-            var vm = new ResChatRoomsPageDTO { Rooms = rooms, SelectedId = chatRoomId, Messages = messages };
+            var vm = new ResChatRoomsPageDTO { Rooms = rooms, SelectedId = reqDto.chatRoomId, Messages = messages };
             return Ok(vm);
         }
 
@@ -91,14 +99,16 @@ namespace ApiProject.Controllers
         /// <param name="memberId"></param>
         /// <param name="employeeId"></param>
         /// <returns></returns>
+        [Authorize]
         [HttpPost("SendMessage")]
         //[ValidateAntiForgeryToken]
-        
-        public async Task<IActionResult> SendMessage(int chatRoomId, string content,string? visitorId = null , int? memberId = null,int? employeeId = null)  // ✅ 新增：後台員工身分)
+
+        public async Task<IActionResult> SendMessage(CancellationToken ct,[FromBody] ReqSendMessageDTO reqDto)  // ✅ 新增：後台員工身分)
         {
+            var idCheck = await _memberAuth.ValidateAndGetMemberAsync(User, ct);
             TChatRoom room = await _context.TChatRooms
                 .AsTracking()
-                .FirstOrDefaultAsync(r => r.FChatRoomId == chatRoomId);
+                .FirstOrDefaultAsync(r => r.FChatRoomId == reqDto.chatRoomId);
 
             string senderId = null;
             string? SenderType = null;
@@ -106,9 +116,9 @@ namespace ApiProject.Controllers
             var now = DateTime.Now;
             TMessage msg = new TMessage
             {
-                FChatRoomId = chatRoomId,
+                FChatRoomId = reqDto.chatRoomId,
                 FSenderId = senderId,   // ← string
-                FContent = content,
+                FContent = reqDto.content,
                 FSenderType = SenderType,
                 FCreatedAt = now
             };
