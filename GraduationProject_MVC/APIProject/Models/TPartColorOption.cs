@@ -21,5 +21,5 @@ public partial class TPartColorOption
 
     public bool? FIsDefault { get; set; }
 
-    public int? fDisplayOrder { get; set; }
+    public int? FDisplayOrder { get; set; }
 }
