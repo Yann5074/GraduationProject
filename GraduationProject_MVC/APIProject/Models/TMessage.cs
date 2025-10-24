@@ -11,7 +11,7 @@ public partial class TMessage
 
     public int? FChatRoomId { get; set; }
 
-    public string FSenderType { get; set; }
+    public string? FSenderType { get; set; }
 
     public string FSenderId { get; set; }
 

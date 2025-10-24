@@ -82,35 +82,54 @@ namespace ApiProject.Controllers
             return Ok(vm);
         }
 
+        /// <summary>
+        /// 傳送訊息
+        /// </summary>
+        /// <param name="chatRoomId"></param>
+        /// <param name="content"></param>
+        /// <param name="visitorId"></param>
+        /// <param name="memberId"></param>
+        /// <param name="employeeId"></param>
+        /// <returns></returns>
         [HttpPost("SendMessage")]
         //[ValidateAntiForgeryToken]
-        public async Task<IActionResult> SendMessage(int chatRoomId, string content)
+        
+        public async Task<IActionResult> SendMessage(int chatRoomId, string content,string? visitorId = null , int? memberId = null,int? employeeId = null)  // ✅ 新增：後台員工身分)
         {
             TChatRoom room = await _context.TChatRooms
                 .AsTracking()
                 .FirstOrDefaultAsync(r => r.FChatRoomId == chatRoomId);
+
             string senderId = null;
-            string SenderType = null;
+            string? SenderType = null;
+
+            var now = DateTime.Now;
             TMessage msg = new TMessage
             {
                 FChatRoomId = chatRoomId,
                 FSenderId = senderId,   // ← string
                 FContent = content,
                 FSenderType = SenderType,
-                FCreatedAt = DateTime.Now
+                FCreatedAt = now
             };
 
             _context.TMessages.Add(msg);
             await _context.SaveChangesAsync();
             // 5) 更新聊天室最後訊息時間（若您表上有此欄位）
 
-            room.FLastMessageAt = DateTime.Now;
+            room.FLastMessageAt = now;
             _context.TChatRooms.Update(room);
             await _context.SaveChangesAsync();
 
             //// 6) 回到 Index，維持目前聊天室與搜尋字  RedirectToAction跳轉到指定的動作方法
             //return RedirectToAction(nameof(Index), new { chatRoomId });
-            return Ok(new { redirectedTo = "Index", chatRoomId });
+            return Ok(new
+            {
+                messageId = msg.FMessagesId,
+                SenderType,
+                senderId = senderId,
+                createdAt = now
+            });
         }
 
 
@@ -130,22 +149,22 @@ namespace ApiProject.Controllers
             _context.TContactForms.Add(form);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "表單提交成功" });
+            return Ok(new { message = "表單提交成功"});
         }
 
-        [HttpGet("Templates")]
-        public async Task<IActionResult> GetTemplates()
-        {
-            var templates = await _context.TMessageTemplates
-                .OrderBy(t => t.FTemplateId)
-                .Select(t => new {
-                    title = t.FTitle,
-                    desc = t.FDescription,
-                    text = t.FContentText
-                }).ToListAsync();
+        //[HttpGet("Templates")]
+        //public async Task<IActionResult> GetTemplates()
+        //{
+        //    var templates = await _context.TMessageTemplates
+        //        .OrderBy(t => t.FTemplateId)
+        //        .Select(t => new {
+        //            title = t.FTitle,
+        //            desc = t.FDescription,
+        //            text = t.FContentText
+        //        }).ToListAsync();
 
-            return Ok(templates);
-        }
+        //    return Ok(templates);
+        //}
 
 
 
