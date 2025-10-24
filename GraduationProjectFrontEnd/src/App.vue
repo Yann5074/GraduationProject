@@ -7,40 +7,47 @@ import { useAuthStore } from './stores/auth'
 
 const route = useRoute()
 const router = useRouter()
+const isActive = (path) => route.path.startsWith(path)
 const auth = useAuthStore()
-const isActive = (path) => route.path === path // 判斷是否為當前頁
 
-const loggingOut = ref(false) // 登出動作的狀態
+/** 統一 axios：一定要帶 cookie 才能讓後端辨識 Session */
+const http = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE || 'https://localhost:7131',
+  withCredentials: true,
+  timeout: 10000,
+})
 
-// 確認前端登出動作，避免重複操作
+/** ✅ 啟動時同步伺服器 Session 狀態 */
+// ✅ 修正版：讓 Pinia 自動用 MemberDTO 處理 imageUrl
+async function hydrateFromServer() {
+  try {
+    const { data: me } = await http.get('/api/Member/me')
+    await auth.login({ user: me }) // 交給 auth 自己轉換 DTO
+  } catch {
+    auth.logout()
+  }
+}
+
+const loggingOut = ref(false)
 async function handleLogout() {
   if (loggingOut.value) return // 確認是否正在登出
   loggingOut.value = true
   try {
-    // 1) 呼叫後端登出（空 body 即可）
-    await http.post('/Member/logout')
-
-    // 2) 清前端登入狀態
-    auth.logout()
-
-    // 3) 導回登入頁或首頁（擇一）
-    router.push('/') // 或改成 '/'
+    await http.post('/api/Member/logout')
   } catch (err) {
-    console.error('logout failed:', err?.response || err)
-    // 就算後端失敗，仍清前端並導頁（避免卡住）
-    auth.logout()
-    router.push('/signin')
+    console.warn('logout api error:', err?.response || err)
   } finally {
+    auth.logout()
     loggingOut.value = false
+    router.push('/signin')
   }
 }
 
-// Dropdown 初始化（保險）
+/** 初始化 dropdown 並同步登入狀態 */
 onMounted(() => {
-  document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((el) => {
-    // eslint-disable-next-line no-new
-    new Dropdown(el)
-  })
+  document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((el) => new Dropdown(el))
+  auth.hydrate()
+  hydrateFromServer()
 })
 </script>
 
@@ -48,9 +55,12 @@ onMounted(() => {
   <main>
     <!-- 自己加的聊天室浮動元件 -->
     <ChatWidget />
-    
+
     <!-- 上方導覽列 -->
-    <nav class="custom-navbar navbar navbar navbar-expand-md navbar-dark bg-dark" arial-label="Furni navigation bar">
+    <nav
+      class="custom-navbar navbar navbar navbar-expand-md navbar-dark bg-dark"
+      arial-label="Furni navigation bar"
+    >
       <div class="container">
         <!-- 左上 Logo icon -->
         <RouterLink class="navbar-brand" to="/">Furni<span>.</span></RouterLink>
@@ -81,33 +91,56 @@ onMounted(() => {
           </ul>
           <!-- 右上角 icon -->
           <div class="custom-navbar-cta navbar-nav mb-2 mb-md-0 ms-5">
-            <!-- 購物車 icon -->
+            <!-- 購物車 -->
             <li class="nav-item">
-              <RouterLink class="nav-link" to="/cart">
-                <img src="/asset/images/cart.svg" />
-              </RouterLink>
+              <RouterLink class="nav-link" to="/cart"
+                ><img src="/asset/images/cart.svg"
+              /></RouterLink>
             </li>
             <!-- 登入 icon -->
             <!-- 未登入 -->
             <li v-if="!auth.isLoggedIn" class="nav-item">
-              <RouterLink class="nav-link" to="/signin">
-                <img src="/asset/images/user.svg" />
-              </RouterLink>
+              <RouterLink class="nav-link" to="/signin"
+                ><img src="/asset/images/user.svg"
+              /></RouterLink>
             </li>
 
-            <!-- 已登入 -->
+            <!-- 會員區：未登入 -->
+            <!-- <li v-if="!auth.isLoggedIn" class="nav-item">
+              <RouterLink class="nav-link d-flex align-items-center" to="/signin">
+                
+                <i class="bi bi-person fs-4 text-white"></i>
+              </RouterLink>
+            </li> -->
+
+            <!-- 會員區：已登入 -->
             <li v-else class="nav-item dropdown">
               <a
-                class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown"
+                class="nav-link dropdown-toggle d-flex align-items-center gap-2"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
                 aria-expanded="false"
               >
-                <!-- ✅ 這裡改用 Pinia 計算好的完整頭像網址 :src="auth.avatarUrl" -->
+                <!-- 頭貼：用 Pinia 的 avatarUrl :src="auth.avatarUrl"-->
                 <img
-                  :src="auth.avatarUrl" class="rounded-circle" style="width: 28px; height: 28px; object-fit: cover" alt="avatar" />
-                <span class="text-white">{{ auth.user?.name || '使用者' }}</span>
+                  :src="auth.avatarUrl"
+                  alt="avatar"
+                  class="rounded-circle border border-light"
+                  style="width: 28px; height: 28px; object-fit: cover"
+                  @error="$event.target.src = '/asset/images/user.svg'"
+                />
+
+                <!-- 顯示暱稱或姓名 -->
+                <span class="text-white fw-semibold">
+                  {{ auth.displayName || auth.user?.name || '使用者' }}
+                </span>
               </a>
+
               <ul class="dropdown-menu dropdown-menu-end">
-                <li><RouterLink class="dropdown-item" to="/account">我的帳戶</RouterLink></li>
+                <li>
+                  <RouterLink class="dropdown-item" to="/account/profile"> 我的帳戶 </RouterLink>
+                </li>
                 <li><hr class="dropdown-divider" /></li>
                 <li>
                   <button class="dropdown-item" @click="handleLogout" :disabled="loggingOut">
@@ -123,7 +156,7 @@ onMounted(() => {
 
     <RouterView />
 
-    <!-- Footer（把 public 圖片改成 / 開頭） -->
+    <!-- Start Footer Section -->
     <footer class="footer-section">
       <div class="container relative">
         <!-- <div class="sofa-img">
@@ -148,22 +181,107 @@ onMounted(() => {
                   <input type="email" class="form-control" placeholder="Enter your email" />
                 </div>
                 <div class="col-auto">
-                  <button class="btn btn-primary"><span class="fa fa-paper-plane"></span></button>
+                  <button class="btn btn-primary">
+                    <span class="fa fa-paper-plane"></span>
+                  </button>
                 </div>
               </form>
             </div>
           </div>
         </div>
 
-        <!-- 其餘不變 -->
-        <!-- ... -->
+        <div class="row g-5 mb-5">
+          <div class="col-lg-4">
+            <div class="mb-4 footer-logo-wrap">
+              <a href="#" class="footer-logo">Furni<span>.</span></a>
+            </div>
+            <p class="mb-4">
+              Donec facilisis quam ut purus rutrum lobortis. Donec vitae odio quis nisl dapibus
+              malesuada. Nullam ac aliquet velit. Aliquam vulputate velit imperdiet dolor tempor
+              tristique. Pellentesque habitant
+            </p>
+
+            <ul class="list-unstyled custom-social">
+              <li>
+                <a href="#"><span class="fa fa-brands fa-facebook-f"></span></a>
+              </li>
+              <li>
+                <a href="#"><span class="fa fa-brands fa-twitter"></span></a>
+              </li>
+              <li>
+                <a href="#"><span class="fa fa-brands fa-instagram"></span></a>
+              </li>
+              <li>
+                <a href="#"><span class="fa fa-brands fa-linkedin"></span></a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="col-lg-8">
+            <div class="row links-wrap">
+              <div class="col-6 col-sm-6 col-md-3">
+                <ul class="list-unstyled">
+                  <li><a href="#">About us</a></li>
+                  <li><a href="#">Services</a></li>
+                  <li><a href="#">Blog</a></li>
+                  <li><a href="#">Contact us</a></li>
+                </ul>
+              </div>
+
+              <div class="col-6 col-sm-6 col-md-3">
+                <ul class="list-unstyled">
+                  <li><a href="#">Support</a></li>
+                  <li><a href="#">Knowledge base</a></li>
+                  <li><a href="#">Live chat</a></li>
+                </ul>
+              </div>
+
+              <div class="col-6 col-sm-6 col-md-3">
+                <ul class="list-unstyled">
+                  <li><a href="#">Jobs</a></li>
+                  <li><a href="#">Our team</a></li>
+                  <li><a href="#">Leadership</a></li>
+                  <li><a href="#">Privacy Policy</a></li>
+                </ul>
+              </div>
+
+              <div class="col-6 col-sm-6 col-md-3">
+                <ul class="list-unstyled">
+                  <li><a href="#">Nordic Chair</a></li>
+                  <li><a href="#">Kruzo Aero</a></li>
+                  <li><a href="#">Ergonomic Chair</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-top copyright">
+          <div class="row pt-4">
+            <div class="col-lg-6">
+              <p class="mb-2 text-center text-lg-start">
+                Copyright &copy;{{ new Date().getFullYear() }}. All Rights Reserved. &mdash;
+                Designed with love by <a href="https://untree.co">Untree.co</a> Distributed By
+                <a hreff="https://themewagon.com">ThemeWagon</a>
+              </p>
+            </div>
+
+            <div class="col-lg-6 text-center text-lg-end">
+              <ul class="list-unstyled d-inline-flex ms-auto">
+                <li class="me-4"><a href="#">Terms &amp; Conditions</a></li>
+                <li><a href="#">Privacy Policy</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
     </footer>
+    <!-- End Footer Section -->
   </main>
 </template>
 
 <style scoped>
- .app-container {
+.app-container {
   position: relative;
   min-height: 100vh;
 }
