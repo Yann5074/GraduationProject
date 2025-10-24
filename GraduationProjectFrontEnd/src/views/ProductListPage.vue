@@ -363,7 +363,7 @@ const pagination = ref(null)
 const searchKeyword = ref('')
 const sortOptions = SORT_OPTIONS
 
-// 本地篩選條件（不會觸發 watch）
+
 const localFilters = reactive({
   categoryId: null,
   minPrice: null,
@@ -524,26 +524,26 @@ function getImageUrl(url) {
     return 'https://via.placeholder.com/250/cccccc/ffffff?text=No+Image'
   }
   
-  // 如果是完整的 URL（http:// 或 https://）
+
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url
   }
   
-  // 如果是相對路徑（/ProductImages/..., /MemberHeadImages/..., /storage/...）
+
   if (url.startsWith('/')) {
-    // 從後端 API 的 base URL 組合
+  
     const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7131'
     const fullUrl = `${API_BASE}${url}`
     console.log('🔗 轉換相對路徑:', url, '→', fullUrl)
     return fullUrl
   }
   
-  // 其他情況（可能是檔名）
+
   console.warn('⚠️ 無法識別的圖片格式:', url)
   return 'https://via.placeholder.com/250/cccccc/ffffff?text=Invalid+URL'
 }
 
-// 更新 URL 並重新載入（統一的更新函數）
+
 async function updateAndReload() {
   // 重置到第一頁
   localFilters.pageNumber = 1
