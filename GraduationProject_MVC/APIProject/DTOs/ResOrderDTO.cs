@@ -6,7 +6,7 @@ namespace ApiProject.DTOs
     {
         public string OrderId { get; set; }
         public int IsDeleted { get; set; }
-        public int? EmployeeId { get; set; }
+        //public int? EmployeeId { get; set; }
         public string? EmployeeName { get; set; }
         public string OrderTime { get; set; }
         public int OrderStatusId { get; set; }
