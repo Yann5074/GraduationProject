@@ -84,28 +84,44 @@ export const ProductAPI = {
     },
 
     // 取得產品詳情
-    async getProductById(productId) {
-        const response = await apiClient.get(`/Product/${productId}`)
-        const data = response.data
+    async getProductById(productId, includeCustomization = true) {  // ⭐ 預設為 true
+        try {
+            // ⭐ 加入 query parameter
+            const url = `/Product/${productId}?includeCustomization=${includeCustomization}`
 
-        if (data.hasOwnProperty('success')) {
-            return data
-        }
+            const response = await apiClient.get(url)
 
+            console.log('🔍 原始 API 回應:', response.data)
 
-        if (data.fProductId) {
-            return {
-                success: true,
-                message: '取得產品詳情成功',
-                data: data
+            const data = response.data
+
+            // 如果後端已經有 success 包裝
+            if (data.hasOwnProperty('success')) {
+                return data
             }
-        }
 
-        // 其他情況視為失敗
-        return {
-            success: false,
-            message: '產品資料格式錯誤',
-            data: null
+            // 如果後端直接回傳產品物件
+            if (data.fProductId) {
+                return {
+                    success: true,
+                    message: '取得產品詳情成功',
+                    data: data
+                }
+            }
+
+            return {
+                success: false,
+                message: '產品資料格式錯誤',
+                data: null
+            }
+
+        } catch (error) {
+            console.error('取得產品詳情失敗:', error)
+            return {
+                success: false,
+                message: error.response?.data?.message || '取得產品詳情失敗',
+                data: null
+            }
         }
     },
 

@@ -208,7 +208,6 @@ namespace ApiProject.Services
                 .Include(p => p.ProductVariants)
                 .AsQueryable();
 
-            // 如果需要自訂資訊，載入部位和顏色選項
             if (includeCustomization)
             {
                 query = query
@@ -218,7 +217,7 @@ namespace ApiProject.Services
             }
             else
             {
-                // 只載入部位（不載入顏色選項）
+                
                 query = query.Include(p => p.ProductParts);
             }
 
@@ -229,6 +228,10 @@ namespace ApiProject.Services
                 return null;
             }
 
+            var primaryAsset = product.ProductAssets
+               .Where(a => !string.IsNullOrEmpty(a.FUrl) && (a.FIsPrimary ?? false))
+               .OrderBy(a => a.FSortOrder)
+               .FirstOrDefault();
             var result = new ResProductDetailDTO
             {
                 FProductId = product.FProductId,
@@ -238,7 +241,14 @@ namespace ApiProject.Services
                 CategoryName = product.Category?.FName,
                 FWarrantyMonth = product.FWarrantyMonth,
                 FAssemblyRequired = product.FAssemblyRequired,
-                FDiscount = product.FDiscount,
+                MainImageUrl = primaryAsset?.FUrl
+                    ?? product.ProductAssets
+                        .Where(a => !string.IsNullOrEmpty(a.FUrl))
+                        .OrderBy(a => a.FSortOrder)
+                        .Select(a => a.FUrl)
+                        .FirstOrDefault()
+                    ?? "/ProductImages/default.png",
+
 
                 // 素材
                 Assets = product.ProductAssets
@@ -264,8 +274,6 @@ namespace ApiProject.Services
                         FSku = v.FSku,
                         FPrice = v.FPrice,
                         FStock = v.FStock,
-                        FColorId = v.FColorId,
-                        ColorName = v.Color?.FColorName
                     }).ToList(),
 
                 TotalStock = product.ProductVariants
@@ -410,18 +418,17 @@ namespace ApiProject.Services
 
             return similarProducts;
         }
-        // 取得產品變體資訊（購物車用）
-        // 支援單一或批次查詢
+
         // 批次取得購物車商品資訊
         public async Task<List<ResCartProductDTO>> GetCartProductsAsync(List<int> productVariantIds)
         {
-            // 驗證輸入
+ 
             if (productVariantIds == null || !productVariantIds.Any())
             {
                 return new List<ResCartProductDTO>();
             }
 
-            // 批次查詢產品變體（支援單一或多個）
+
             var variants = await _db.TProductVariants
                 .Include(v => v.Product)
                     .ThenInclude(p => p.ProductAssets)
@@ -445,9 +452,9 @@ namespace ApiProject.Services
 
 
 
-        /// <summary>
-        /// 建立購物車商品 DTO（內部方法）
-        /// </summary>
+
+
+
         private async Task<ResCartProductDTO> BuildCartProductDTO(TProductVariant variant)
         {
             // 解析 SKU 取得顏色組合
@@ -695,9 +702,8 @@ namespace ApiProject.Services
             return result;
         }
 
-        /// <summary>
-        /// 建立 SKU（內部方法）
 
+        /// SKU（內部方法）
         private async Task<string> BuildSKUAsync(int productId, Dictionary<string, int> selectedOptions)
         {
             // 1. 取得產品代碼（4字元）
