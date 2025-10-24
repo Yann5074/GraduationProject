@@ -12,7 +12,7 @@ using System.Security.Claims;
 
 namespace ApiProject.Controllers
 {
-    
+
     [Route("api/[controller]")]
     [ApiController]
     public class ChatRoomController : ControllerBase
@@ -58,12 +58,12 @@ namespace ApiProject.Controllers
                 await _context.SaveChangesAsync(ct);
             }
 
-          
+
 
 
 
             // 5) 決定選中的聊天室：前端若沒送，就用會員自己的
-            int? selectedId =myRoom?.FChatRoomId;
+            int? selectedId = myRoom?.FChatRoomId;
 
             // 6) 撈該聊天室訊息
             var messages = new List<ResMessageDto>();
@@ -108,17 +108,17 @@ namespace ApiProject.Controllers
         [HttpPost("SendMessage")]
         //[ValidateAntiForgeryToken]
 
-        public async Task<IActionResult> SendMessage(CancellationToken ct,[FromBody] ReqSendMessageDTO reqDto)  // ✅ 新增：後台員工身分)
+        public async Task<IActionResult> SendMessage(CancellationToken ct, [FromBody] ReqSendMessageDTO reqDto)  // ✅ 新增：後台員工身分)
         {
             var idCheck = await _memberAuth.ValidateAndGetMemberAsync(User, ct);
             TChatRoom room = await _context.TChatRooms
                 .AsTracking()
                 .FirstOrDefaultAsync(r => r.FChatRoomId == reqDto.chatRoomId);
 
-            string senderId = idCheck.Member.FMemberId.ToString() ;
+            string senderId = idCheck.Member.FMemberId.ToString();
             string? SenderType = "member";
 
-            
+
 
             var now = DateTime.Now;
             TMessage msg = new TMessage
