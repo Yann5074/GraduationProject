@@ -153,7 +153,7 @@ namespace GraduationProject.Controllers
         /// <returns></returns>
         [HttpPost]
         //[ValidateAntiForgeryToken]
-        public async Task<IActionResult> SendMessage(int chatRoomId,string content)
+        public async Task<IActionResult> SendMessage(int chatRoomId,string content,string? visitordId ,int? memberId)
         {
             TChatRoom room = await _context.TChatRooms
                 //AsTracking嘿～這些資料你要幫我記住它原本的樣子喔！」
@@ -161,16 +161,45 @@ namespace GraduationProject.Controllers
                 .FirstOrDefaultAsync(r => r.FChatRoomId == chatRoomId);
             // senderid 用途 : 驗證身分  為何null  因為這裡少一個方法 
             // 少一個功能  去member裡拿出來的資料  伏筆:interface
-            string senderId = null; 
+            string senderId = null;
 
-            //為何不加new會爆掉
-            var msg = new TMessage
+
+            //判定 訊息回覆者為 訪客 會員 bot 並給予值 
+            string senderType;
+            string? senderKey;
+
+
+            if (memberId.HasValue)
             {
-                FChatRoomId = chatRoomId,
-                FSenderId = senderId,   // ← string
-                FContent = content,
-                FCreatedAt = DateTime.Now
-            };
+                senderType = "member";
+                senderKey = memberId.Value.ToString();
+            }
+
+            else if (!string.IsNullOrWhiteSpace(visitordId))
+            {
+                senderId = "visitor";
+                senderKey = visitordId;
+            }
+
+            else
+            {
+                senderType = "bot";
+                senderKey = null;
+            }
+
+
+
+
+                //為何不加new會爆掉
+                var msg = new TMessage
+                {
+                    FChatRoomId = chatRoomId,
+                    FSenderType = senderType,
+                    FSenderId = senderId,   // ← string
+                    FContent = content,
+                    FContentType = "text",
+                    FCreatedAt = DateTime.Now
+                };
 
             _context.TMessages.Add(msg);
             await _context.SaveChangesAsync();
