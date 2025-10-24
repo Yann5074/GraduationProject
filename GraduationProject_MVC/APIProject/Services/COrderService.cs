@@ -34,9 +34,9 @@ namespace ApiProject.Services
                 .Select(o => new ResOrderDTO
                 {
                     OrderId = o.FOrderId.ToString(),
-                    EmployeeId = o.FEmployeeId,
+                    //EmployeeId = o.FEmployeeId,
                     //EmployeeName = o.Employee == null? "未指定員工": o.Employee.FName,
-                    EmployeeName = o.Employee.FName,                    
+                    EmployeeName = o.Employee.FName,
                     OrderTime = o.FOrderTime.ToString(),
                     OrderStatusId = o.FOrderStatus,
                     OrderStatus = o.OrderStatus.FStatusName,
@@ -78,7 +78,7 @@ namespace ApiProject.Services
             var result = await query.Select(o => new ResOrderDTO
             {
                 OrderId = o.FOrderId.ToString(),
-                EmployeeId = o.FEmployeeId,
+                //EmployeeId = o.FEmployeeId,
                 EmployeeName = o.Employee.FName,
                 OrderTime = o.FOrderTime.ToString(),
                 OrderStatusId = o.FOrderStatus,

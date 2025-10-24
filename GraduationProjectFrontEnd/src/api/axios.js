@@ -14,13 +14,20 @@ http.interceptors.response.use(
     response => response,
     error => {
         const auth = useAuthStore();
+        const status = error.response?.status;
+        const result = error.response?.data;
 
-        if (error.response.status === 401) {
-            auth.logout();
-            router.push('/signin');
+        switch(status){
+            case 401:
+                auth.logout();
+                router.push('/signin');
+                break;
+            case 500:
+                console.error('API錯誤: ', error);
+                // showGlobalNotification('伺服器發生問題，請稍後再試', 'error'); #TODO 未來若要顯示通知要額外npm 裝套件 Element Plus 或 Vant
+                break;
         }
-        console.error('API出錯: ', error)
-        return Promise.reject(error)
+        return Promise.reject(result);
     }
 )
 

@@ -59,7 +59,7 @@ namespace ApiProject.Controllers
             return NoContent();
         }
 
-        // 更改訂單地址 -V
+        // 更改配送地址 -V
         // Patch:api/Order/address/orderId
         [Authorize]
         [HttpPatch("address/{orderId}")]
