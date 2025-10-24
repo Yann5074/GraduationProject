@@ -1,6 +1,6 @@
 import api from './axios'
 
-// 列出所有訂單
+// 列出訂單
 export const getOrders = async () => {
     try {
         const result = await api.get('/Order');

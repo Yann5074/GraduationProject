@@ -2,31 +2,23 @@
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { onMounted, ref } from 'vue'
 import { Dropdown } from 'bootstrap'
-import axios from 'axios'
-import { useAuthStore } from '@/stores/auth'
-import ChatRoom from "@/components/Chat/ChatRoom.vue";
-import ChatWidget from '@/components/Chat/ChatWidget.vue'
-const showChat = ref(false);
+import http from '../src/api/axios'
+import { useAuthStore } from './stores/auth'
+
 const route = useRoute()
 const router = useRouter()
-const isActive = (path) => route.path === path
 const auth = useAuthStore()
+const isActive = (path) => route.path === path // 判斷是否為當前頁
 
-// 建立 axios（要帶 cookie 才能讓後端清 session）
-const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE || 'https://localhost:7131',
-  withCredentials: true,
-  timeout: 10000,
-})
+const loggingOut = ref(false) // 登出動作的狀態
 
-const loggingOut = ref(false)
-
+// 確認前端登出動作，避免重複操作
 async function handleLogout() {
-  if (loggingOut.value) return
+  if (loggingOut.value) return // 確認是否正在登出
   loggingOut.value = true
   try {
     // 1) 呼叫後端登出（空 body 即可）
-    await http.post('/api/Member/logout')
+    await http.post('/Member/logout')
 
     // 2) 清前端登入狀態
     auth.logout()
@@ -54,19 +46,16 @@ onMounted(() => {
 
 <template>
   <main>
-	
     <!-- 自己加的聊天室浮動元件 -->
     <ChatWidget />
- 
-
-    <nav
-      class="custom-navbar navbar navbar navbar-expand-md navbar-dark bg-dark"
-      arial-label="Furni navigation bar"
-    >
+    
+    <!-- 上方導覽列 -->
+    <nav class="custom-navbar navbar navbar navbar-expand-md navbar-dark bg-dark" arial-label="Furni navigation bar">
       <div class="container">
+        <!-- 左上 Logo icon -->
         <RouterLink class="navbar-brand" to="/">Furni<span>.</span></RouterLink>
-
         <div class="collapse navbar-collapse" id="navbarsFurni">
+          <!-- 上方導覽 -->
           <ul class="custom-navbar-nav navbar-nav ms-auto mb-2 mb-md-0">
             <li class="nav-item" :class="{ active: isActive('/') }">
               <RouterLink class="nav-link" to="/">首頁</RouterLink>
@@ -86,8 +75,11 @@ onMounted(() => {
             <li class="nav-item" :class="{ active: isActive('/Contact') }">
               <RouterLink class="nav-link" to="/Contact">聯絡我們</RouterLink>
             </li>
+            <li class="nav-item" :class="{ active: isActive('/Order') }">
+              <RouterLink class="nav-link" to="/Order">訂單資訊</RouterLink>
+            </li>
           </ul>
-
+          <!-- 右上角 icon -->
           <div class="custom-navbar-cta navbar-nav mb-2 mb-md-0 ms-5">
             <!-- 購物車 icon -->
             <li class="nav-item">
@@ -95,7 +87,7 @@ onMounted(() => {
                 <img src="/asset/images/cart.svg" />
               </RouterLink>
             </li>
-
+            <!-- 登入 icon -->
             <!-- 未登入 -->
             <li v-if="!auth.isLoggedIn" class="nav-item">
               <RouterLink class="nav-link" to="/signin">
@@ -106,19 +98,12 @@ onMounted(() => {
             <!-- 已登入 -->
             <li v-else class="nav-item dropdown">
               <a
-                class="nav-link dropdown-toggle d-flex align-items-center gap-2"
-                href="#"
-                role="button"
-                data-bs-toggle="dropdown"
+                class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown"
                 aria-expanded="false"
               >
                 <!-- ✅ 這裡改用 Pinia 計算好的完整頭像網址 :src="auth.avatarUrl" -->
                 <img
-                  :src="auth.avatarUrl"
-                  class="rounded-circle"
-                  style="width: 28px; height: 28px; object-fit: cover"
-                  alt="avatar"
-                />
+                  :src="auth.avatarUrl" class="rounded-circle" style="width: 28px; height: 28px; object-fit: cover" alt="avatar" />
                 <span class="text-white">{{ auth.user?.name || '使用者' }}</span>
               </a>
               <ul class="dropdown-menu dropdown-menu-end">

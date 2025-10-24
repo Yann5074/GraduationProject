@@ -14,7 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
       const parsed = JSON.parse(raw)
       user.value = parsed.user ?? null
       token.value = parsed.token ?? null
-    } catch {}
+    } catch { }
   }
   load()
 
@@ -28,7 +28,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   // ====== 4) 健壯化的頭像網址 ======
   // API base：可用 .env 設定，沒有就用本機預設
-  const API_BASE = import.meta.env.VITE_API_BASE || 'https://localhost:7131'
+  const IMAGE_BASE = import.meta.env.VITE_BASE_URL || 'https://localhost:7131'
   const AVATAR_PREFIX = '/MemberHeadImages/'
 
   // 從 user 取出「可能的」頭像欄位（檔名或完整網址）
@@ -43,8 +43,8 @@ export const useAuthStore = defineStore('auth', () => {
     const f = avatarFile.value
     if (!f) return '/asset/images/default-avatar.png' // 沒給 → 前端預設圖
     if (/^https?:\/\//i.test(f)) return f // 已是完整 URL → 直接用
-    if (f.startsWith('/')) return `${API_BASE}${f}` // 伺服器絕對路徑 → 接上 API_BASE
-    return `${API_BASE}${AVATAR_PREFIX}${f}` // 純檔名 → /MemberHeadImages/檔名
+    if (f.startsWith('/')) return `${IMAGE_BASE}${f}` // 伺服器絕對路徑 → 接上 API_BASE
+    return `${IMAGE_BASE}${AVATAR_PREFIX}${f}` // 純檔名 → /MemberHeadImages/檔名
   })
   // ====== end 頭像網址 ======
 

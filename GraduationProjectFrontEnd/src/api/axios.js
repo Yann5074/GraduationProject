@@ -1,18 +1,27 @@
 import axios from 'axios'
+import { useAuthStore } from '../stores/auth'
+import router from '@/router'
 
 const apiBaseUrl = import.meta.env.VITE_API_URL;
 
-const api = axios.create({
+const http = axios.create({
     baseURL: apiBaseUrl, // 後端網址
+    withCredentials: true, // 確保請求帶有 cookie
     timeout: 10000, // 等待上限10秒
 })
 
-api.interceptors.response.use(
+http.interceptors.response.use(
     response => response,
     error => {
+        const auth = useAuthStore();
+
+        if (error.response.status === 401) {
+            auth.logout();
+            router.push('/signin');
+        }
         console.error('API出錯: ', error)
         return Promise.reject(error)
     }
 )
 
-export default api
+export default http
