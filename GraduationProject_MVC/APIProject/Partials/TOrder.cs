@@ -20,6 +20,9 @@ namespace ApiProject.Models
         [ForeignKey(nameof(FPaymentStatus))]
         public TPaymentStatus PaymentStatus { get; set; }
 
+        [ForeignKey(nameof(FPaymentMethod))]
+        public TPaymentMethod PaymentMethod { get; set; }
+
         [ForeignKey(nameof(FDeliveryStatus))]
         public TDeliveryStatus DeliveryStatus { get; set; }
 

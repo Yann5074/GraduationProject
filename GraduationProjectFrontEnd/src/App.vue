@@ -2,8 +2,9 @@
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { onMounted, ref } from 'vue'
 import { Dropdown } from 'bootstrap'
-import axios from 'axios'
-import { useAuthStore } from '@/stores/auth'
+import http from '../src/api/axios'
+import { useAuthStore } from './stores/auth'
+import ChatWidget from './components/Chat/ChatWidget.vue'
 
 const route = useRoute()
 const router = useRouter()

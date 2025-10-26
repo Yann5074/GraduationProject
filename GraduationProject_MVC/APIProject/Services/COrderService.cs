@@ -28,6 +28,7 @@ namespace ApiProject.Services
                 .Include(o => o.Employee)
                 .Include(o => o.OrderStatus)
                 .Include(o => o.PaymentStatus)
+                .Include(o => o.PaymentMethod)
                 .Include(o => o.DeliveryStatus)
                 .Include(o => o.LogisticsProvider)
                 .Where(o => o.FMemberId == idCheck.Member.FMemberId) 
@@ -40,6 +41,8 @@ namespace ApiProject.Services
                     OrderTime = o.FOrderTime.ToString(),
                     OrderStatusId = o.FOrderStatus,
                     OrderStatus = o.OrderStatus.FStatusName,
+                    PaymentMethod = o.PaymentMethod.FPaymentName,
+                    DeliveryStatus = o.DeliveryStatus.FDeliveryStatusName,
                     TotalPrice = o.FTotalPrice,
                     OrderDetail = o.OrderDetail
                     .Select(od => new ResOrderDetailDTO
@@ -83,6 +86,8 @@ namespace ApiProject.Services
                 OrderTime = o.FOrderTime.ToString(),
                 OrderStatusId = o.FOrderStatus,
                 OrderStatus = o.OrderStatus.FStatusName,
+                PaymentMethod = o.PaymentMethod.FPaymentName,
+                DeliveryStatus = o.DeliveryStatus.FDeliveryStatusName,
                 TotalPrice = o.FTotalPrice,
                 OrderDetail = o.OrderDetail
                 .Select(od => new ResOrderDetailDTO
