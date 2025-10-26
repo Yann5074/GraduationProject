@@ -1,12 +1,12 @@
-import { formatCurrency, formatDateTime } from "@/utils/format"
+import { formatCurrency, formatDateTime, formatImageUrl } from "@/utils/format"
 
 // 訂單狀態的固定清單
-const STATUS_STEPS =[
-    {id:1, label: '處理中'},
-    {id:2, label: '訂單成立'},
-    {id:3, label: '付款資訊確認'},
-    {id:4, label: '訂單出貨'},
-    {id:5, label: '訂單完成'},
+const STATUS_STEPS = [
+    { id: 1, label: '處理中' },
+    { id: 2, label: '訂單成立' },
+    { id: 3, label: '付款資訊確認' },
+    { id: 4, label: '訂單出貨' },
+    { id: 5, label: '訂單完成' },
 ]
 
 // 定義 Class
@@ -18,6 +18,8 @@ export class OrderDTO {
         orderStatusId = 0,
         orderStatus = null,
         paymentMethod = null,
+        taxNo = '',
+        deliveryAddress = '',
         deliveryStatus = null,
         totalPrice = 0,
         orderDetail = []
@@ -28,16 +30,18 @@ export class OrderDTO {
         this.orderStatusId = orderStatusId
         this.orderStatus = orderStatus
         this.paymentMethod = paymentMethod
+        this.taxNo = taxNo
+        this.deliveryAddress = deliveryAddress
         this.deliveryStatus = deliveryStatus
         this.totalPrice = totalPrice
         this.orderDetail = orderDetail.map(OrderDetailDTO.fromApi) // 巢狀 DTO 處理
     }
 
     //透過Getter產生進度條節點
-    get statusSteps(){
+    get statusSteps() {
         const currentId = this.orderStatusId;
         const total = STATUS_STEPS.length - 1;
-        return STATUS_STEPS.map((step, index) =>({
+        return STATUS_STEPS.map((step, index) => ({
             label: step.label,
             active: step.id <= currentId,
             leftPercent: (index / total) * 100
@@ -45,8 +49,8 @@ export class OrderDTO {
     }
 
     // 透過Getter產生進度線百分比
-    get progressPercent(){
-        if(!this.orderStatusId)
+    get progressPercent() {
+        if (!this.orderStatusId)
             return 0
         const currentIndex = STATUS_STEPS.findIndex(
             (s) => s.id == this.orderStatusId
@@ -57,16 +61,16 @@ export class OrderDTO {
     }
 
     //時間格式轉換
-    get formatOrderTime(){
+    get formatOrderTime() {
         return formatDateTime(this.orderTime);
     }
     //金錢格式轉換
-    get formatTotalPrice(){
+    get formatTotalPrice() {
         return formatCurrency(this.totalPrice);
     }
 
     // 靜態工廠方法 - 替代建構子建立統一入口，並可控制內部邏輯
-    static fromApi(data = {}){
+    static fromApi(data = {}) {
         return new OrderDTO(data)
     }
 }
@@ -79,29 +83,29 @@ export class OrderDetailDTO {
         quantity = 0,
         subtotal = 0,
         imageUrl = '',
-    } = {}){
+    } = {}) {
         this.productName = productName
         this.productInfo = productInfo
         this.unitPrice = unitPrice
         this.quantity = quantity
         this.subtotal = this.calculateSubtotal()
-        this.imageUrl = imageUrl
+        this.imageUrl = formatImageUrl(imageUrl)
     }
 
     // method
-    calculateSubtotal(){
+    calculateSubtotal() {
         return this.quantity * this.unitPrice
     }
 
-    //金錢格式轉換
-    get formatunitPrice(){
+    get formatunitPrice() {
         return formatCurrency(this.unitPrice)
     }
-    // get formatsubtotal(){
-    //     return formatCurrency()
-    // }
 
-    static fromApi(data = {}){
+    get formatsubtotal() {
+        return formatCurrency(this.subtotal)
+    }
+
+    static fromApi(data = {}) {
         return new OrderDetailDTO(data)
     }
 }

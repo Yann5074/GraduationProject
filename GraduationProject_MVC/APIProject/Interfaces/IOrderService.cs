@@ -11,9 +11,9 @@ namespace ApiProject.Interfaces
 
         public Task<ResultDTO> DeleteOrderAsync(int orderId, ClaimsPrincipal user, CancellationToken ct);
 
-        public Task<ResultDTO> EditDeliveryAddressAsync(int orderId, ReqDeliveryAddressDTO reqDTO, ClaimsPrincipal user, CancellationToken ct);
+        public Task<ResultDTO> EditDeliveryAddressAsync(ReqDeliveryAddressDTO reqDTO, ClaimsPrincipal user, CancellationToken ct);
 
-        public Task<ResultDTO> EditTaxNoAsync(int orderId, ReqTaxNoDTO reqDTO, ClaimsPrincipal user, CancellationToken ct);
+        public Task<ResultDTO> EditTaxNoAsync(ReqTaxNoDTO reqDTO, ClaimsPrincipal user, CancellationToken ct);
 
         public Task<ResultDTO> CreateOrderFromCartAsync(ReqCreateOrderDTO dto, ClaimsPrincipal user, CancellationToken ct);
 

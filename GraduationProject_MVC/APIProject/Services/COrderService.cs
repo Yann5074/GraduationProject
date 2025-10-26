@@ -41,7 +41,9 @@ namespace ApiProject.Services
                     OrderTime = o.FOrderTime.ToString(),
                     OrderStatusId = o.FOrderStatus,
                     OrderStatus = o.OrderStatus.FStatusName,
+                    TaxNo = o.FTaxNo,
                     PaymentMethod = o.PaymentMethod.FPaymentName,
+                    DeliveryAddress = o.FDeliveryAddress,
                     DeliveryStatus = o.DeliveryStatus.FDeliveryStatusName,
                     TotalPrice = o.FTotalPrice,
                     OrderDetail = o.OrderDetail
@@ -87,6 +89,8 @@ namespace ApiProject.Services
                 OrderStatusId = o.FOrderStatus,
                 OrderStatus = o.OrderStatus.FStatusName,
                 PaymentMethod = o.PaymentMethod.FPaymentName,
+                TaxNo = o.FTaxNo,
+                DeliveryAddress = o.FDeliveryAddress,
                 DeliveryStatus = o.DeliveryStatus.FDeliveryStatusName,
                 TotalPrice = o.FTotalPrice,
                 OrderDetail = o.OrderDetail
@@ -144,7 +148,7 @@ namespace ApiProject.Services
         }
 
         // 修改訂單配送地址 -o
-        public async Task<ResultDTO> EditDeliveryAddressAsync(int orderId, ReqDeliveryAddressDTO reqDTO, ClaimsPrincipal user, CancellationToken ct)
+        public async Task<ResultDTO> EditDeliveryAddressAsync(ReqDeliveryAddressDTO reqDTO, ClaimsPrincipal user, CancellationToken ct)
         {
             var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
             if (idCheck.Ok == false)
@@ -154,14 +158,7 @@ namespace ApiProject.Services
                     Code = idCheck.Code,
                     Message = idCheck.Message,
                 };
-            if (orderId != reqDTO.OrderId)
-                return new ResultDTO
-                {
-                    Ok = false,
-                    Code = StatusCodes.Status400BadRequest,
-                    Message = "訂單資訊錯誤，請重新操作"
-                };
-            var od = await _context.TOrders.FirstOrDefaultAsync(o => o.FOrderId == orderId && o.FMemberId == idCheck.Member.FMemberId);
+            var od = await _context.TOrders.FirstOrDefaultAsync(o => o.FOrderId == reqDTO.OrderId && o.FMemberId == idCheck.Member.FMemberId);
             if (od == null)
                 return new ResultDTO
                 {
@@ -180,7 +177,7 @@ namespace ApiProject.Services
         }
 
         // 修改統編 -o
-        public async Task<ResultDTO> EditTaxNoAsync(int orderId, ReqTaxNoDTO reqDTO, ClaimsPrincipal user, CancellationToken ct)
+        public async Task<ResultDTO> EditTaxNoAsync(ReqTaxNoDTO reqDTO, ClaimsPrincipal user, CancellationToken ct)
         {
             var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
             if (idCheck.Ok == false)
@@ -190,16 +187,28 @@ namespace ApiProject.Services
                     Code = idCheck.Code,
                     Message = idCheck.Message,
                 };
-
-            if (orderId != reqDTO.OrderId)
+            if (reqDTO.TaxNo == null)
                 return new ResultDTO
                 {
                     Ok = false,
                     Code = StatusCodes.Status400BadRequest,
-                    Message = "訂單資訊錯誤，請重新操作"
-
+                    Message = "無效請求"
                 };
-            TOrder order = _context.TOrders.FirstOrDefault(o => o.FOrderId == orderId && o.FMemberId == idCheck.Member.FMemberId);
+            if (string.IsNullOrEmpty(reqDTO.TaxNo))
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status400BadRequest,
+                    Message = "請輸入正確統編"
+                };
+            if (reqDTO.TaxNo.Length != 8 || !reqDTO.TaxNo.All(char.IsDigit))
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status400BadRequest,
+                    Message = "統一編號須為8碼數字"
+                };
+            TOrder order = _context.TOrders.FirstOrDefault(o => o.FOrderId == reqDTO.OrderId && o.FMemberId == idCheck.Member.FMemberId);
             if (order == null)
                 return new ResultDTO
                 {
