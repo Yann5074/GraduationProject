@@ -42,9 +42,18 @@
             </div>
           </div>
         </div>
-
+        
         <!-- 右側：產品資訊 -->
         <div class="col-lg-6">
+          <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm"
+              data-bs-toggle="modal"
+              data-bs-target="#viewer3DModal"
+              @click="open3D"
+            >
+              3D 檢視
+            </button>
           <h1 class="product-title mb-3">{{ product.fName }}</h1>
           
           <div class="mb-3">
@@ -141,12 +150,12 @@
                       class="color-circle" 
                       :style="{ backgroundColor: variant.colorHex || variant.ColorHex }"
                     ></div>
-                    <div class="flex-grow-1 text-start">
+                    <!-- <div class="flex-grow-1 text-start">
                       <div class="fw-bold">{{ variant.colorName || variant.ColorName }}</div>
-                    </div>
+                    </div> -->
                   </div>
                   
-                  <div v-else class="fw-bold mb-2">{{ variant.fSku || variant.FSku }}</div>
+                  <!-- <div v-else class="fw-bold mb-2">{{ variant.fSku || variant.FSku }}</div> -->
                   
                   <!-- 縮圖 -->
                   <img 
@@ -263,12 +272,65 @@
       </div>
     </div>
   </div>
+
+  <!-- [ADD] Bootstrap Modal：3D 檢視視窗 -->
+<div
+  class="modal fade"
+  id="viewer3DModal"
+  tabindex="-1"
+  aria-labelledby="viewer3DModalLabel"
+  aria-hidden="true"
+  @hidden.bs.modal="close3D"
+>
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="viewer3DModalLabel">3D 檢視</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @click="close3D"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div style="height:70vh; width:100%;">
+          <!-- 只在 Modal 開啟才掛載，避免資源浪費 -->
+          <ThreePBRViewer
+            v-if="is3DView"
+            :model-url="modelUrl"
+            :textures="textures"
+            :envmap-url="envHDR"
+            style="display:block; height:100%; width:100%;"
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="close3D">關閉</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ProductAPI } from '@/api/Product'
+import ThreePBRViewer  from '@/components/Three3DView.vue'
+
+const is3DView = ref(false)
+
+const modelUrl = ref('/ProductImages/3D/Models/Chair.glb')
+const textures = ref({
+  baseColor: '/ProductImages/3D/Textures/Chair_BaseColor.jpg',
+  normal:    '/ProductImages/3D/Textures/Chair_Normal.jpg',
+  roughness: '/ProductImages/3D/Textures/Chair_Roughness.jpg',
+  metalness: '/ProductImages/3D/Textures/Chair_Metalness.jpg'
+})
+// 可省略
+const envHDR = ref('/ProductImages/3D/Textures/studio_small_09_2k.hdr')
+
+// 開關（若你要在其他地方也能觸發）
+function open3D()  { is3DView.value = true }
+function close3D() { is3DView.value = false }
+
 
 
 const route = useRoute()
