@@ -1,6 +1,6 @@
 import http from './axios'
 import { handleApiResult } from '@/utils/apiHelper';
-import {mapToOrderDTOList} from '@/dtos/OrderDTO';
+import { mapToOrderDTOList } from '@/dtos/OrderDTO';
 
 // 列出訂單
 export const getAllOrders = async () => {
@@ -14,11 +14,11 @@ export const getAllOrders = async () => {
 }
 
 // 尋找指定訂單
-export const lookupOrder = async () =>{
-    try{
+export const lookupOrder = async () => {
+    try {
         const result = await http.get(`/Order/${orderId}`);
         return mapToOrderDTOList(result.data);
-    }catch(err){
+    } catch (err) {
         console.error('查無指定訂單:', err);
         throw err
     }
@@ -36,9 +36,13 @@ export const deleteOrder = async (orderId) => {
 }
 
 // 更改配送地址
-export const EditDeliveryAddress = async (orderId, reqDTO) => {
+export const EditDeliveryAddress = async (orderId, newAddress) => {
+    const reqDTO = {
+        orderId: parseInt(orderId),
+        address: newAddress
+    }
     try {
-        const result = await http.patch(`/Order/address/${orderId}`, reqDTO);
+        const result = await http.patch(`/Order/address`, reqDTO);
         return handleApiResult(result.data);
     } catch (err) {
         console.log('更新配送地址失敗: ', err);
@@ -47,21 +51,25 @@ export const EditDeliveryAddress = async (orderId, reqDTO) => {
 }
 
 // 更改統編
-export const EditTaxNo = async (orderId, reqDTO) => {
-    try{
-        const result = await http.patch(`/Order/taxno/${orderId}`, reqDTO);
+export const EditTaxNo = async (orderId, newTaxNo) => {
+    const reqDTO = {
+        orderId: parseInt(orderId),
+        taxNo: newTaxNo
+    }
+    try {
+        const result = await http.patch('/Order/taxno', reqDTO);
         return handleApiResult(result.data);
-    }catch (err) {
+    } catch (err) {
         console.log('更新統編失敗', err);
         throw err;
     }
 }
 // 會員結帳
 export const memberCheckOut = async (reqDTO) => {
-    try{
+    try {
         const result = await http.post('/Order/CheckOut', reqDTO);
         return handleApiResult(result.data);
-    }catch (err) {
+    } catch (err) {
         console.log('新增訂單失敗: ', err);
         throw err;
     }

@@ -60,12 +60,12 @@ namespace ApiProject.Controllers
         }
 
         // 更改配送地址 -V
-        // Patch:api/Order/address/orderId
+        // Patch:api/Order/address
         [Authorize]
-        [HttpPatch("address/{orderId}")]
-        public async Task<IActionResult> EditDeliveryAddress(int orderId, ReqDeliveryAddressDTO reqDTO, CancellationToken ct)
+        [HttpPatch("address")]
+        public async Task<IActionResult> EditDeliveryAddress(ReqDeliveryAddressDTO reqDTO, CancellationToken ct)
         {
-            var result = await _orderService.EditDeliveryAddressAsync(orderId, reqDTO, User, ct);
+            var result = await _orderService.EditDeliveryAddressAsync(reqDTO, User, ct);
             if (!result.Ok)
             {
                 if (result.Code < 500)
@@ -77,12 +77,12 @@ namespace ApiProject.Controllers
         }
 
         // 更改統編 -V
-        // Patch:api/Order/taxno/{orderId}
+        // Patch:api/Order/taxno
         [Authorize]
-        [HttpPatch("taxno/{orderId}")]
-        public async Task<IActionResult> EditTaxNoAsync(int orderId, ReqTaxNoDTO reqDTO, CancellationToken ct)
+        [HttpPatch("taxno")]
+        public async Task<IActionResult> EditTaxNoAsync(ReqTaxNoDTO reqDTO, CancellationToken ct)
         {
-            var result = await _orderService.EditTaxNoAsync(orderId, reqDTO, User, ct);
+            var result = await _orderService.EditTaxNoAsync(reqDTO, User, ct);
             if (!result.Ok)
             {
                 if (result.Code < 500)
