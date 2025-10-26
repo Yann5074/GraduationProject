@@ -38,6 +38,8 @@ builder.Services.AddScoped<IAnalyticsService, CAnalyticsService>();
 //取得登入員工資料
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContextService, CUserContextService>();
+//請假管理
+builder.Services.AddScoped<ILeaveService, CLeaveService>();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession(o =>

@@ -524,7 +524,7 @@ public partial class dbFurniMartContext : DbContext
                 .HasMaxLength(20)
                 .HasColumnName("fLeaveType");
             entity.Property(e => e.FPicture)
-                .HasMaxLength(30)
+                .HasMaxLength(100)
                 .HasColumnName("fPicture");
             entity.Property(e => e.FStartDate)
                 .HasColumnType("datetime")

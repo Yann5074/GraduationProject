@@ -1,0 +1,42 @@
+﻿@using GraduationProject.ViewModels
+@model CLeaveCreateViewModel
+<h3>申請請假</h3>
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <div class="mb-3">
+        <label class="form-label">假別</label>
+        <select asp-for="LeaveType" class="form-select">
+            <option value="事假">事假</option>
+            <option value="病假">病假</option>
+            <option value="特休">特休</option>
+        </select>
+        <span asp-validation-for="LeaveType" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">開始</label>
+        <input asp-for="StartDate" type="datetime-local" class="form-control" />
+        <span asp-validation-for="StartDate" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">結束</label>
+        <input asp-for="EndDate" type="datetime-local" class="form-control" />
+        <span asp-validation-for="EndDate" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">說明</label>
+        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">上傳證明（選填）</label>
+        <input asp-for="Picture" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp,.pdf" />
+        <small class="text-muted">限 jpg/png/webp/pdf，檔案大小必須 < 2MB</small>
+    </div>
+    <button class="btn btn-primary">送出申請</button>
+    <a asp-action="List" class="btn btn-secondary">返回我的申請</a>
+</form>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+
