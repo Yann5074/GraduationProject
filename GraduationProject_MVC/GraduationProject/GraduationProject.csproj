@@ -26,9 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Interfaces\" />
     <Folder Include="Wraps\" />
-    <Folder Include="Services\" />
     <Folder Include="Api\" />
     <Folder Include="Tools\" />
   </ItemGroup>

@@ -1,0 +1,51 @@
+﻿@using GraduationProject.ViewModels
+@model CLeaveRequestItemViewModel
+
+<h3>待審請假申請</h3>
+<p>總請假數量：@Model.TotalRequests</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>員工</th>
+            <th>假別</th>
+            <th>起</th>
+            <th>迄</th>
+            <th>說明</th>
+            <th>證明</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var x in Model.LeaveRequests)
+        {
+            var url = string.IsNullOrEmpty(x.PictureFileName) ? null : Url.Content($"~/LeaveEvidence/{x.PictureFileName}");
+            <tr>
+                <td>@x.EmployeeName</td>
+                <td>@x.LeaveType</td>
+                <td>@x.StartDate</td>
+                <td>@x.EndDate</td>
+                <td>@x.Description</td>
+                <td>
+                    @if (url is not null)
+                    {
+                        <a href="@url" target="_blank">檢視</a>
+                    }
+                </td>
+                <td class="text-nowrap">
+                    <form asp-action="Approve" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@x.LeaveId" />
+                        <button class="btn btn-sm btn-success">核准</button>
+                    </form>
+                    <form asp-action="Reject" method="post" class="d-inline ms-1">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@x.LeaveId" />
+                        <button class="btn btn-sm btn-danger">駁回</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+

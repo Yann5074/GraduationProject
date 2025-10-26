@@ -1,0 +1,50 @@
+﻿@using GraduationProject.Enum
+@using GraduationProject.ViewModels
+@model IEnumerable<CLeaveListItemViewModel>
+<h3>取消申請清單</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>假別</th>
+            <th>起</th>
+            <th>迄</th>
+            <th>狀態</th>
+            <th>證明</th>
+            <th>說明</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            var count = 0;
+            foreach (var x in Model)
+            {
+                count++;
+                <tr>
+                    <td>@count</td>
+                    <td>@x.LeaveType</td>
+                    <td>@x.StartDate</td>
+                    <td>@x.EndDate</td>
+                    <td>@x.Status</td>
+                    <td>
+                        @if (string.IsNullOrEmpty(x.PictureUrl))
+                        {
+                            <p>無</p>
+                        }
+                        @if (!string.IsNullOrEmpty(x.PictureUrl))
+                        {
+                            <a href="@x.PictureUrl" target="_blank">檢視</a>
+                        }
+                    </td>
+                    <td>@x.Description</td>
+                    <td>
+                        <form method="post" asp-action="Delete" asp-route-leaveId="@x.LeaveId">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('確定要刪除嗎？')">刪除</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>

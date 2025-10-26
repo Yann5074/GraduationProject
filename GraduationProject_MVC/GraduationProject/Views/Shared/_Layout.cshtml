@@ -87,6 +87,12 @@
                     <span class="text">員工管理</span>
                 </a>
             </li>
+            <li class="@(ctrl == "Leave" ? "active" : "")">
+                <a asp-area="" asp-controller="Leave" asp-action="List">
+                    <i class="bx bxs-calendar-x bx-sm"></i>
+                    <span class="text">請假管理</span>
+                </a>
+            </li>
             <li class="@(ctrl == "Products" ? "active" : "")">
                 <a asp-area="" asp-controller="Products" asp-action="List">
                     <i class="bx bxs-shopping-bag-alt bx-sm"></i>

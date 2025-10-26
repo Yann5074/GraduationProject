@@ -1,0 +1,91 @@
+﻿@using GraduationProject.DTOs
+@using GraduationProject.Dictionary
+@using GraduationProject.Enum
+@using GraduationProject.ViewModels
+@using System.Text.Json
+@model IEnumerable<CLeaveListItemViewModel>
+@{
+    var json = Context.Session.GetString(CEmployeeDictionary.SK_LOGINED_USER);
+    var me = json is null ? null : JsonSerializer.Deserialize<SessionUser>(json);
+    var isAdmin = me?.RoleId == 4 && me?.StatusId == 1;
+}
+<h3>我的請假申請</h3>
+<!-- Header / Toolbar -->
+<div class="d-flex align-items-center mb-3">
+    <!-- 右側按鈕群組 -->
+    <div class="ms-auto d-flex gap-2">
+        <a asp-action="Create" class="btn btn-success">
+            <i class="fa-solid fa-plus"></i> 新增假單
+        </a>
+        <a asp-action="DeletedList" class="btn btn-success">
+            <i class="fa-solid fa-plus"></i> 取消清單
+        </a>
+        @if (isAdmin)
+        {
+            <a asp-action="Pending" class="btn btn-success">
+                <i class="bi bi-check-circle"></i> 審核假單
+            </a>
+        }
+    </div>
+</div>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>假別</th>
+            <th>起</th>
+            <th>迄</th>
+            <th>狀態</th>
+            <th>證明</th>
+            <th>說明</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            var count = 0;
+            foreach (var x in Model)
+            {
+                count++;
+                <tr>
+                    <td>@count</td>
+                    <td>@x.LeaveType</td>
+                    <td>@x.StartDate</td>
+                    <td>@x.EndDate</td>
+                    <td>@x.Status</td>
+                    <td>
+                        @if (string.IsNullOrEmpty(x.PictureUrl))
+                        {
+                            <p>無</p>
+                        }
+                        @if (!string.IsNullOrEmpty(x.PictureUrl))
+                        {
+                            <a href="@x.PictureUrl" target="_blank">檢視</a>
+                        }
+                    </td>
+                    <td>@x.Description</td>
+                    <td>
+                        @if (x.StatusId == (int)LeaveRequestStatusEnum.Pending)
+                        {
+                            <form method="post" asp-action="SoftDelete" asp-route-leaveId="@x.LeaveId">
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('確定要取消申請嗎？')">取消申請</button>
+                            </form>
+                        }
+                        @if (x.StatusId == (int)LeaveRequestStatusEnum.Approved)
+                        {
+                            <button disabled class="btn btn-secondary">已通過</button>
+                        }
+                        @if (x.StatusId == (int)LeaveRequestStatusEnum.Rejected)
+                        {
+                            <button disabled class="btn btn-secondary">駁回</button>
+                        }
+                        else
+                        {
+                            <button disabled class="btn btn-secondary">已刪除</button>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
