@@ -2,26 +2,12 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import { useAuthStore } from '@/stores/auth' // ✅ 新增：拿 Pinia
+import { registerAPI, loginAPI } from '@/api/Member' // ✅ 用你現成的 api，而不是自己建 axios instance
 
-// ===== 建立 Axios 實例 =====
-const http = axios.create({
-  baseURL: 'https://localhost:7131', // 後端 API 網址
-  withCredentials: true, // ✅ 必須開啟，讓瀏覽器帶 Session Cookie
-  timeout: 10000,
-})
-
-// ===== Router =====
+// ===== Router / Store =====
 const router = useRouter()
-
-// ===== API 呼叫 =====
-async function registerAPI(req) {
-  return http.post('/api/Member/create', req)
-}
-
-async function loginAPI(account, password) {
-  return http.post('/api/Member/login', { account, password })
-}
+const auth = useAuthStore() // ✅ 之後註冊成功後會用到
 
 // ===== 表單狀態 =====
 const name = ref('')
@@ -34,6 +20,10 @@ const loading = ref(false)
 const errorMsg = ref('')
 const successMsg = ref('')
 
+// 顯示/隱藏密碼
+const showPassword = ref(false)
+const showConfirm = ref(false)
+
 // 密碼提示：有輸入但未達 6 碼
 const pwdTooShort = computed(() => password.value.length > 0 && password.value.length < 6)
 
@@ -42,7 +32,7 @@ const confirmTooShort = computed(
   () => confirmPassword.value.length > 0 && confirmPassword.value.length < 6,
 )
 
-// 兩次密碼不一致（都 >= 6 碼才檢查不一致，避免早期就報錯）
+// 兩次密碼不一致（都 >= 6 碼才檢查不一致）
 const confirmMismatch = computed(
   () =>
     password.value.length >= 6 &&
@@ -50,7 +40,7 @@ const confirmMismatch = computed(
     confirmPassword.value !== password.value,
 )
 
-// ===== 簡單驗證 =====
+// 簡單驗證
 const canSubmit = computed(
   () =>
     name.value &&
@@ -63,7 +53,7 @@ const canSubmit = computed(
     !loading.value,
 )
 
-// ===== 註冊事件 =====
+// ===== 送出註冊 =====
 const onSubmit = async (e) => {
   e.preventDefault()
   errorMsg.value = ''
@@ -84,24 +74,56 @@ const onSubmit = async (e) => {
 
   loading.value = true
   try {
-    // 1️⃣ 呼叫註冊 API
+    // 1️⃣ 呼叫註冊 API (建立新會員)
     await registerAPI(req)
 
-    // 2️⃣ 註冊成功後自動登入（可選）
-    await loginAPI(account.value, password.value)
+    // 2️⃣ 註冊成功後，馬上用同一組帳密去登入
+    const loginRes = await loginAPI(account.value, password.value)
 
-    successMsg.value = '註冊成功，正在為您登入...'
-    await new Promise((r) => setTimeout(r, 1000))
-    router.push('/')
+    // 後端 /api/Member/login 目前回的資料長這樣：
+    // {
+    //   "memberId": 10032,
+    //   "account": "a999999",
+    //   "displayName": null,
+    //   "name": "陳大雄",
+    //   "gender": null,
+    //   "genderName": null,
+    //   "birthDate": null,
+    //   "email": "a9987651110@gmail.com",
+    //   "memberImage": "default.png",
+    //   "phone": "09876551111",
+    //   "address": null,
+    //   "avatarUrl": null,
+    //   "levelId": 1,
+    //   "levelName": "郵編",
+    //   "moneySum": 0,
+    //   "status": 1,
+    //   "statusName": "正常",
+    //   "createTime": "...",
+    //   "updateTime": "..."
+    // }
+    //
+    // axios.post(...) 會把這個包在 loginRes.data 裡
+
+    const userData = loginRes.data // ✅ 這是整個會員物件
+
+    // 3️⃣ 通知 Pinia：「我們現在已經登入了」
+    await auth.login({ user: userData }) // ✅ 這一步很重要
+
+    // login() 內部會：
+    // - this.setUser(userData)  -> 把整個 user 存進 Pinia 和 localStorage
+    // - this.setAvatar(...)     -> 把大頭貼網址準備好給 navbar
+
+    // 4️⃣ 導到首頁
+    successMsg.value = '註冊成功，已為您自動登入'
+    router.push('/') // ✅ 導回首頁
   } catch (err) {
+    console.error(err)
     errorMsg.value = err?.response?.data?.message || '註冊失敗，請再試一次'
   } finally {
     loading.value = false
   }
 }
-// 加在你的 <script setup> 其它 ref 後面
-const showPassword = ref(false)
-const showConfirm = ref(false)
 </script>
 
 <template>

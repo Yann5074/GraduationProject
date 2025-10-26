@@ -126,7 +126,7 @@ onMounted(() => {
                 <img
                   :src="auth.avatarUrl"
                   alt="avatar"
-                  class="rounded-circle border border-light"
+                  class="rounded-circle border"
                   style="width: 28px; height: 28px; object-fit: cover"
                   @error="$event.target.src = '/asset/images/user.svg'"
                 />
