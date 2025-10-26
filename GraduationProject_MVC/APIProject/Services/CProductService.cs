@@ -294,6 +294,39 @@ namespace ApiProject.Services
                     .Where(v => v.FPrice.HasValue && v.FPstatus == 1)
                     .Max(v => v.FPrice),
 
+                IsCustomizable = product.ProductParts.Any(),
+
+                //  只有當 includeCustomization = true 時才載入
+                CustomizationParts = includeCustomization && product.ProductParts.Any()
+                    ? product.ProductParts
+                        .OrderBy(p => p.FDiaplayOrder)
+                        .Select(part => new ResPartDTO
+                        {
+                            FPartId = part.FPartId,
+                            FPartName = part.FPartName,
+                            FPartCode = part.FPartCode,
+                            fDisplayOrder = part.FDiaplayOrder,
+                            ColorOptions = part.ColorOptions
+                                .OrderBy(o => o.FDisplayOrder)
+                                .Select(option => new ResColorOptionDTO 
+                                {
+                                    FColorOptionId = option.FColorOptionId,
+                                    FOptionName = option.FOptionName,
+                                    FColorHex = option.FColorHex,
+                                    FThumbnail = option.FThumbnail,
+                                    FIsDefault = option.FIsDefault,
+                                    fDisplayOrder = option.FDisplayOrder,
+                                    Textures = option.Textures
+                                        .Select(t => new ResTextureDTO
+                                        {
+                                            FTextureId = t.FTextureId,
+                                            FTextureType = t.FTextureType,
+                                            FFilePath = t.FFilePath,
+                                            FTiling = t.FTiling
+                                        }).ToList()
+                                }).ToList()
+                        }).ToList()
+                    : null,
 
                 // 時間戳記
                 FCreateTime = product.FCreateTime,

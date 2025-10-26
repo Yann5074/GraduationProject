@@ -6,7 +6,7 @@ import {mapToOrderDTOList} from '@/dtos/OrderDTO';
 export const getAllOrders = async () => {
     try {
         const result = await http.get('/Order');
-        return mapToOrderDTOList(result);
+        return mapToOrderDTOList(result.data);
     } catch (err) {
         console.error('取得訂單資料失敗: ', err);
         throw err
@@ -17,7 +17,7 @@ export const getAllOrders = async () => {
 export const lookupOrder = async () =>{
     try{
         const result = await http.get(`/Order/${orderId}`);
-        return mapToOrderDTOList(result);
+        return mapToOrderDTOList(result.data);
     }catch(err){
         console.error('查無指定訂單:', err);
         throw err

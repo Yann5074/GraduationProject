@@ -12,6 +12,8 @@ namespace ApiProject.DTOs
         public int OrderStatusId { get; set; }
         public string OrderStatus { get; set; }
         public decimal TotalPrice { get; set; }
+        public string PaymentMethod { get; set; }
+        public string DeliveryStatus { get; set; }
 
         public IEnumerable<ResOrderDetailDTO> OrderDetail { get; set; } = new List<ResOrderDetailDTO>();
 
