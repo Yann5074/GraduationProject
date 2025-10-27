@@ -31,7 +31,7 @@ namespace ApiProject.Services
                 .Include(o => o.PaymentMethod)
                 .Include(o => o.DeliveryStatus)
                 .Include(o => o.LogisticsProvider)
-                .Where(o => o.FMemberId == idCheck.Member.FMemberId) 
+                .Where(o => o.FMemberId == idCheck.Member.FMemberId && o.FIsDeleted == 0) 
                 .Select(o => new ResOrderDTO
                 {
                     OrderId = o.FOrderId.ToString(),
@@ -47,6 +47,7 @@ namespace ApiProject.Services
                     DeliveryStatus = o.DeliveryStatus.FDeliveryStatusName,
                     TotalPrice = o.FTotalPrice,
                     OrderDetail = o.OrderDetail
+                    .Where(od => od.FIsDeleted == 0)
                     .Select(od => new ResOrderDetailDTO
                     {
                         ProductName = od.ProductVariant.Product.FName,
@@ -72,7 +73,7 @@ namespace ApiProject.Services
                 .Include(o => o.OrderDetail)
                     .ThenInclude(od => od.ProductVariant)
                         .ThenInclude(pro => pro.Product)
-                .Where(o => o.FMemberId == idCheck.Member.FMemberId)
+                .Where(o => o.FMemberId == idCheck.Member.FMemberId && o.FIsDeleted == 0)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(keyword))
@@ -94,6 +95,7 @@ namespace ApiProject.Services
                 DeliveryStatus = o.DeliveryStatus.FDeliveryStatusName,
                 TotalPrice = o.FTotalPrice,
                 OrderDetail = o.OrderDetail
+                .Where(od => od.FIsDeleted == 0)
                 .Select(od => new ResOrderDetailDTO
                 {
                     ProductName = od.ProductVariant.Product.FName,

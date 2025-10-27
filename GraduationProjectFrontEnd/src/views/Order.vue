@@ -99,9 +99,12 @@
             </div>
             <hr class="my-3" />
             <!-- 左下角按鈕 -->
-            <div class="d-flex justify-content-start">
+            <div class="d-flex justify-content-between items-center">
                 <button class="btn btn-link" @click="toggleDetails(od)">
                     {{ od.showDetails ? '收回' : '看明細' }}
+                </button>
+                <button class="btn btn-danger mb-1" @click="toggleDelete(od)">
+                    取消訂單
                 </button>
             </div>
             <!-- 明細表格 -->
@@ -141,6 +144,7 @@
     </div>
     <EditModal ref="editModalRef" :title="modalTitle" :field-label="fieldLabel" :old-value="oldValue" :field-type="fieldType"
     @confirm="handleConfirm"/>
+    <ConfirmModal ref="confirmModalRef" titel="確認取消訂單" :message="`是否確定要取消訂單 ${currentOrder?.orderId || ''} ?`" @confirm="handleDeleteConfirm" />
 </template>
 
 <style scoped>
@@ -258,16 +262,23 @@ hr{
 import {ref, onMounted} from 'vue';
 import {getAllOrders, lookupOrder, deleteOrder, EditDeliveryAddress, EditTaxNo} from '@/api/Order';
 import EditModal from '@/components/EditModal.vue';
+import ConfirmModal from '@/components/ConfirmModal.vue'
 
+//顯示訂單相關
 const orders = ref([]);
+//更改訂單地址及統編相關
 const editModalRef = ref(null);
 const fieldLabel = ref('');
 const modalTitle = ref('');
 const oldValue = ref('');
 const fieldType = ref('');
 let currentOrder = null;
+//搜尋訂單相關
 const keyword = ref('');
+//刪除訂單相關
+const confirmModalRef = ref(null);
 
+//初始載入
 onMounted(async () =>{
     const result = await getAllOrders()
     orders.value = result.map(order =>{
@@ -281,7 +292,7 @@ const toggleDetails = (order) =>{
     order.showDetails = !order.showDetails;
 }
 
-//觸發彈跳視窗
+//觸發修改彈跳視窗
 function openModal(type, order){
     currentOrder = order
     fieldType.value = type
@@ -291,7 +302,7 @@ function openModal(type, order){
     editModalRef.value.open()
 }
 
-//確認修改
+// 修改訂單
 async function handleConfirm(newValue){
     try{
         if (fieldType.value === 'taxno'){
@@ -304,7 +315,7 @@ async function handleConfirm(newValue){
             alert(`${res.message}`)
         }
     }catch (err){
-        console.error('修改失敗: ', err)
+        console.error('修改失敗: ', err.message)
         const msg = err.message;
         alert(`${msg}`)
     }
@@ -329,6 +340,32 @@ async function handleSearch(){
         console.error('取得訂單資料失敗', err)
         const msg = err.message;
         alert(`${msg}`)
+    }
+}
+
+// 觸發刪除訂單彈窗
+const toggleDelete = (od) =>{
+    currentOrder = od;
+    confirmModalRef.value.open();
+}
+
+// 刪除訂單
+const handleDeleteConfirm = async () =>{
+    try{
+        const res = await deleteOrder(currentOrder.orderId)
+        if (res.message == null)
+            alert('訂單刪除成功')
+        if (res.ok){
+            const result = await getAllOrders()
+            orders.value = result.map(order =>{
+                order.showDetails= false
+                return order
+            })
+        }
+    }catch (err){
+        console.log('刪除訂單失敗', err)
+        let msg = err.message
+        alert(msg)
     }
 }
 </script>

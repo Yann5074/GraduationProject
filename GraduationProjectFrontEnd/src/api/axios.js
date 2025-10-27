@@ -1,25 +1,44 @@
 import axios from 'axios'
+import { useAuthStore } from '@/stores/auth'
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:7131'
 
-const api = axios.create({
+const http = axios.create({
   baseURL: 'https://localhost:7131', // 後端網址
   timeout: 10000, // 等待上限10秒
   withCredentials: true, // ⬅️ 關鍵！讓 Cookie / Session 一起送出
 })
 
-// 可選：401 時清掉前端登入狀態
-import { useAuthStore } from '@/stores/auth'
-api.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err?.response?.status === 401) {
-      try {
-        useAuthStore().clear()
-      } catch {}
-    }
-    return Promise.reject(err)
-  },
-)
+http.interceptors.response.use(
+    response =>{
+        return response
+    },
+    error => {
+        const auth = useAuthStore();
+        const status = error.response?.status;
+        const result = error.response?.data;
+        let message = result?.message;
+        let code = result?.code
 
-export default api
+        switch(status){
+            case 401:
+                auth.clear();
+                router.push('/signin');
+                code = '401'
+                message = '登入逾時，請重新登入'
+                break;
+            case 500:
+                console.error('API錯誤: ', error);
+                code = '500'
+                message = '伺服器發生問題，請稍後再試'
+                break;
+        }
+        return Promise.reject({
+            ok: false,
+            code,
+            message,
+            data: result
+        });
+      })
+
+export default http
