@@ -152,7 +152,7 @@ namespace GraduationProject.Controllers
         /// <param name="content">     前端畫面右側的messagelist 下面的 對話框裡面的 輸入內容 </param>
         /// <returns></returns>
         [HttpPost]
-        //[ValidateAntiForgeryToken]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SendMessage(int chatRoomId,string content,string? visitordId ,int? memberId)
         {
             TChatRoom room = await _context.TChatRooms
@@ -166,11 +166,12 @@ namespace GraduationProject.Controllers
 
             //判定 訊息回覆者為 訪客 會員 bot 並給予值 
             string senderType = null;
-            string? senderKey;
+            string? senderKey = null;
 
 
             if (memberId.HasValue)
             {
+                // 前台會員或半會員
                 senderType = "member";
                 senderKey = memberId.Value.ToString();
             }
@@ -183,12 +184,9 @@ namespace GraduationProject.Controllers
 
             else
             {
-                senderType = "bot";
+                senderType = "employye";
                 senderKey = null;
             }
-
-
-
 
                 //為何不加new會爆掉
                 var msg = new TMessage
@@ -209,8 +207,25 @@ namespace GraduationProject.Controllers
             _context.TChatRooms.Update(room);
             await _context.SaveChangesAsync();
 
-            //// 6) 回到 Index，維持目前聊天室與搜尋字  RedirectToAction跳轉到指定的動作方法
-            return RedirectToAction(nameof(Index), new { chatRoomId });
+
+            // ✅ 直接回 JSON，不重整頁面
+            if (Request.Headers["X-Requested-With"] == "fetch" || Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new
+                {
+                    ok = true,
+                    message = new
+                    {
+                        senderType = senderType,
+                        content = content,
+                        createdAt = msg.FCreatedAt?.ToString("yyyy/MM/dd HH:mm")
+                    }
+                });
+            }
+
+            // 6) 回到 Index，維持目前聊天室與搜尋字  RedirectToAction跳轉到指定的動作方法
+            // 為不重整頁面 註解下面這行
+            //return RedirectToAction(nameof(Index), new { chatRoomId });
         }
 
             
