@@ -93,7 +93,7 @@
         margin-bottom: 12px;
     }
 
-        .msg-row.from-member {
+        .msg-row.from-employee {
             justify-content: flex-end;
         }
 
@@ -110,7 +110,7 @@
         box-shadow: 0 2px 6px rgba(0,0,0,.25);
     }
 
-    .from-member .bubble {
+    .from-employee .bubble {
         background: #3b82f6;
         color: #fff;
     }
@@ -220,8 +220,8 @@
             {
                 foreach (var m in Model.Messages)
                 {
-                    var isMember = (m.SenderType ?? "").ToLower() == "member";
-                    <div class="msg-row @(isMember ? "from-member" : "from-others")">
+                    var isAgent = (m.SenderType ?? "").ToLower() == "employee";
+                    <div class="msg-row @(isAgent ? "from-employee" : "from-others")">
                         <div class="bubble">
                             <div class="content">@m.Content</div>
                             <div class="meta">
@@ -270,10 +270,12 @@
               const box = document.getElementById('messages');
               if (box) box.scrollTop = box.scrollHeight;
 
+              const form = document.querySelector('form.composer');
               const ta  = document.getElementById('msgInput');
               const btn = document.getElementById('sendBtn');
+              const token= form?.querySelector('input[name="__RequestVerificationToken"]');
 
-              if (!ta) return;
+            if (!form || !ta || !btn) return;
 
               // 自動高度（上限 160px）
               const autoresize = () => {
@@ -287,11 +289,58 @@
               ta.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  if (!btn.disabled && ta.value.trim().length > 0) {
-                    btn.closest('form').submit();
+                  if (ta.value.trim()) form.requestSubmit();
                   }
                 }
               });
+              // ✅ 攔截送出：用 fetch 不重整
+              form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const text = ta.value.trim();
+                if (!text) return;
+
+                btn.disabled = true; ta.disabled = true;
+
+                const fd = new FormData(form);
+                if (token) fd.append('__RequestVerificationToken', token.value);
+
+                try {
+                  const res = await fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'fetch' },
+                    body: fd
+                  });
+                  if (!res.ok) throw new Error('Network error');
+                  const data = await res.json();
+                  if (!data.ok) throw new Error('Server says not ok');
+
+                  // 將新訊息插入（agent 在右）
+                  const m = data.message;
+                  const isAgent = (m.senderType || '').toLowerCase() === 'agent';
+
+                  const row = document.createElement('div');
+                  row.className = 'msg-row ' + (isAgent ? 'from-agent' : 'from-others');
+                  row.innerHTML = `
+                    <div class="bubble">
+                      <div class="content"></div>
+                      <div class="meta"><span>${m.senderType}</span><span>${m.createdAt}</span></div>
+                    </div>`;
+                  row.querySelector('.content').textContent = m.content;
+
+                  box.appendChild(row);
+                  box.scrollTop = box.scrollHeight;
+                  ta.value = '';
+                  autoresize();
+                } catch (err) {
+                  alert('送出失敗：' + err.message);
+                } finally {
+                  btn.disabled = false; ta.disabled = false;
+                  ta.focus();
+                }
+              });
+            })();
+
+
             })();
         </script>
 }

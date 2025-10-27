@@ -16,7 +16,7 @@
       <input
         v-model="content"
         @keyup.enter="send"
-        placeholder="輸入訊息..."
+        placeholder="輸入訊息...."
       />
       <button @click="send" :disabled="!content.trim()">送出</button>
     </div>
