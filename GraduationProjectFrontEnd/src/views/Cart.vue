@@ -22,7 +22,7 @@
 
               <!-- 購物車內容載入 -->
               <tbody>
-                <tr v-for="(ci, index) in cartItems" :key="ci.cartItemId">
+                <tr v-for="ci in cartItems" :key="ci.cartItemId">
                   <td class="product-thumbnail">
                     <img :src="ci.imageUrl" class="img-fluid"></img>
                   </td>
@@ -38,10 +38,10 @@
                     $ {{ ci.formatunitPrice }}
                   </td>
                   <td>
-                    <QtyControl v-model="ci.qty" :min="1" :max="99" @update:model-value="updateSubtotal(ci)"/>
+                    <QtyControl v-model="ci.qty" :min="1" :max="99" @update:model-value="onQtyChange(ci, $event)"/>
                   </td>
                   <td class="subtotal">
-                    $ {{ ci.formatsubtotal }}
+                    $ {{ (ci.qty * ci.unitPrice).toLocaleString() }}
                   </td>
                   <td>
                     <button type="button" class="btn btn-black btn-sm" @click="removeItem(ci.cartItemId)">
@@ -90,7 +90,7 @@
 
 <script setup>
 import { onMounted, ref, computed } from 'vue'
-import { getAllCarts, deleteItem } from '@/api/Cart'
+import { getAllCarts, deleteItem, editCartItem } from '@/api/Cart'
 import QtyControl from '@/components/QtyControl.vue'
 
 
@@ -99,7 +99,24 @@ const cartItems = ref([])
 // 刪除購物車相關
 const confirmModalRef = ref(null)
 
-//動態總金額計算
+// 動態計數&呼叫數量變動API
+const onQtyChange = async (ci, newQty) =>{
+  const oldqty = ci.qty
+  ci.qty = newQty
+  ci.subtotal = ci.unitPrice * newQty
+
+  try{
+    const result = await editCartItem(ci.cartItemId, ci.qty)
+    if (!result.ok){
+      //在錯誤時如何讓數字便回去or庫存最大數量?
+    }
+  }catch(err){
+    console.error('更新購物車商品數量失敗-.vue', err)
+    alert(err.message)
+  }
+}
+
+// 動態總金額計算
 const formatTotal = computed(() =>{
   const sum = cartItems.value.reduce(
     (acc, item) => acc + item.subtotal, 0
@@ -123,9 +140,9 @@ onMounted(async () => {
 )
 
 // 移除商品
-const removeItem = async () =>{
+const removeItem = async (cartItemId) =>{
   try{
-    const result = await deleteItem(ci.cartItemId)
+    const result = await deleteItem(cartItemId)
     if (result.ok){
       const result = await getAllCarts()
       cartItems.value = result[0]?.cartItem || []

@@ -90,16 +90,8 @@ namespace ApiProject.Services
         }
 
         // 編輯購物車物品數量 -o
-        public async Task<ResultDTO> EditCartItemNumAsync(int cartItemId, ReqEditCartItemNumDTO reqDto)
+        public async Task<ResultDTO> EditCartItemNumAsync(ReqEditCartItemNumDTO reqDto)
         {
-            // 判斷Req購物車明細是否正確
-            if (cartItemId <= 0 || cartItemId != reqDto.CartItemId)
-                return new ResultDTO
-                {
-                    Ok = false,
-                    Code = StatusCodes.Status400BadRequest,
-                    Message = "資料資訊錯誤，請重新確認"
-                };
 
             // 判斷是否有該購物車明細
             var cartItem = await _context.TCartItems.FirstOrDefaultAsync(ci => ci.FCartItemId == reqDto.CartItemId);
