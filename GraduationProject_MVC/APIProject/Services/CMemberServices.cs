@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
+using System.Net;
+using System.Net.Mail;
+using Microsoft.Extensions.Configuration;
 
 namespace ApiProject.Services
 {
@@ -15,45 +18,88 @@ namespace ApiProject.Services
         private readonly IPasswordHasher<TMember> _hasher;
         private readonly IHttpContextAccessor _http;
         private readonly IWebHostEnvironment _env;
+        private readonly IConfiguration _config;
 
-        public CMemberServices(dbFurniMartContext context, IPasswordHasher<TMember> hasher, IHttpContextAccessor httpContextAccessor, IWebHostEnvironment env)
+        public CMemberServices(dbFurniMartContext context, IPasswordHasher<TMember> hasher, IHttpContextAccessor httpContextAccessor, IWebHostEnvironment env, IConfiguration config)
         {
             _context = context;
             _hasher = hasher;
             _http = httpContextAccessor;
             _env = env;
+            _config = config;
         }
 
         //註冊帳號
-        public async Task<ResultDTO> MemberCreateAccountAsync(ReqMemberCreateAccountDTO reqdto, CancellationToken ct = default)
+        public async Task<ResultDTO> MemberCreateAccountAsync(ReqMemberCreateAccountDTO reqdto,CancellationToken ct = default)
         {
             // 1) 基礎驗證
             if (!Regex.IsMatch(reqdto.Phone ?? "", @"^\d{10}$"))
                 throw new InvalidOperationException("手機號碼格式不正確，需為10位數字。");
+
             if (string.IsNullOrWhiteSpace(reqdto.Password) || reqdto.Password.Length < 6)
                 throw new InvalidOperationException("密碼長度至少 6 碼。");
-            if (string.IsNullOrWhiteSpace(reqdto.Email) || !Regex.IsMatch(reqdto.Email,
-                @"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.IgnoreCase))
+
+            if (string.IsNullOrWhiteSpace(reqdto.Email) ||
+                !Regex.IsMatch(reqdto.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.IgnoreCase))
                 throw new InvalidOperationException("Email 格式不正確。");
 
             // 2) 唯一性檢查（帳號 / 手機 / Email）
-            if (await _context.TMembers.AsNoTracking().AnyAsync(x => x.FAccount == reqdto.Account, ct))
+            if (await _context.TMembers.AsNoTracking()
+                .AnyAsync(x => x.FAccount == reqdto.Account, ct))
                 throw new InvalidOperationException("此帳號已存在，請重新輸入");
-            if (await _context.TMembers.AsNoTracking().AnyAsync(x => x.FPhone == reqdto.Phone, ct))
+
+            if (await _context.TMembers.AsNoTracking()
+                .AnyAsync(x => x.FPhone == reqdto.Phone, ct))
                 throw new InvalidOperationException("此手機號碼已存在，請重新輸入");
-            if (await _context.TMembers.AsNoTracking().AnyAsync(x => x.FEmail == reqdto.Email, ct))
+
+            if (await _context.TMembers.AsNoTracking()
+                .AnyAsync(x => x.FEmail == reqdto.Email, ct))
                 throw new InvalidOperationException("此 Email 已存在，請重新輸入");
 
+            // 3) 信箱驗證檢查（新增的重點）
+            //    規則：這個 Email 必須有一筆 tEmailVerification 紀錄，
+            //    而且那筆：
+            //      - FIsUsed = true  (表示使用者在 /verify-email-code 成功過)
+            //      - FExpireTime 尚未過期 (或你想放寬，允許過期也行，我這裡還是檢查時效)
+            //
+            //    如果找不到，代表使用者沒有做過「email 驗證碼驗證」→ 不給註冊
+            //
+            var emailVerifiedRecord = await _context.TEmailVerifications
+                .Where(v =>
+                    v.FEmail == reqdto.Email &&
+                    v.FIsUsed == true)
+                .OrderByDescending(v => v.FCreateTime)
+                .FirstOrDefaultAsync(ct);
+
+            if (emailVerifiedRecord == null)
+            {
+                // 沒找到代表根本沒成功驗證
+                throw new InvalidOperationException("請先通過信箱驗證再註冊帳號。");
+            }
+
+            if (DateTime.UtcNow > emailVerifiedRecord.FExpireTime)
+            {
+                // 極端狀況：他驗證的那筆其實已經過期了（通常不太會發生，
+                // 因為你在 VerifyEmailCodeAsync 時就會把 FIsUsed 設 true
+                // 是「當下」成功的驗證碼，所以理論上不會過期）
+                throw new InvalidOperationException("驗證碼已過期，請重新驗證信箱後再註冊。");
+            }
+
+            // 4) 建立會員 Entity
             var entity = new TMember
             {
                 FName = reqdto.Name,
                 FPhone = reqdto.Phone,
                 FEmail = reqdto.Email,
                 FAccount = reqdto.Account,
-                //預設
+
+                // 預設值
                 FMemberImage = "default.png",
                 FPhoneState = false,
-                FEmailState = false,
+
+                // ✅ 信箱已經驗證過了，所以這裡我們直接標記 true
+                FEmailState = true,
+
                 FLeveId = 1,
                 FMoneySum = 0,
                 FStatus = 1,
@@ -61,12 +107,14 @@ namespace ApiProject.Services
                 FUpdateTime = DateTime.Now
             };
 
-            // 密碼加鹽
+            // 5) 密碼加鹽 (你原本做的正確作法，保留)
             entity.FPasswords = _hasher.HashPassword(entity, reqdto.Password);
 
+            // 6) 存到資料庫
             _context.TMembers.Add(entity);
             await _context.SaveChangesAsync(ct);
 
+            // 7) 回傳統一格式
             return new ResultDTO
             {
                 Ok = true,
@@ -74,6 +122,7 @@ namespace ApiProject.Services
                 Message = "註冊帳號成功"
             };
         }
+
         //登入
         public async Task<ResMemberDTO?> MemberLoginAsync(ReqMemberLoginDTO reqdto, CancellationToken ct = default)
         {
@@ -291,6 +340,131 @@ namespace ApiProject.Services
             var result = _hasher.VerifyHashedPassword(member, member.FPasswords, rawPassword);
 
             return result == PasswordVerificationResult.Success;
+        }
+
+        //產生 6 碼驗證碼
+        private string GenerateCode()
+        {
+            var rand = new Random();
+            return rand.Next(100000, 999999).ToString(); // 6碼驗證碼
+        }
+
+        private async Task SendEmailAsync(string toEmail, string code)
+        {
+            // 1. 從 appsettings.json 讀 EmailSettings 區塊
+            var emailSection = _config.GetSection("EmailSettings");
+            var host = emailSection["Host"];            // smtp.gmail.com
+            var portRaw = emailSection["Port"];         // "587"
+            var enableSslRaw = emailSection["EnableSSL"]; // "true"
+            var userName = emailSection["UserName"];    // 你的gmail@gmail.com
+            var password = emailSection["Password"];    // 應用程式密碼(16碼)
+
+            if (string.IsNullOrWhiteSpace(host) ||
+                string.IsNullOrWhiteSpace(portRaw) ||
+                string.IsNullOrWhiteSpace(enableSslRaw) ||
+                string.IsNullOrWhiteSpace(userName) ||
+                string.IsNullOrWhiteSpace(password))
+            {
+                // 如果你要在除錯時更清楚，也可以丟例外
+                throw new InvalidOperationException("寄信設定不完整，請確認 appsettings.json 的 EmailSettings。");
+            }
+
+            int port = int.Parse(portRaw);
+            bool enableSsl = bool.Parse(enableSslRaw);
+
+            // 2. 準備信件內容
+            //    這封就是使用者收到的驗證碼信
+            var mail = new MailMessage();
+            mail.From = new MailAddress(userName, "FurniMart 驗證中心"); // 第二個參數是顯示名稱，可以改
+            mail.To.Add(toEmail);
+            mail.Subject = "您的驗證碼";
+            mail.Body =
+                $"您好！\r\n\r\n" +
+                $"您的驗證碼是：{code}\r\n" +
+                $"此驗證碼 5 分鐘內有效，請不要告訴別人。\r\n\r\n" +
+                $"FurniMart 敬上";
+            mail.IsBodyHtml = false; // 如果你想做漂亮一點的 HTML，可以改成 true 並組 HTML
+
+            // 3. 建 SMTP Client，連到 Gmail
+            using (var smtp = new SmtpClient(host, port))
+            {
+                smtp.EnableSsl = enableSsl; // Gmail 587 走 TLS
+                smtp.Credentials = new NetworkCredential(userName, password);
+
+                // 4. 寄信 (這是 async 版本)
+                await smtp.SendMailAsync(mail);
+            }
+        }
+
+        public async Task<ResultDTO> SendEmailVerificationCodeAsync(string email)
+        {
+            // 1. 產生驗證碼
+            string code = GenerateCode();
+
+            // 2. 建一筆 DB 記錄 (5 分鐘有效)
+            var entity = new TEmailVerification
+            {
+                FEmail = email,
+                FCode = code,
+                FExpireTime = DateTime.UtcNow.AddMinutes(5),
+                FIsUsed = false,
+                FCreateTime = DateTime.UtcNow
+            };
+
+            _context.TEmailVerifications.Add(entity);
+            await _context.SaveChangesAsync();
+
+            // 3. 寄信
+            await SendEmailAsync(email, code);
+
+            // 4. 回傳
+            return new ResultDTO
+            {
+                Ok = true,
+                Code = 200,
+                Message = "驗證碼已寄出，請至信箱查看。"
+            };
+        }
+        //前端輸入驗證碼
+        public async Task<ResultDTO> VerifyEmailCodeAsync(string email, string code)
+        {
+            // 找最近的一筆該 email + code，還沒用掉的
+            var record = await _context.TEmailVerifications
+                .Where(v => v.FEmail == email && v.FCode == code && v.FIsUsed == false)
+                .OrderByDescending(v => v.FCreateTime)
+                .FirstOrDefaultAsync();
+
+            if (record == null)
+            {
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = 400,
+                    Message = "驗證碼錯誤。"
+                };
+            }
+
+            // 檢查過期
+            if (DateTime.UtcNow > record.FExpireTime)
+            {
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = 401,
+                    Message = "驗證碼已過期。"
+                };
+            }
+
+            // 標記成已使用
+            record.FIsUsed = true;
+            await _context.SaveChangesAsync();
+
+            return new ResultDTO
+            {
+                Ok = true,
+                Code = 200,
+                Message = "信箱驗證成功。"
+            };
         }
 
         //上傳大頭貼

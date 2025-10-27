@@ -67,8 +67,8 @@ onMounted(() => {
         <div class="collapse navbar-collapse" id="navbarsFurni">
           <!-- 上方導覽 -->
           <ul class="custom-navbar-nav navbar-nav ms-auto mb-2 mb-md-0">
-            <li class="nav-item" :class="{ active: isActive('/') }">
-              <RouterLink class="nav-link" to="/">首頁</RouterLink>
+            <li class="nav-item" :class="{ active: isActive('/home') }">
+              <RouterLink class="nav-link" to="/home">首頁</RouterLink>
             </li>
             <li class="nav-item" :class="{ active: isActive('/products') }">
               <RouterLink class="nav-link" to="/products">購物</RouterLink>
