@@ -66,9 +66,9 @@ namespace ApiProject.Controllers
         // 編輯購物車物品數量 -V
         // Patch: api/Cart/item/{cartItemId}
         [HttpPatch("item/{cartItemId}")]
-        public async Task<IActionResult> EditCartItemQty(int cartItemId, ReqEditCartItemNumDTO reqDto)
+        public async Task<IActionResult> EditCartItemQty(ReqEditCartItemNumDTO reqDto)
         {
-            var result = await _cartService.EditCartItemNumAsync(cartItemId, reqDto);
+            var result = await _cartService.EditCartItemNumAsync(reqDto);
             if (!result.Ok)
             {
                 if (result.Code < 500)
@@ -76,7 +76,7 @@ namespace ApiProject.Controllers
                 else
                     return StatusCode(StatusCodes.Status500InternalServerError, "伺服器內部錯誤");
             }
-            return NoContent();
+            return Ok(result);
         }
 
         // 商品加入購物車 (登入成功時) -V
