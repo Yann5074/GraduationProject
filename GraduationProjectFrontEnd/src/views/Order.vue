@@ -1,7 +1,20 @@
 <template>
     <div class="order-list container">
+        <!-- 搜尋功能區塊 -->
+        <div class="search-bar justify-content-between mb-4">
+            <div class="search-title h5 mb-0">
+                <i class="bi bi-search"></i>
+                訂單查詢
+            </div>
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="請輸入訂單編號或商品名稱" v-model.trim="keyword" />
+                <button class="btn btn-primary" @click="handleSearch">
+                    搜尋
+                </button>
+            </div>
+        </div>
+        <!-- 訂單資訊 -->
         <div v-for="od in orders" :key="od.orderId" class="order-card mb-4 shadow-sm p-3 rounded">
-            <!-- 訂單資訊 -->
             <table class="table table-bordered mb-3">
                 <thead class="table-header">
                     <tr>
@@ -38,9 +51,15 @@
                             $ {{ od.formatTotalPrice }}
                         </td>
                     </tr>
-                    <!-- 第二列 -->
-                    <tr class="table-header"> <th colspan="2">統一編號</th> <th colspan="5">配送地址</th> </tr>
-
+                    <!-- 第二列資訊 -->
+                    <tr class="table-header">
+                        <th colspan="2">
+                            統一編號
+                        </th>
+                        <th colspan="5">
+                            配送地址
+                        </th>
+                    </tr>
                     <tr class="align-top">
                         <td colspan="2" class="tax-no-cell">
                             <div class="d-flex justify-content-between align-items-center">
@@ -217,6 +236,22 @@
 hr{
     border-top: 1px solid #eee;
 }
+
+.search-bar{
+    display: flex;
+    margin-top: 20px;
+    border: 2px solid #326A66;
+    height: 100px;
+    align-items: center;
+}
+
+.search-title{
+    margin-left: 10px;
+}
+.input-group{
+    max-width: 400PX;
+    margin-right: 10px;
+}
 </style>
 
 <script setup>
@@ -231,6 +266,7 @@ const modalTitle = ref('');
 const oldValue = ref('');
 const fieldType = ref('');
 let currentOrder = null;
+const keyword = ref('');
 
 onMounted(async () =>{
     const result = await getAllOrders()
@@ -269,6 +305,28 @@ async function handleConfirm(newValue){
         }
     }catch (err){
         console.error('修改失敗: ', err)
+        const msg = err.message;
+        alert(`${msg}`)
+    }
+}
+
+// 搜尋訂單
+async function handleSearch(){
+    try{
+        if (!keyword.value.trim()){
+            const res = await getAllOrders()
+            orders.value = res.map(order =>{
+            order.showDetails= false
+            return order
+        })
+        }else{
+            const res = await lookupOrder(keyword.value)
+            orders.value = res.map(order =>{
+            order.showDetails=false
+            return order
+        })}
+    }catch (err){
+        console.error('取得訂單資料失敗', err)
         const msg = err.message;
         alert(`${msg}`)
     }
