@@ -20,6 +20,11 @@ namespace ApiProject.Interfaces
 
         //確認目前密碼
         public Task<bool> CheckPasswordAsync(int memberId, string rawPassword, CancellationToken ct = default);
+        //產生 6 碼驗證碼
+        public Task<ResultDTO> SendEmailVerificationCodeAsync(string email);
+        //前端輸入驗證碼
+        public Task<ResultDTO> VerifyEmailCodeAsync(string email, string code);
+
         //上傳大頭貼
         //public Task<ResMemberUploadPhotoDTO> MemberUploadPhotoAsync(int memberId, IFormFile file, CancellationToken ct = default);
 

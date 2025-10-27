@@ -281,5 +281,56 @@ namespace ApiProject.Controllers
             });
         }
 
+        // 9) 產生 6 碼驗證碼
+        // POST /api/Member/send-email-code
+        [HttpPost("send-email-code")]
+        public async Task<ActionResult<ResultDTO>> SendEmailCode([FromBody] ReqSendEmailCodeDTO req)
+        {
+            if (string.IsNullOrWhiteSpace(req.Email))
+            {
+                return BadRequest(new ResultDTO
+                {
+                    Ok = false,
+                    Code = 400,
+                    Message = "Email 必填"
+                });
+            }
+
+            var result = await _memberService.SendEmailVerificationCodeAsync(req.Email);
+
+            if (!result.Ok)
+            {
+                // 依你自己的 Code 決定要回哪個 HTTP 狀態碼
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        // 10) 前端輸入驗證碼
+        // POST /api/Member/verify-email-code
+        [HttpPost("verify-email-code")]
+        public async Task<ActionResult<ResultDTO>> VerifyEmailCode([FromBody] ReqVerifyEmailCodeDTO req)
+        {
+            if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Code))
+            {
+                return BadRequest(new ResultDTO
+                {
+                    Ok = false,
+                    Code = 400,
+                    Message = "Email 與 驗證碼 必填"
+                });
+            }
+
+            var result = await _memberService.VerifyEmailCodeAsync(req.Email, req.Code);
+
+            if (!result.Ok)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
     }
 }
