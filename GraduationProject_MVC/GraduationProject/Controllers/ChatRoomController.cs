@@ -162,7 +162,7 @@ namespace GraduationProject.Controllers
         /// <returns></returns>
         [HttpPost]
         //[ValidateAntiForgeryToken]
-        public async Task<IActionResult> SendMessage( int chatRoomId, string content)
+        public async Task<IActionResult> SendMessage(int chatRoomId, string content)
         {
             {
                 TChatRoom room = await _context.TChatRooms
@@ -199,18 +199,18 @@ namespace GraduationProject.Controllers
                 _context.TChatRooms.Update(room);
                 await _context.SaveChangesAsync();
                 // ✅ 直接回 JSON，不重整頁面
-                
-                    return Json(new
+
+                return Json(new
+                {
+                    ok = true,
+                    message = new
                     {
-                        ok = true,
-                        message = new
-                        {
-                            senderType = senderType,
-                            content = content,
-                            createdAt = msg.FCreatedAt?.ToString("yyyy/MM/dd HH:mm")
-                        }
-                    });
-                
+                        senderType = senderType,
+                        content = content,
+                        createdAt = msg.FCreatedAt?.ToString("yyyy/MM/dd HH:mm")
+                    }
+                });
+
 
                 // 6) 回到 Index，維持目前聊天室與搜尋字  RedirectToAction跳轉到指定的動作方法
                 // 為不重整頁面 註解下面這行
