@@ -17,7 +17,9 @@ const onInput = (e) => emit('update:modelValue', clamp(e.target.value))
 
 <template>
   <div class="input-group" style="max-width: 120px;">
-    <button type="button" class="btn btn-outline-black" @click="dec">−</button>
+    <button type="button" class="btn btn-outline-black" @click="dec">
+      <i class="bi bi-dash-square"></i>
+    </button>
     <input
       type="text"
       class="form-control text-center"
@@ -29,6 +31,8 @@ const onInput = (e) => emit('update:modelValue', clamp(e.target.value))
       @input="onInput"
       @blur="onInput"
     />
-    <button type="button" class="btn btn-outline-black" @click="inc">＋</button>
+    <button type="button" class="btn btn-outline-black" @click="inc">
+      <i class="bi bi-plus-square"></i>
+    </button>
   </div>
 </template>

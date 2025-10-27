@@ -22,9 +22,9 @@ namespace ApiProject.Controllers
         //Get: api/Cart
 
         [HttpGet]
-        public async Task<List<ResCartDTO>> GetAllCart()
+        public async Task<List<ResCartDTO>> GetAllCart(CancellationToken ct)
         {
-            var result = await _cartService.GetAllCartAsync();
+            var result = await _cartService.GetAllCartAsync(User, ct);
             return result;
         }
 

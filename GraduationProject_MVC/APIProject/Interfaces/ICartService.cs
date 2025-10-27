@@ -6,7 +6,7 @@ namespace ApiProject.Interfaces
 {
     public interface ICartService
     {
-        public Task<List<ResCartDTO>> GetAllCartAsync();
+        public Task<List<ResCartDTO>> GetAllCartAsync(ClaimsPrincipal user, CancellationToken ct);
 
         public Task<ResultDTO> DeleteCartItemAsync(int cartItemId);
 

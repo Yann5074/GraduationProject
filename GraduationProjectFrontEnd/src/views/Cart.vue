@@ -1,32 +1,8 @@
-<script setup>
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-
-onMounted(() => { })
-const router = useRouter()
-const goCheckout = () => router.push({ name: 'checkout' })
-
-import QtyControl from '@/components/QtyControl.vue'
-const qtyA = ref(1)
-const qtyB = ref(1)
-</script>
-
 <template>
-<!-- Start Hero Section -->
-	<div class="hero">
-		<div class="container">
-			<div class="row justify-content-between">
-				<div class="col-lg-5">
-					<div class="intro-excerpt">
-						<h1>Cart</h1>
-					</div>
-				</div>
-				<div class="col-lg-7"></div>
-			</div>
-		</div>
-	</div>
-<!-- End Hero Section -->
-
+  <div class="title">
+    <p><i class="bi bi-cart"></i> 購物車</p>
+  </div>
+  <!-- 購物車列表 -->
 <div class="untree_co-section before-footer-section">
     <div class="container">
       <div class="row mb-5">
@@ -35,111 +11,130 @@ const qtyB = ref(1)
             <table class="table">
               <thead>
                 <tr>
-                  <th class="product-thumbnail">Image</th>
-                  <th class="product-name">Product</th>
-                  <th class="product-price">Price</th>
-                  <th class="product-quantity">Quantity</th>
-                  <th class="product-total">Total</th>
-                  <th class="product-remove">Remove</th>
+                  <th class="product-thumbnail"></th>
+                  <th class="product-name">商品名稱</th>
+                  <th class="product-price">單價</th>
+                  <th class="product-quantity">數量</th>
+                  <th class="product-total">小計</th>
+                  <th class="product-remove">刪除</th>
                 </tr>
               </thead>
+
+              <!-- 購物車內容載入 -->
               <tbody>
-                <tr>
+                <tr v-for="(ci, index) in cartItems" :key="ci.cartItemId">
                   <td class="product-thumbnail">
-                    <img src="../../public/asset/images/product-1.png" alt="Image" class="img-fluid">
+                    <img :src="ci.imageUrl" class="img-fluid"></img>
                   </td>
                   <td class="product-name">
-                    <h2 class="h5 text-black">Product 1</h2>
-                  </td>
-                  <td>$49.00</td>
-                  <td>
-                    <QtyControl v-model="qtyA" :min="1" :max="99" />
-                  </td>
-                  <td>$49.00</td>
-                  <td><a href="#" class="btn btn-black btn-sm">X</a></td>
-                </tr>
-
-                <tr>
-                  <td class="product-thumbnail">
-                    <img src="../../public/asset/images/product-2.png" alt="Image" class="img-fluid">
-                  </td>
-                  <td class="product-name">
-                    <h2 class="h5 text-black">Product 2</h2>
-                  </td>
-                  <td>$49.00</td>
-                  <td>
-                    <div class="input-group mb-3 d-flex align-items-center quantity-container" style="max-width: 120px;">
-                      <QtyControl v-model="qtyB" :min="1" :max="99" />
+                    <h2 class="h5 text-black">
+                      {{ ci.productName }}
+                    </h2>
+                    <div class="text-muted small">
+                      規格: {{ci.size}}
                     </div>
-
                   </td>
-                  <td>$49.00</td>
-                  <td><a href="#" class="btn btn-black btn-sm">X</a></td>
+                  <td>
+                    $ {{ ci.formatunitPrice }}
+                  </td>
+                  <td>
+                    <QtyControl v-model="ci.qty" :min="1" :max="99" @update:model-value="updateSubtotal(ci)"/>
+                  </td>
+                  <td class="subtotal">
+                    $ {{ ci.formatsubtotal }}
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-black btn-sm" @click="removeItem(ci.cartItemId)">
+                      <i class="bi bi-x-octagon"></i>
+                    </button>
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
+          <!-- 合計欄位 -->
+          <div class="text-end mt-4">
+            <h5>
+              結帳金額:
+              <span class="totalPrice">
+                {{ formatTotal }}
+              </span>
+                <button class="btn btn-danger ms-3 me-3">
+                  結帳
+                </button>
+            </h5>
+          </div>
         </form>
-      </div>
-
-      <div class="row">
-        <div class="col-md-6">
-          <div class="row mb-5">
-            <div class="col-md-6 mb-3 mb-md-0">
-              <button class="btn btn-black btn-sm btn-block">Update Cart</button>
-            </div>
-            <div class="col-md-6">
-              <button class="btn btn-outline-black btn-sm btn-block">Continue Shopping</button>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-12">
-              <label class="text-black h4" for="coupon">Coupon</label>
-              <p>Enter your coupon code if you have one.</p>
-            </div>
-            <div class="col-md-8 mb-3 mb-md-0">
-              <input type="text" class="form-control py-3" id="coupon" placeholder="Coupon Code">
-            </div>
-            <div class="col-md-4">
-              <button class="btn btn-black">Apply Coupon</button>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6 pl-5">
-          <div class="row justify-content-end">
-            <div class="col-md-7">
-              <div class="row">
-                <div class="col-md-12 text-right border-bottom mb-5">
-                  <h3 class="text-black h4 text-uppercase">Cart Totals</h3>
-                </div>
-              </div>
-              <div class="row mb-3">
-                <div class="col-md-6">
-                  <span class="text-black">Subtotal</span>
-                </div>
-                <div class="col-md-6 text-right">
-                  <strong class="text-black">$230.00</strong>
-                </div>
-              </div>
-              <div class="row mb-5">
-                <div class="col-md-6">
-                  <span class="text-black">Total</span>
-                </div>
-                <div class="col-md-6 text-right">
-                  <strong class="text-black">$230.00</strong>
-                </div>
-              </div>
-
-              <div class="row">
-                <div class="col-md-12">
-                  <button type="button" class="btn btn-black btn-lg py-3 btn-block" @click="goCheckout">Proceed To Checkout</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
   <RouterView />
 </template>
+
+<style scoped>
+.title{
+  margin: 20px;
+  font-size: 30px;
+
+}
+.totalPrice{
+  font-size: bold;
+  color: red;
+}
+.subtotal{
+  color:red;
+  font-size: bold;
+}
+</style>
+
+
+<script setup>
+import { onMounted, ref, computed } from 'vue'
+import { getAllCarts, deleteItem } from '@/api/Cart'
+import QtyControl from '@/components/QtyControl.vue'
+
+
+// 顯示購物車相關
+const cartItems = ref([])
+// 刪除購物車相關
+const confirmModalRef = ref(null)
+
+//動態總金額計算
+const formatTotal = computed(() =>{
+  const sum = cartItems.value.reduce(
+    (acc, item) => acc + item.subtotal, 0
+  )
+  return new Intl.NumberFormat('zh-TW', {
+    style: 'currency',
+    currency: 'TWD'
+  }).format(sum)
+})
+
+//初始化載入
+onMounted(async () => {
+  try{
+    const result = await getAllCarts()
+    cartItems.value = result[0]?.cartItem || []
+  }catch (err){
+    console.error('載入購物車錯誤', err)
+    alert(err.message)
+  }
+}
+)
+
+// 移除商品
+const removeItem = async () =>{
+  try{
+    const result = await deleteItem(ci.cartItemId)
+    if (result.ok){
+      const result = await getAllCarts()
+      cartItems.value = result[0]?.cartItem || []
+    }
+  }catch(err){
+    console.log('刪除購物車商品失敗', err)
+    let msg = err.message
+    alert(msg)
+  }
+}
+
+</script>

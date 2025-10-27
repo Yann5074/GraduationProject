@@ -19,9 +19,12 @@ namespace ApiProject.Services
             _memberAuth = memberAuth;
         }
 
-        // 列出購物車內容 #TODO 要加入訪客的ID判斷與僅列出自己的購物車
-        public async Task<List<ResCartDTO>> GetAllCartAsync()
+        // 列出購物車內容 #TODO 要加入訪客的ID判斷
+        public async Task<List<ResCartDTO>> GetAllCartAsync(ClaimsPrincipal user, CancellationToken ct)
         {
+            var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
+            if (idCheck.Ok != true)
+                return new List<ResCartDTO>();
             var query = _context.TCarts
                 .Include(c => c.CartItem)
                     .ThenInclude(c => c.ProductVariant)
@@ -29,7 +32,7 @@ namespace ApiProject.Services
                 .Include(c => c.CartItem)
                     .ThenInclude(c => c.ProductVariant)
                         .ThenInclude(c => c.ProductAsset)
-                .Where(c => c.FIsDeleted != 1 && c.FIsCheckOut != 1)
+                .Where(c => c.FIsDeleted != 1 && c.FIsCheckOut != 1 && c.FMemberId == idCheck.Member.FMemberId)
                 .Select(c => new ResCartDTO
                 {
                     MemberId = c.FMemberId,
