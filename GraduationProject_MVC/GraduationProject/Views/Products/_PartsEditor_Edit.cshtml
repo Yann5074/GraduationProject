@@ -1,10 +1,14 @@
 ﻿@model GraduationProject.ViewModels.CProductEditViewModel
+
 <div class="card my-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <strong>零件／配件</strong>
-        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addPart()">＋新增零件</button>
+        <button type="button" id="btnAddPart" class="btn btn-sm btn-outline-primary">＋新增零件</button>
     </div>
+
     <div class="card-body" id="part-rows"></div>
+
+    <!-- 後端接收的隱藏欄位 -->
     <input type="hidden" name="PartsJson" id="PartsJson" />
 </div>
 
@@ -18,40 +22,40 @@
     function renderParts(){
       const el = document.getElementById('part-rows');
       el.innerHTML = parts.map((p,pi)=>`
-        <div class="border rounded p-2 mb-3 ${p.deleted?'opacity-50':''}">
+        <div class="border rounded p-2 mb-3 ${p.Deleted?'opacity-50':''}">
           <div class="d-flex gap-2 align-items-end">
-            <input class="form-control" placeholder="零件名稱" value="${p.partName||''}" oninput="parts[${pi}].partName=this.value"/>
-            <input class="form-control" placeholder="代碼" value="${p.partCode||''}" oninput="parts[${pi}].partCode=this.value"/>
-            <input class="form-control" type="number" placeholder="排序" value="${p.displayOrder??''}" oninput="parts[${pi}].displayOrder=parseInt(this.value)||null"/>
+            <input class="form-control" placeholder="零件名稱" value="${p.PartName||''}" oninput="parts[${pi}].partName=this.value"/>
+            <input class="form-control" placeholder="代碼" value="${p.PartCode||''}" oninput="parts[${pi}].partCode=this.value"/>
+            <input class="form-control" type="number" placeholder="排序" value="${p.DisplayOrder??''}" oninput="parts[${pi}].displayOrder=parseInt(this.value)||null"/>
             <button type="button" class="btn btn-sm btn-outline-success" onclick="addOption(${pi})">＋選項</button>
             <div class="form-check ms-auto">
-              <input class="form-check-input" type="checkbox" ${p.deleted?'checked':''} onchange="parts[${pi}].deleted=this.checked"> 刪除零件
+              <input class="form-check-input" type="checkbox" ${p.Deleted?'checked':''} onchange="parts[${pi}].deleted=this.checked"> 刪除零件
             </div>
           </div>
           <div class="mt-2">
             ${ (p.options||[]).map((o,oi)=>`
-              <div class="border p-2 mb-2 ${o.deleted?'opacity-50':''}">
+              <div class="border p-2 mb-2 ${o.Deleted?'opacity-50':''}">
                 <div class="row g-2 align-items-end">
-                  <div class="col-md-3"><input class="form-control" placeholder="選項名稱" value="${o.optionName||''}" oninput="parts[${pi}].options[${oi}].optionName=this.value"/></div>
-                  <div class="col-md-2"><input class="form-control" placeholder="#HEX" value="${o.colorHex||''}" oninput="parts[${pi}].options[${oi}].colorHex=this.value"/></div>
-                  <div class="col-md-2"><input class="form-control" type="number" step="0.01" placeholder="價差" value="${o.priceAdjustment??''}" oninput="parts[${pi}].options[${oi}].priceAdjustment=parseFloat(this.value)||null"/></div>
+                  <div class="col-md-3"><input class="form-control" placeholder="選項名稱" value="${o.OptionName||''}" oninput="parts[${pi}].options[${oi}].optionName=this.value"/></div>
+                  <div class="col-md-2"><input class="form-control" placeholder="#HEX" value="${o.ColorHex||''}" oninput="parts[${pi}].options[${oi}].colorHex=this.value"/></div>
+                  <div class="col-md-2"><input class="form-control" type="number" step="0.01" placeholder="價差" value="${o.PriceAdjustment??''}" oninput="parts[${pi}].options[${oi}].priceAdjustment=parseFloat(this.value)||null"/></div>
                   <div class="col-md-2 form-check">
-                    <input class="form-check-input" type="checkbox" ${o.isDefault?'checked':''} onchange="parts[${pi}].options[${oi}].isDefault=this.checked"> 預設
+                    <input class="form-check-input" type="checkbox" ${o.IsDefault?'checked':''} onchange="parts[${pi}].options[${oi}].isDefault=this.checked"> 預設
                   </div>
-                  <div class="col-md-2"><input class="form-control" type="number" placeholder="排序" value="${o.displayOrder??''}" oninput="parts[${pi}].options[${oi}].displayOrder=parseInt(this.value)||null"/></div>
+                  <div class="col-md-2"><input class="form-control" type="number" placeholder="排序" value="${o.DisplayOrder??''}" oninput="parts[${pi}].options[${oi}].displayOrder=parseInt(this.value)||null"/></div>
                   <div class="col-md-1 form-check">
-                    <input class="form-check-input" type="checkbox" ${o.deleted?'checked':''} onchange="parts[${pi}].options[${oi}].deleted=this.checked"> 刪
+                    <input class="form-check-input" type="checkbox" ${o.Deleted?'checked':''} onchange="parts[${pi}].options[${oi}].deleted=this.checked"> 刪
                   </div>
                 </div>
                 <div class="mt-2">
                   <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addTexture(${pi},${oi})">＋貼圖</button>
-                  ${ (o.textures||[]).map((t,ti)=>`
-                    <div class="row g-2 align-items-end mt-1 ${t.deleted?'opacity-50':''}">
-                      <div class="col-md-3"><input class="form-control" placeholder="類型" value="${t.textureType||''}" oninput="parts[${pi}].options[${oi}].textures[${ti}].textureType=this.value"/></div>
-                      <div class="col-md-6"><input class="form-control" placeholder="檔案路徑" value="${t.filePath||''}" oninput="parts[${pi}].options[${oi}].textures[${ti}].filePath=this.value"/></div>
-                      <div class="col-md-2"><input class="form-control" placeholder="Tiling" value="${t.tiling||''}" oninput="parts[${pi}].options[${oi}].textures[${ti}].tiling=this.value"/></div>
+                  ${ (o.Textures||[]).map((t,ti)=>`
+                    <div class="row g-2 align-items-end mt-1 ${t.Deleted?'opacity-50':''}">
+                      <div class="col-md-3"><input class="form-control" placeholder="類型" value="${t.TextureType||''}" oninput="parts[${pi}].options[${oi}].textures[${ti}].textureType=this.value"/></div>
+                      <div class="col-md-6"><input class="form-control" placeholder="檔案路徑" value="${t.FilePath||''}" oninput="parts[${pi}].options[${oi}].textures[${ti}].filePath=this.value"/></div>
+                      <div class="col-md-2"><input class="form-control" placeholder="Tiling" value="${t.Tiling||''}" oninput="parts[${pi}].options[${oi}].textures[${ti}].tiling=this.value"/></div>
                       <div class="col-md-1 form-check">
-                        <input class="form-check-input" type="checkbox" ${t.deleted?'checked':''} onchange="parts[${pi}].options[${oi}].textures[${ti}].deleted=this.checked"> 刪
+                        <input class="form-check-input" type="checkbox" ${t.Deleted?'checked':''} onchange="parts[${pi}].options[${oi}].textures[${ti}].deleted=this.checked"> 刪
                       </div>
                     </div>`).join('') }
                 </div>

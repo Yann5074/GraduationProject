@@ -3,7 +3,7 @@
 namespace GraduationProject.DTOs
 {
   
-    public class CProductUpdateDTO
+    public class CProductUpdateDTO : CProductCreateDTO
     {
         public int ProductId { get; set; }
 
@@ -15,9 +15,8 @@ namespace GraduationProject.DTOs
         public bool? AssemblyRequired { get; set; }
         public string? AssemblyPart { get; set; }
         public int? Discount { get; set; }
-
-        public List<CProductVariantUpdateDTO> Variants { get; set; } = new();
-        public List<CProductAssetUpdateDTO> Assets { get; set; } = new();
-        public List<CProductPartUpdateDTO> Parts { get; set; } = new();
+        public new List<CProductAssetDTO> Assets { get; set; } = new();
+        public List<CProductVariantDTO> Variants { get; set; } = new();
+    
     }
 }

@@ -232,6 +232,16 @@ namespace ApiProject.Services
                .Where(a => !string.IsNullOrEmpty(a.FUrl) && (a.FIsPrimary ?? false))
                .OrderBy(a => a.FSortOrder)
                .FirstOrDefault();
+
+            // 3D
+            var modelAsset = product.ProductAssets
+                .FirstOrDefault(a => a.FAssetType == "3D" || a.FAssetType == "Model");
+
+            // 環境貼圖
+            var envMapAsset = product.ProductAssets
+                .FirstOrDefault(a => a.FAssetType == "EnvMap");
+
+
             var result = new ResProductDetailDTO
             {
                 FProductId = product.FProductId,
@@ -248,7 +258,11 @@ namespace ApiProject.Services
                         .Select(a => a.FUrl)
                         .FirstOrDefault()
                     ?? "/ProductImages/default.png",
+                // 3D 模型路徑
+                F3dModelPath = modelAsset?.FUrl,
 
+                // 環境貼圖路徑
+                EnvMapUrl = envMapAsset?.FUrl,
 
                 // 素材
                 Assets = product.ProductAssets

@@ -64,11 +64,59 @@ export const ProductAPI = {
     },
 
     /**
-     * 取得篩選選項
+     * 取得產品類別列表
+     * @returns {Promise<Object>} 類別列表
+     */
+    async getCategories() {
+        try {
+            const response = await apiClient.get('/Category')
+            return response
+        } catch (error) {
+            console.error('取得類別列表失敗:', error)
+            return {
+                success: false,
+                message: error.response?.data?.message || '取得類別列表失敗',
+                data: []
+            }
+        }
+    },
+
+    /**
+     * 取得篩選選項（包含類別和價格範圍）
      * @returns {Promise<Object>} 篩選選項資料
      */
-    getFilterOptions() {
-        return apiClient.get('/Product/filter-options')
+    async getFilterOptions() {
+        try {
+            // 方法 1: 如果後端有統一的篩選選項 API，取消註解下面這行
+            // return apiClient.get('/Product/filter-options')
+
+            // 方法 2: 組合類別 API 和預設價格範圍
+            const categoriesRes = await this.getCategories()
+
+            return {
+                success: true,
+                data: {
+                    categories: categoriesRes.data || categoriesRes || [],
+                    priceRanges: [
+                        { min: 0, max: 5000, label: '5000 以下' },
+                        { min: 5000, max: 10000, label: '5000 - 10000' },
+                        { min: 10000, max: 20000, label: '10000 - 20000' },
+                        { min: 20000, max: 50000, label: '20000 - 50000' },
+                        { min: 50000, max: null, label: '50000 以上' }
+                    ]
+                }
+            }
+        } catch (error) {
+            console.error('取得篩選選項失敗:', error)
+            return {
+                success: false,
+                message: '取得篩選選項失敗',
+                data: {
+                    categories: [],
+                    priceRanges: []
+                }
+            }
+        }
     },
 
     /**
@@ -83,10 +131,15 @@ export const ProductAPI = {
         return apiClient.get(`/Product/search/${encodeURIComponent(keyword)}`)
     },
 
-    // 取得產品詳情
-    async getProductById(productId, includeCustomization = true) {  // ⭐ 預設為 true
+    /**
+     * 取得產品詳情
+     * @param {number} productId - 產品 ID
+     * @param {boolean} includeCustomization - 是否包含客製化資訊（包含 3D 模型路徑）
+     * @returns {Promise<Object>} 產品詳情
+     */
+    async getProductById(productId, includeCustomization = true) {
         try {
-            // ⭐ 加入 query parameter
+            // ⭐ includeCustomization=true 會取得 3D 模型路徑
             const url = `/Product/${productId}?includeCustomization=${includeCustomization}`
 
             const response = await apiClient.get(url)
@@ -125,7 +178,11 @@ export const ProductAPI = {
         }
     },
 
-    // 取得產品變體
+    /**
+     * 取得產品變體
+     * @param {number} productId - 產品 ID
+     * @returns {Promise<Object>} 產品變體列表
+     */
     async getProductVariants(productId) {
         const response = await apiClient.get(`/Product/${productId}/variants`)
         return response.data
@@ -162,7 +219,7 @@ export const ProductAPI = {
     },
 
     /**
-     * 根據自訂選項取得價格
+     * 根據自訂選項取得價格（用於 3D 客製化）
      * @param {number} id - 產品 ID
      * @param {Object} selectedOptions - 選中的顏色選項 { partCode: colorOptionId }
      * @returns {Promise<Object>} 價格資訊

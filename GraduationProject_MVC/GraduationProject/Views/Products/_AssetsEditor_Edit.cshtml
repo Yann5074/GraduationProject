@@ -1,48 +1,51 @@
 ﻿@model GraduationProject.ViewModels.CProductEditViewModel
+
 <div class="card my-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <strong>圖片／素材</strong>
-        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addAsset()">＋新增素材</button>
+        <button type="button" id="btnAddAsset" class="btn btn-sm btn-outline-primary">＋新增素材</button>
     </div>
+
     <div class="card-body" id="asset-rows"></div>
+
+    <!-- 後端接收的隱藏欄位 -->
     <input type="hidden" name="AssetsJson" id="AssetsJson" />
 </div>
 
+
 <script>
-    const assets = @Html.Raw(Model.AssetsJson ?? "[]");
-    function addAsset(){ assets.push({ assetId:null, deleted:false, assetType:'Image', url:'', isPrimary:false, sortOrder:assets.length+1, productVariantId:null }); renderAssets(); }
+    const Assets = @Html.Raw(Model.AssetsJson ?? "[]");
+    function addAsset(){ Assets.push({ assetId:null, deleted:false, assetType:'Image', url:'', isPrimary:false, sortOrder:Assets.length+1, productVariantId:null }); renderAssets(); }
     function renderAssets(){
       const el = document.getElementById('asset-rows');
-      el.innerHTML = assets.map((a,i)=>`
-        <div class="row g-2 align-items-end border-bottom pb-2 mb-2 ${a.deleted?'opacity-50':''}">
+      el.innerHTML = Assets.map((a,i)=>`
+        <div class="row g-2 align-items-end border-bottom pb-2 mb-2 ${a.Deleted?'opacity-50':''}">
           <div class="col-md-2"><label class="form-label">類型</label>
             <select class="form-select" onchange="assets[${i}].assetType=this.value">
-              <option ${a.assetType==='Image'?'selected':''}>Image</option>
-              <option ${a.assetType==='Model'?'selected':''}>Model</option>
-              <option ${a.assetType==='Texture'?'selected':''}>Texture</option>
+              <option ${a.AssetType==='Image'?'selected':''}>Image</option>
+              <option ${a.AssetType==='Model'?'selected':''}>Model</option>
+              <option ${a.AssetType==='Texture'?'selected':''}>Texture</option>
             </select>
           </div>
           <div class="col-md-3"><label class="form-label">URL</label>
-            <input class="form-control" value="${a.url||''}" oninput="assets[${i}].url=this.value"/>
+            <input class="form-control" value="${a.Url||''}" oninput="assets[${i}].url=this.value"/>
           </div>
           <div class="col-md-2"><label class="form-label">MIME</label>
-            <input class="form-control" value="${a.mimeType||''}" oninput="assets[${i}].mimeType=this.value"/>
+            <input class="form-control" value="${a.MimeType||''}" oninput="assets[${i}].mimeType=this.value"/>
           </div>
-          <div class="col-md-2"><label class="form-label">掛載變體Id</label>
-            <input class="form-control" type="number" value="${a.productVariantId??''}" oninput="assets[${i}].productVariantId=parseInt(this.value)||null"/>
-          </div>
+          
           <div class="col-md-1 form-check mt-4">
-            <input class="form-check-input" type="checkbox" ${a.isPrimary?'checked':''} onchange="assets[${i}].isPrimary=this.checked"> 主圖
+            <input class="form-check-input" type="checkbox" ${a.IsPrimary?'checked':''} onchange="assets[${i}].isPrimary=this.checked"> 主圖
           </div>
           <div class="col-md-1"><label class="form-label">排序</label>
-            <input class="form-control" type="number" value="${a.sortOrder??''}" oninput="assets[${i}].sortOrder=parseInt(this.value)||null"/>
+            <input class="form-control" type="number" value="${a.SortOrder??''}" oninput="assets[${i}].sortOrder=parseInt(this.value)||null"/>
           </div>
           <div class="col-md-1 form-check mt-4">
-            <input class="form-check-input" type="checkbox" ${a.deleted?'checked':''} onchange="assets[${i}].deleted=this.checked"> 刪除
+            <input class="form-check-input" type="checkbox" ${a.Deleted?'checked':''} onchange="assets[${i}].deleted=this.checked"> 刪除
           </div>
-          <input type="hidden" value="${a.assetId??''}"/>
+          <input type="hidden" value="${a.AssetId??''}"/>
         </div>`).join('');
-      document.getElementById('AssetsJson').value = JSON.stringify(assets);
+      document.getElementById('AssetsJson').value = JSON.stringify(Assets);
     }
     renderAssets();
 </script>

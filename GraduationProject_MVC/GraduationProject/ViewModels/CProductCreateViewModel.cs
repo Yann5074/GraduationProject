@@ -16,6 +16,9 @@ namespace GraduationProject.ViewModels
         public string? AssemblyPart { get; set; }
         public int? Discount { get; set; }
 
+
+        public CProductUpdateDTO Data { get; set; } = new();
+
         // 子集合以 JSON 承載
         public string? VariantsJson { get; set; }
         public string? AssetsJson { get; set; }

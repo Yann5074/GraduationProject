@@ -2,10 +2,10 @@
 
 namespace GraduationProject.DTOs
 {
-    public class CProductDetailDTO
+    public class CProductDetailDTO : CProductDTO
     {
        
-            public int? ProductId { get; set; }
+            public int ProductId { get; set; }
 
             [Display(Name = "產品名稱")]
             public string? Name { get; set; }
