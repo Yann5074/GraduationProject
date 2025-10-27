@@ -275,6 +275,24 @@ namespace ApiProject.Services
             };
         }
 
+        //確認目前密碼
+        public async Task<bool> CheckPasswordAsync(int memberId, string rawPassword, CancellationToken ct = default)
+        {
+            // 撈目前會員
+            var member = await _context.TMembers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.FMemberId == memberId, ct);
+
+            if (member == null) return false;
+            if (string.IsNullOrEmpty(rawPassword)) return false;
+
+            // 這邊假設資料庫裡的加密密碼欄位叫 FPassword
+            // 也假設你在登入時用的是 PasswordHasher<TMember>
+            var result = _hasher.VerifyHashedPassword(member, member.FPasswords, rawPassword);
+
+            return result == PasswordVerificationResult.Success;
+        }
+
         //上傳大頭貼
         //public async Task<ResMemberUploadPhotoDTO> MemberUploadPhotoAsync(int memberId, IFormFile file, CancellationToken ct = default)
         //{
