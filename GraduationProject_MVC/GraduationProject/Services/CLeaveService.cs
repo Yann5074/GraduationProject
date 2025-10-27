@@ -1,5 +1,6 @@
 ﻿using GraduationProject.DTOs;
 using GraduationProject.Enum;
+using GraduationProject.Extensions;
 using GraduationProject.Interfaces;
 using GraduationProject.Models;
 using Microsoft.EntityFrameworkCore;
@@ -9,33 +10,55 @@ namespace GraduationProject.Services
     public class CLeaveService : ILeaveService
     {
         private readonly dbFurniMartContext _db;
-        public CLeaveService(dbFurniMartContext db) => _db = db;
+        private readonly IWebHostEnvironment _env;
+        private readonly ILogger<CLeaveService> _logger;
+        public CLeaveService(dbFurniMartContext db, IWebHostEnvironment env, ILogger<CLeaveService> logger)
+        {
+            _db = db;
+            _env = env;
+            _logger = logger;
+        }
 
         //List
-        public async Task<List<CLeaveItemDTO>> GetMyLeavesAsync(int employeeId, CancellationToken ct = default)
+        public async Task<PagedList<CLeaveItemDTO>> GetMyLeavesAsync(int employeeId, string? keyword, DateTime? start, DateTime? end, int page = 1, int pageSize = 10, CancellationToken ct = default)
         {
-            return await _db.TLeaves.AsNoTracking()
-                .Where(x => x.FEmployeeId == employeeId && x.FStatusId != (int)LeaveRequestStatusEnum.Deleted)
-                .OrderByDescending(x => x.FCreatetime)
+            IQueryable<TLeave> q = _db.TLeaves.AsNoTracking()
+                    .Where(x => x.FEmployeeId == employeeId && x.FStatusId != (int)LeaveRequestStatusEnum.Deleted);
+
+            // 關鍵字
+            if (!string.IsNullOrWhiteSpace(keyword))
+                q = q.Where(x => (x.FDescription ?? "").Contains(keyword));
+
+            // 時間區間（以 FStartDate 或 FCreatetime 篩選都可，選你要的欄位）
+            if (start.HasValue)
+            {
+                var s = start.Value.Date;                 // 當天 00:00
+                q = q.Where(x => x.FStartDate >= s);      // 起：含當天
+            }
+            if (end.HasValue)
+            {
+                var e = end.Value.Date.AddDays(1);        // 取「小於隔天 00:00」→ 等同「包含結束日整天」
+                q = q.Where(x => x.FStartDate < e);       // 迄：不含隔天
+            }
+
+            // 投影 + 分頁（用你現成的 ToPagedListAsync 擴充方法）
+            var list = q.OrderByDescending(x => x.FCreatetime)
                 .Select(x => new CLeaveItemDTO
                 {
                     LeaveId = x.FLeaveId,
-                    EmployeeId = (int)x.FEmployeeId,
-                    EmployeeName = _db.TEmployees
-                                      .Where(e => e.FEmployeeId == x.FEmployeeId)
-                                      .Select(e => e.FName).FirstOrDefault() ?? "",
-                    LeaveType = x.FLeaveType,
-                    StartDate = (DateTime)x.FStartDate,
-                    EndDate = (DateTime)x.FEndDate,
-                    Description = x.FDescription,
-                    StatusId = (int)x.FStatusId,
+                    LeaveType = x.FLeaveType!,
+                    StartDate = x.FStartDate ?? DateTime.MinValue,
+                    EndDate = x.FEndDate ?? DateTime.MinValue,
+                    StatusId = x.FStatusId ?? 0,
                     StatusName = _db.TRequestStatuses
                                     .Where(s => s.FStatusId == x.FStatusId)
-                                    .Select(s => s.FStatus).FirstOrDefault() ?? "",
+                                    .Select(s => s.FStatus)
+                                    .FirstOrDefault() ?? "未知",
                     PictureFileName = x.FPicture,
                     CreateTime = x.FCreatetime
-                })
-                .ToListAsync(ct);
+                });
+
+            return await list.ToPagedListAsync(page, pageSize, ct);
         }
 
         //Deleted List
@@ -176,11 +199,39 @@ namespace GraduationProject.Services
         public async Task<bool> DeleteLeavesAsync(int id, CancellationToken ct = default)
         {
             if (id <= 0) return false;
+
+            // 先查出狀態與檔名
+            var info = await _db.TLeaves
+                .Where(x => x.FLeaveId == id)
+                .Select(x => new { x.FStatusId, x.FPicture })
+                .SingleOrDefaultAsync(ct);
+
+            if (info is null) return false;
+            if (info.FStatusId != (int)LeaveRequestStatusEnum.Deleted) return false;
+
             var delete = await _db.TLeaves
                 .Where(e => e.FLeaveId == id && e.FStatusId == (int)LeaveRequestStatusEnum.Deleted)
                 .ExecuteDeleteAsync(ct);
+            if (delete <= 0) return false;
 
-            return delete > 0;
+            // 再清檔案
+            if (!string.IsNullOrWhiteSpace(info.FPicture))
+            {
+                try
+                {
+                    // 取檔名
+                    var fileName = Path.GetFileName(info.FPicture);
+                    var fullPath = Path.Combine(_env.WebRootPath, "LeaveEvidence", fileName);
+                    if (System.IO.File.Exists(fullPath))
+                        System.IO.File.Delete(fullPath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "刪除證明檔失敗：{FPicture}", info.FPicture);
+                }
+            }
+
+            return true;
         }
     }
 }

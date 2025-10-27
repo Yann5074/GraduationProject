@@ -5,9 +5,16 @@
 @using System.Text.Json
 @model IEnumerable<CLeaveListItemViewModel>
 @{
+    //權限設定
     var json = Context.Session.GetString(CEmployeeDictionary.SK_LOGINED_USER);
     var me = json is null ? null : JsonSerializer.Deserialize<SessionUser>(json);
     var isAdmin = me?.RoleId == 4 && me?.StatusId == 1;
+
+    //狀態Enum
+    var pending = (int)LeaveRequestStatusEnum.Pending;
+    var approved = (int)LeaveRequestStatusEnum.Approved;
+    var rejected = (int)LeaveRequestStatusEnum.Rejected;
+    var deleted = (int)LeaveRequestStatusEnum.Deleted;
 }
 <h3>我的請假申請</h3>
 <!-- Header / Toolbar -->
@@ -17,12 +24,12 @@
         <a asp-action="Create" class="btn btn-success">
             <i class="fa-solid fa-plus"></i> 新增假單
         </a>
-        <a asp-action="DeletedList" class="btn btn-success">
-            <i class="fa-solid fa-plus"></i> 取消清單
+        <a asp-action="DeletedList" class="btn btn-secondary">
+            <i class="fa-solid fa-xmark"></i> 取消清單
         </a>
         @if (isAdmin)
         {
-            <a asp-action="Pending" class="btn btn-success">
+            <a asp-action="Pending" class="btn btn-dark">
                 <i class="bi bi-check-circle"></i> 審核假單
             </a>
         }
@@ -65,23 +72,24 @@
                     </td>
                     <td>@x.Description</td>
                     <td>
-                        @if (x.StatusId == (int)LeaveRequestStatusEnum.Pending)
+                        @if (x.StatusId == pending)
                         {
-                            <form method="post" asp-action="SoftDelete" asp-route-leaveId="@x.LeaveId">
-                                <button type="submit" class="btn btn-danger" onclick="return confirm('確定要取消申請嗎？')">取消申請</button>
+                            <form method="post" asp-action="SoftDelete" asp-route-leaveId="@x.LeaveId" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('確定要取消申請嗎？')">取消申請</button>
                             </form>
                         }
-                        @if (x.StatusId == (int)LeaveRequestStatusEnum.Approved)
+                        else if (x.StatusId == approved)
                         {
                             <button disabled class="btn btn-secondary">已通過</button>
                         }
-                        @if (x.StatusId == (int)LeaveRequestStatusEnum.Rejected)
+                        else if (x.StatusId == rejected)
                         {
                             <button disabled class="btn btn-secondary">駁回</button>
                         }
                         else
                         {
-                            <button disabled class="btn btn-secondary">已刪除</button>
+                            <button disabled class="btn btn-secondary">未知狀態</button>
                         }
                     </td>
                 </tr>
