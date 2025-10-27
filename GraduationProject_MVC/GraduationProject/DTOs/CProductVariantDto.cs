@@ -5,7 +5,7 @@ namespace GraduationProject.DTOs
 {
     public class CProductVariantDTO
     {
-        public int VariantId { get; set; }
+        public int? VariantId { get; set; }
         public string? SKU { get; set; }
         public int? ColorId { get; set; }
         public decimal? Length { get; set; }
@@ -22,8 +22,8 @@ namespace GraduationProject.DTOs
         public string? ColorName { get; set; }
         public string? ColorCode { get; set; }
         public int? PStatus { get; set; }        // tProductVariant.fPStatus
+        public bool? Deleted { get; set; }
 
-    
     }
 
 }

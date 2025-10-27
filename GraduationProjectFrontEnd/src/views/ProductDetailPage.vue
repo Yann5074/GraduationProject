@@ -27,9 +27,36 @@
     <!-- 產品詳情 -->
     <div v-else-if="product" class="container py-4">
       <div class="row g-4">
-        <!-- 左側：圖片區 -->
+        <!-- 左側：圖片/3D 模型區 -->
         <div class="col-lg-6">
-          <div class="product-images">
+          <!-- 切換按鈕 -->
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="btn-group" role="group">
+              <button 
+                class="btn" 
+                :class="viewMode === 'image' ? 'btn-primary' : 'btn-outline-primary'"
+                @click="viewMode = 'image'"
+              >
+                <i class="bi bi-image me-1"></i>照片
+              </button>
+              <button 
+                v-if="product.f3dModelPath"
+                class="btn" 
+                :class="viewMode === '3d' ? 'btn-primary' : 'btn-outline-primary'"
+                @click="viewMode = '3d'"
+              >
+                <i class="bi bi-badge-3d me-1"></i>3D 模型
+              </button>
+            </div>
+            
+            <!-- 3D 可用提示 -->
+            <small v-if="product.f3dModelPath && viewMode === 'image'" class="text-muted">
+              <i class="bi bi-info-circle me-1"></i>可切換 3D 預覽
+            </small>
+          </div>
+
+          <!-- 照片視窗 -->
+          <div v-show="viewMode === 'image'" class="product-images">
             <div class="main-image-container mb-3">
               <img :src="selectedImage" :alt="product.fName" class="img-fluid rounded main-image" @error="handleImageError" />
               <div v-if="product.fDiscount > 0" class="position-absolute top-0 start-0 p-3">
@@ -41,19 +68,28 @@
               <img v-for="(image, index) in productImages" :key="index" :src="image" class="thumbnail" :class="{ active: selectedImage === image }" @click="selectedImage = image" @error="handleImageError" />
             </div>
           </div>
+
+          <!-- 3D 模型視窗 -->
+          <div v-show="viewMode === '3d' && product.f3dModelPath" class="viewer-3d-wrapper">
+             <Furniture3DViewer 
+                v-if="product.f3dModelPath"
+                :model-url="product.f3dModelPath"
+                :textures="modelTextures"
+                :env-map-url="product.envMapUrl || null"
+                @model-loaded="on3DModelLoaded"
+                @model-error="on3DModelError"
+              />
+          </div>
+
+          <!-- 沒有 3D 模型的提示 -->
+          <div v-if="!product.model3dUrl && viewMode === '3d'" class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            此產品暫無 3D 模型
+          </div>
         </div>
-        
+
         <!-- 右側：產品資訊 -->
         <div class="col-lg-6">
-          <button
-              type="button"
-              class="btn btn-outline-secondary btn-sm"
-              data-bs-toggle="modal"
-              data-bs-target="#viewer3DModal"
-              @click="open3D"
-            >
-              3D 檢視
-            </button>
           <h1 class="product-title mb-3">{{ product.fName }}</h1>
           
           <div class="mb-3">
@@ -82,7 +118,7 @@
           <!-- ⭐ 客製化部位選擇 -->
           <div v-if="product.isCustomizable && customizationParts.length > 0" class="mb-4">
             <h5 class="mb-3">
-              <i class="bi bi-palette me-2"></i>自訂產品
+              <i class="bi bi-palette me-2"></i>自訂您的產品
             </h5>
             
             <div v-for="part in customizationParts" :key="part.fPartId" class="mb-4">
@@ -104,10 +140,10 @@
                   >
                     <div class="d-flex align-items-center gap-2 mb-2">
                       <!-- 顏色圓圈 -->
-                      <!-- <div 
+                      <div 
                         class="color-circle" 
                         :style="{ backgroundColor: option.fColorHex || '#ccc' }"
-                      ></div> -->
+                      ></div>
                       <div class="flex-grow-1 text-start">
                         <div class="fw-bold small">{{ option.fOptionName }}</div>
                         <small v-if="option.fPrice" class="text-primary">
@@ -128,7 +164,7 @@
             </div>
           </div>
 
-        
+          <!-- 簡單變體選擇（如果沒有客製化） -->
           <div v-else-if="variants.length > 0" class="mb-4">
             <h5 class="mb-3">選擇規格</h5>
             <div class="row g-2">
@@ -142,7 +178,7 @@
                   :disabled="getVariantStock(variant) <= 0" 
                   @click="selectVariant(variant)"
                 >
-                 
+                  <!-- 如果有顏色資訊 -->
                   <div v-if="variant.colorName || variant.ColorName" class="d-flex align-items-center gap-2 mb-2">
                     <!-- 顏色圓圈 -->
                     <div 
@@ -150,12 +186,12 @@
                       class="color-circle" 
                       :style="{ backgroundColor: variant.colorHex || variant.ColorHex }"
                     ></div>
-                    <!-- <div class="flex-grow-1 text-start">
+                    <div class="flex-grow-1 text-start">
                       <div class="fw-bold">{{ variant.colorName || variant.ColorName }}</div>
-                    </div> -->
+                    </div>
                   </div>
-                  
-                  <!-- <div v-else class="fw-bold mb-2">{{ variant.fSku || variant.FSku }}</div> -->
+                  <!-- 如果沒有顏色資訊，顯示 SKU -->
+                  <div v-else class="fw-bold mb-2">{{ variant.fSku || variant.FSku }}</div>
                   
                   <!-- 縮圖 -->
                   <img 
@@ -206,10 +242,10 @@
           <!-- 操作按鈕 -->
           <div class="d-grid gap-2">
             <button class="btn btn-primary btn-lg" :disabled="!canAddToCart" @click="addToCart">
-              加入購物車
+              <i class="bi bi-cart-plus me-2"></i>加入購物車
             </button>
             <button class="btn btn-outline-primary btn-lg" :disabled="!canAddToCart" @click="buyNow">
-              立即購買
+              <i class="bi bi-lightning-fill me-2"></i>立即購買
             </button>
           </div>
 
@@ -240,9 +276,9 @@
                 <div class="col-md-6">
                   <strong>組裝：</strong> {{ product.fAssemblyRequired ? '需要組裝' : '無需組裝' }}
                 </div>
-                <!-- <div v-if="product.isCustomizable" class="col-md-6">
+                <div v-if="product.isCustomizable" class="col-md-6">
                   <strong>客製化：</strong> <span class="badge bg-info">支援客製化</span>
-                </div> -->
+                </div>
               </div>
             </div>
             <div id="description" class="tab-pane fade">
@@ -272,66 +308,13 @@
       </div>
     </div>
   </div>
-
-  <!-- [ADD] Bootstrap Modal：3D 檢視視窗 -->
-<div
-  class="modal fade"
-  id="viewer3DModal"
-  tabindex="-1"
-  aria-labelledby="viewer3DModalLabel"
-  aria-hidden="true"
-  @hidden.bs.modal="close3D"
->
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="viewer3DModalLabel">3D 檢視</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @click="close3D"></button>
-      </div>
-      <div class="modal-body p-0">
-        <div style="height:70vh; width:100%;">
-          <!-- 只在 Modal 開啟才掛載，避免資源浪費 -->
-          <ThreePBRViewer
-            v-if="is3DView"
-            :model-url="modelUrl"
-            :textures="textures"
-            :envmap-url="envHDR"
-            style="display:block; height:100%; width:100%;"
-          />
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="close3D">關閉</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ProductAPI } from '@/api/Product'
-import ThreePBRViewer  from '@/components/Three3DView.vue'
-
-const is3DView = ref(false)
-
-const modelUrl = ref('/ProductImages/3D/Models/Chair.glb')
-const textures = ref({
-  baseColor: '/ProductImages/3D/Textures/Chair_BaseColor.jpg',
-  normal:    '/ProductImages/3D/Textures/Chair_Normal.jpg',
-  roughness: '/ProductImages/3D/Textures/Chair_Roughness.jpg',
-  metalness: '/ProductImages/3D/Textures/Chair_Metalness.jpg'
-})
-// 可省略
-const envHDR = ref('/ProductImages/3D/Textures/studio_small_09_2k.hdr')
-
-// 開關（若你要在其他地方也能觸發）
-function open3D()  { is3DView.value = true }
-function close3D() { is3DView.value = false }
-
-
+import Furniture3DViewer from '@/components/Furniture3DViewer.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -349,6 +332,9 @@ const relatedProducts = ref([])
 // ⭐ 客製化相關
 const customizationParts = ref([])
 const selectedOptions = ref({}) // { partId: colorOptionId }
+
+// ⭐ 3D 檢視模式
+const viewMode = ref('image') // 'image' 或 '3d'
 
 const maxQuantity = computed(() => {
   if (selectedVariant.value) {
@@ -728,6 +714,58 @@ function handleImageError(event) {
   event.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="500" height="500"%3E%3Crect fill="%23e0e0e0" width="500" height="500"/%3E%3Ctext fill="%23666" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle" font-size="20"%3E圖片載入失敗%3C/text%3E%3C/svg%3E'
 }
 
+// ⭐ 3D 模型相關函數
+function get3DTextures() {
+  if (!product.value || !selectedOptions.value) {
+    return {}
+  }
+
+  // 根據使用者選擇的顏色選項，回傳對應的 PBR 貼圖
+  const textures = {
+    baseColor: null,
+    normal: null,
+    roughness: null,
+    metalness: null,
+    ao: null
+  }
+
+  // 如果產品有客製化選項，根據選擇組合貼圖
+  if (product.value.isCustomizable && customizationParts.value.length > 0) {
+    customizationParts.value.forEach(part => {
+      const selectedOptionId = selectedOptions.value[part.fPartId]
+      if (selectedOptionId) {
+        const option = part.colorOptions.find(o => o.fColorOptionId === selectedOptionId)
+        if (option && option.textures) {
+          // 假設後端提供了每個顏色選項的貼圖 URL
+          // 這裡可以根據實際的資料結構調整
+          if (option.textures.baseColor) textures.baseColor = getImageUrl(option.textures.baseColor)
+          if (option.textures.normal) textures.normal = getImageUrl(option.textures.normal)
+          if (option.textures.roughness) textures.roughness = getImageUrl(option.textures.roughness)
+          if (option.textures.metalness) textures.metalness = getImageUrl(option.textures.metalness)
+          if (option.textures.ao) textures.ao = getImageUrl(option.textures.ao)
+        }
+      }
+    })
+  } else if (product.value.textures) {
+    // 如果是簡單產品，直接使用產品的貼圖
+    textures.baseColor = product.value.textures.baseColor ? getImageUrl(product.value.textures.baseColor) : null
+    textures.normal = product.value.textures.normal ? getImageUrl(product.value.textures.normal) : null
+    textures.roughness = product.value.textures.roughness ? getImageUrl(product.value.textures.roughness) : null
+    textures.metalness = product.value.textures.metalness ? getImageUrl(product.value.textures.metalness) : null
+    textures.ao = product.value.textures.ao ? getImageUrl(product.value.textures.ao) : null
+  }
+
+  return textures
+}
+
+function on3DModelLoaded(model) {
+  console.log('✅ 3D 模型載入成功', model)
+}
+
+function on3DModelError(err) {
+  console.error('❌ 3D 模型載入失敗', err)
+}
+
 onMounted(() => loadProductDetail())
 
 watch(() => route.params.id, (newId) => {
@@ -863,9 +901,27 @@ watch(() => route.params.id, (newId) => {
   object-fit: cover;
 }
 
+/* ⭐ 3D Viewer 樣式 */
+.viewer-3d-wrapper {
+  position: relative;
+  width: 100%;
+  height: 600px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-group .btn {
+  min-width: 100px;
+}
+
 @media (max-width: 991px) {
   .product-title {
     font-size: 1.5rem;
+  }
+  
+  .viewer-3d-wrapper {
+    height: 400px;
   }
 }
 </style>

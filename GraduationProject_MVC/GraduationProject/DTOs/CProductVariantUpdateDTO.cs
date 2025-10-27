@@ -2,6 +2,7 @@
 {
     public class CProductVariantUpdateDTO
     {
+    
         public int? ProductVariantId { get; set; }   // null = 新增
         public bool? Deleted { get; set; }           // true = 刪除
         public string? SKU { get; set; }
@@ -15,5 +16,6 @@
         public decimal? Height { get; set; }
         public string? SizeLabel { get; set; }
         public decimal? Weight { get; set; }
+ 
     }
 }

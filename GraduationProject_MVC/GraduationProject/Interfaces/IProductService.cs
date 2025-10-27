@@ -12,6 +12,7 @@ namespace GraduationProject.Interfaces
         int Create(CProductCreateDTO dto);
         CProductDetailDTO? GetDetail(int productId); // 給 Edit GET 使用（你可自定）
         int Update(CProductUpdateDTO dto);
+        bool Delete(int productId);
     }
 
 }

@@ -1,50 +1,505 @@
-﻿@model GraduationProject.ViewModels.CProductCreateViewModel
-
+﻿@model GraduationProject.ViewModels.CProductEditViewModel
 @{
     ViewData["Title"] = "新增商品";
+    // 確保 Data 不為 null
+    Model.Data ??= new GraduationProject.DTOs.CProductUpdateDTO();
+    // 若完全沒有預設行，初始化 1 筆空白變體/資產，方便使用者一開始就有欄位可填
+    Model.Data.Variants ??= new List<GraduationProject.DTOs.CProductVariantDTO> { new GraduationProject.DTOs.CProductVariantDTO() };
+    Model.Data.Assets ??= new List<GraduationProject.DTOs.CProductAssetDTO> { new GraduationProject.DTOs.CProductAssetDTO() };
+    var d = Model.Data;
 }
-<h2>新增商品</h2>
 
-<form asp-action="Create" method="post">
-  @Html.AntiForgeryToken()
-
-  <div class="row g-3">
-    <div class="col-md-6">
-      <label asp-for="Name" class="form-label"></label>
-      <input asp-for="Name" class="form-control" />
-      <span asp-validation-for="Name" class="text-danger"></span>
-    </div>
-    <div class="col-md-3">
-      <label asp-for="CategoryId" class="form-label">分類</label>
-      <select asp-for="CategoryId" class="form-select" asp-items="Model.CategoryOptions">
-        <option value="">-- 未指定 --</option>
-      </select>
-    </div>
-    <div class="col-md-3">
-      <label asp-for="PStatus" class="form-label">狀態</label>
-      <select asp-for="PStatus" class="form-select" asp-items="Model.PStatusOptions">
-        <option value="">-- 未指定 --</option>
-      </select>
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="mb-0">新增商品</h2>
+        <div>
+            <a asp-action="List" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> 返回列表
+            </a>
+        </div>
     </div>
 
-    <div class="col-12">
-      <label asp-for="Description" class="form-label"></label>
-      <textarea asp-for="Description" class="form-control" rows="4"></textarea>
-    </div>
-  </div>
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
 
-  <hr />
+        <div class="row g-3">
+            <!-- 左側：基本資料 + 變體 + 資產 -->
+            <div class="col-lg-8">
+                <!-- 基本資料 -->
+                <div class="card shadow-sm">
+                    <div class="card-header">基本資料</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">商品名稱</label>
+                            <input class="form-control" asp-for="Data.Name" required />
+                            <span class="text-danger" asp-validation-for="Data.Name"></span>
+                        </div>
 
-  @await Html.PartialAsync("_VariantsEditor")
-  @await Html.PartialAsync("_AssetsEditor")
-  @await Html.PartialAsync("_PartsEditor")
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">分類</label>
+                                <select class="form-select" asp-for="Data.CategoryId" asp-items="Model.CategoryOptions"></select>
+                                <span class="text-danger" asp-validation-for="Data.CategoryId"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">狀態</label>
+                                <select class="form-select" asp-for="Data.PStatus" asp-items="Model.PStatusOptions"></select>
+                                <span class="text-danger" asp-validation-for="Data.PStatus"></span>
+                            </div>
+                        </div>
 
-  <div class="mt-3">
-    <button type="submit" class="btn btn-primary">建立</button>
-    <a asp-action="List" class="btn btn-outline-secondary">返回列表</a>
-  </div>
-</form>
+                        <div class="mb-3 mt-3">
+                            <label class="form-label">描述</label>
+                            <textarea class="form-control" asp-for="Data.Description" rows="3"></textarea>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">保固(月)</label>
+                                <input class="form-control" asp-for="Data.WarrantyMonth" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">需組裝</label>
+                                <select class="form-select" asp-for="Data.AssemblyRequired">
+                                    <option value="">不指定</option>
+                                    <option value="true">是</option>
+                                    <option value="false">否</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">折扣</label>
+                                <input class="form-control" asp-for="Data.Discount" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">組裝零件</label>
+                                <input class="form-control" asp-for="Data.AssemblyPart" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 變體編輯 -->
+                <div class="card shadow-sm mt-3">
+                    <div class="card-header d-flex justify-content-between">
+                        <span>變體（顏色 / 尺寸 / 庫存 / 售價）</span>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddVariant">＋新增變體</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="variant-list">
+                            @for (int i = 0; i < (d.Variants?.Count ?? 0); i++)
+                            {
+                                <div class="border rounded p-2 mb-2 variant-item">
+                                    <input type="hidden" name="Data.Variants[@i].VariantId" value="@d.Variants[i].VariantId" />
+                                    <input type="hidden" name="Data.Variants[@i].Deleted" value="" />
+                                    <div class="row g-2">
+                                        <div class="col-md-2">
+                                            <label class="form-label">SKU</label>
+                                            <input class="form-control" name="Data.Variants[@i].SKU" value="@d.Variants[i].SKU" required />
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">顏色</label>
+                                            <select class="form-select" name="Data.Variants[@i].ColorId">
+                                                <option value="">無</option>
+                                                @foreach (var c in Model.ColorOptions)
+                                                {
+                                                    <option value="@c.Value">@c.Text</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">售價</label>
+                                            <input class="form-control" name="Data.Variants[@i].Price" value="@(d.Variants[i].Price?.ToString() ?? "")" />
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">成本</label>
+                                            <input class="form-control" name="Data.Variants[@i].Cost" value="@(d.Variants[i].Cost?.ToString() ?? "")" />
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">庫存</label>
+                                            <input class="form-control" name="Data.Variants[@i].Stock" value="@(d.Variants[i].Stock?.ToString() ?? "")" />
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">狀態</label>
+                                            <select class="form-select" name="Data.Variants[@i].PStatus">
+                                                @foreach (var s in Model.PStatusOptions)
+                                                {
+                                                    <option value="@s.Value">@s.Text</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">尺寸</label>
+                                            <input class="form-control" name="Data.Variants[@i].SizeLabel" value="@d.Variants[i].SizeLabel" />
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">長</label>
+                                            <input class="form-control" name="Data.Variants[@i].Length" value="@(d.Variants[i].Length?.ToString() ?? "")" />
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">寬</label>
+                                            <input class="form-control" name="Data.Variants[@i].Width" value="@(d.Variants[i].Width?.ToString() ?? "")" />
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">高</label>
+                                            <input class="form-control" name="Data.Variants[@i].Height" value="@(d.Variants[i].Height?.ToString() ?? "")" />
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">重量</label>
+                                            <input class="form-control" name="Data.Variants[@i].Weight" value="@(d.Variants[i].Weight?.ToString() ?? "")" />
+                                        </div>
+                                        <div class="col-md-2 d-flex align-items-end">
+                                            <button type="button" class="btn btn-outline-danger w-100 btn-delete-variant">刪除</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- 變體模板（隱藏，用於 JS 新增） -->
+                        <template id="tpl-variant">
+                            <div class="border rounded p-2 mb-2 variant-item">
+                                <input type="hidden" name="Data.Variants[__idx__].VariantId" value="" />
+                                <input type="hidden" name="Data.Variants[__idx__].Deleted" value="" />
+                                <div class="row g-2">
+                                    <div class="col-md-2">
+                                        <label class="form-label">SKU</label>
+                                        <input class="form-control" name="Data.Variants[__idx__].SKU" required />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">顏色</label>
+                                        <select class="form-select" name="Data.Variants[__idx__].ColorId">
+                                            <option value="">無</option>
+                                            @foreach (var c in Model.ColorOptions)
+                                            {
+                                                <option value="@c.Value">@c.Text</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">售價</label>
+                                        <input class="form-control" name="Data.Variants[__idx__].Price" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">成本</label>
+                                        <input class="form-control" name="Data.Variants[__idx__].Cost" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">庫存</label>
+                                        <input class="form-control" name="Data.Variants[__idx__].Stock" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">狀態</label>
+                                        <select class="form-select" name="Data.Variants[__idx__].PStatus">
+                                            @foreach (var s in Model.PStatusOptions)
+                                            {
+                                                <option value="@s.Value">@s.Text</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">尺寸</label>
+                                        <input class="form-control" name="Data.Variants[__idx__].SizeLabel" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">長</label>
+                                        <input class="form-control" name="Data.Variants[__idx__].Length" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">寬</label>
+                                        <input class="form-control" name="Data.Variants[__idx__].Width" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">高</label>
+                                        <input class="form-control" name="Data.Variants[__idx__].Height" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">重量</label>
+                                        <input class="form-control" name="Data.Variants[__idx__].Weight" />
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button type="button" class="btn btn-outline-danger w-100 btn-delete-variant">刪除</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- 資產編輯（含圖片上傳＋預覽，僅 image/* 顯示預覽） -->
+                <div class="card shadow-sm mt-3">
+                    <div class="card-header d-flex justify-content-between">
+                        <span>媒體資產（圖片 / 影片 / 3D 模型）</span>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddAsset">＋新增資產</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="asset-list">
+                            @for (int i = 0; i < (d.Assets?.Count ?? 0); i++)
+                            {
+                                var isImg = !string.IsNullOrWhiteSpace(d.Assets[i].MimeType) && d.Assets[i].MimeType.StartsWith("image/");
+                                <div class="border rounded p-2 mb-2 asset-item">
+                                    <input type="hidden" name="Data.Assets[@i].AssetId" value="@d.Assets[i].AssetId" />
+                                    <input type="hidden" name="Data.Assets[@i].Deleted" value="" />
+                                    <div class="row g-2 align-items-end">
+                                        <div class="col-md-3">
+                                            <label class="form-label">URL</label>
+                                            <input class="form-control asset-url" name="Data.Assets[@i].Url" value="@d.Assets[i].Url" />
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">類型</label>
+                                            <input class="form-control asset-type" name="Data.Assets[@i].AssetType" value="@d.Assets[i].AssetType" placeholder="image/video/model" />
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">MIME</label>
+                                            <input class="form-control asset-mime" name="Data.Assets[@i].MimeType" value="@d.Assets[i].MimeType" placeholder="image/png 等" />
+                                        </div>
+                                        <div class="col-md-1">
+                                            <label class="form-label">排序</label>
+                                            <input class="form-control" name="Data.Assets[@i].SortOrder" value="@(d.Assets[i].SortOrder?.ToString() ?? "")" />
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Poster</label>
+                                            <input class="form-control" name="Data.Assets[@i].PosterUrl" value="@d.Assets[i].PosterUrl" />
+                                        </div>
+                                        <div class="col-md-1">
+                                            <input type="hidden" name="Data.Assets[@i].IsPrimary" value="false" />
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="Data.Assets[@i].IsPrimary" value="true" @(d.Assets[i].IsPrimary == true ? "checked" : null) />
+                                                <label class="form-check-label">主圖</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-1 d-grid">
+                                            <button type="button" class="btn btn-outline-danger btn-delete-asset">刪除</button>
+                                        </div>
+
+                                        <!-- 上傳圖片（只允許 image/*） -->
+                                        <div class="col-md-3">
+                                            <label class="form-label">上傳圖片</label>
+                                            <input type="file" class="form-control asset-file" accept="image/*" />
+                                            <small class="text-muted">僅支援圖片；上傳成功會自動填入 URL/MIME</small>
+                                        </div>
+
+                                        <!-- 預覽（僅 image/* 顯示） -->
+                                        <div class="col-md-3">
+                                            <div class="asset-preview border rounded p-1 @(isImg ? "" : "d-none")" style="width:160px;">
+                                                <img src="@d.Assets[i].Url" class="img-fluid rounded" alt="預覽" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- 資產模板（隱藏，用於 JS 新增） -->
+                        <template id="tpl-asset">
+                            <div class="border rounded p-2 mb-2 asset-item">
+                                <input type="hidden" name="Data.Assets[__idx__].AssetId" value="" />
+                                <input type="hidden" name="Data.Assets[__idx__].Deleted" value="" />
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-3">
+                                        <label class="form-label">URL</label>
+                                        <input class="form-control asset-url" name="Data.Assets[__idx__].Url" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">類型</label>
+                                        <input class="form-control asset-type" name="Data.Assets[__idx__].AssetType" placeholder="image/video/model" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">MIME</label>
+                                        <input class="form-control asset-mime" name="Data.Assets[__idx__].MimeType" placeholder="image/png 等" />
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="form-label">排序</label>
+                                        <input class="form-control" name="Data.Assets[__idx__].SortOrder" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Poster</label>
+                                        <input class="form-control" name="Data.Assets[__idx__].PosterUrl" />
+                                    </div>
+                                    <div class="col-md-1">
+                                        <input type="hidden" name="Data.Assets[__idx__].IsPrimary" value="false" />
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="Data.Assets[__idx__].IsPrimary" value="true" />
+                                            <label class="form-check-label">主圖</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1 d-grid">
+                                        <button type="button" class="btn btn-outline-danger btn-delete-asset">刪除</button>
+                                    </div>
+
+                                    <!-- 上傳圖片 -->
+                                    <div class="col-md-3">
+                                        <label class="form-label">上傳圖片</label>
+                                        <input type="file" class="form-control asset-file" accept="image/*" />
+                                        <small class="text-muted">僅支援圖片；上傳成功會自動填入 URL/MIME</small>
+                                    </div>
+
+                                    <!-- 預覽 -->
+                                    <div class="col-md-3">
+                                        <div class="asset-preview border rounded p-1 d-none" style="width:160px;">
+                                            <img src="" class="img-fluid rounded" alt="預覽" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：動作 -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-header">動作</div>
+                    <div class="card-body d-grid gap-2">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-save me-1"></i> 建立
+                        </button>
+                        <a class="btn btn-outline-secondary" asp-action="List">
+                            取消
+                        </a>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    @if (TempData["Ok"] != null)
+                    {
+                        <div class="alert alert-success">@TempData["Ok"]</div>
+                    }
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger">@TempData["Error"]</div>
+                    }
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
 
 @section Scripts {
-  <partial name="_ValidationScriptsPartial" />
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // ===== Variants =====
+        const variantList = document.getElementById('variant-list');
+        const tplVariant = document.getElementById('tpl-variant').innerHTML.trim();
+        const btnAddVariant = document.getElementById('btnAddVariant');
+
+        function currentVariantCount() {
+            return variantList.querySelectorAll('.variant-item').length;
+        }
+
+        btnAddVariant?.addEventListener('click', function () {
+            const idx = currentVariantCount();
+            const html = tplVariant.replaceAll('__idx__', idx);
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = html;
+            variantList.appendChild(wrapper.firstElementChild);
+        });
+
+        variantList?.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn-delete-variant');
+            if (!btn) return;
+            const card = btn.closest('.variant-item');
+            const flag = card.querySelector('input[name$=".Deleted"]');
+            if (flag) flag.value = 'true';
+            card.style.opacity = .5;
+        });
+
+        // ===== Assets（含上傳 + 預覽） =====
+        const assetList = document.getElementById('asset-list');
+        const tplAsset = document.getElementById('tpl-asset').innerHTML.trim();
+        const btnAddAsset = document.getElementById('btnAddAsset');
+
+        function currentAssetCount() {
+            return assetList.querySelectorAll('.asset-item').length;
+        }
+
+        btnAddAsset?.addEventListener('click', function () {
+            const idx = currentAssetCount();
+            const html = tplAsset.replaceAll('__idx__', idx);
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = html;
+            assetList.appendChild(wrapper.firstElementChild);
+        });
+
+        assetList?.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn-delete-asset');
+            if (!btn) return;
+            const card = btn.closest('.asset-item');
+            const flag = card.querySelector('input[name$=".Deleted"]');
+            if (flag) flag.value = 'true';
+            card.style.opacity = .5;
+        });
+
+        function isImageMime(m) { return typeof m === 'string' && m.startsWith('image/'); }
+
+        async function uploadImage(file) {
+            const url = '@Url.Action("UploadAsset", "Product")'; // 若有 Area，改成 new { area = "Admin" }
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            const fd = new FormData();
+            fd.append('file', file);
+
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token },
+                body: fd
+            });
+            if (!res.ok) {
+                const msg = await res.text();
+                throw new Error(msg || 'Upload failed');
+            }
+            return await res.json(); // { url, mime, name }
+        }
+
+        assetList?.addEventListener('change', async function (e) {
+            const input = e.target;
+            if (!input.classList.contains('asset-file')) return;
+
+            const file = input.files?.[0];
+            if (!file) return;
+
+            if (!file.type || !file.type.startsWith('image/')) {
+                alert('僅支援圖片類型 (image/*)');
+                input.value = '';
+                return;
+            }
+
+            const card = input.closest('.asset-item');
+            const urlBox = card.querySelector('.asset-url');
+            const mimeBox = card.querySelector('.asset-mime');
+            const typeBox = card.querySelector('.asset-type');
+            const preview = card.querySelector('.asset-preview');
+            const img = preview?.querySelector('img');
+
+            try {
+                input.disabled = true;
+                const { url, mime } = await uploadImage(file);
+                if (urlBox) urlBox.value = url;
+                if (mimeBox) mimeBox.value = mime || file.type;
+                if (typeBox) typeBox.value = 'image';
+                if (preview && img && isImageMime(mime || file.type)) {
+                    img.src = url;
+                    preview.classList.remove('d-none');
+                }
+            } catch (err) {
+                alert('上傳失敗：' + (err?.message ?? 'Unknown'));
+            } finally {
+                input.disabled = false;
+            }
+        });
+
+        // 初次渲染：依 MIME 顯示/隱藏預覽
+        document.querySelectorAll('#asset-list .asset-item').forEach(card => {
+            const mime = card.querySelector('.asset-mime')?.value || '';
+            const url = card.querySelector('.asset-url')?.value || '';
+            const preview = card.querySelector('.asset-preview');
+            const img = preview?.querySelector('img');
+            if (preview && img && isImageMime(mime) && url) {
+                img.src = url;
+                preview.classList.remove('d-none');
+            } else if (preview) {
+                preview.classList.add('d-none');
+            }
+        });
+    </script>
 }

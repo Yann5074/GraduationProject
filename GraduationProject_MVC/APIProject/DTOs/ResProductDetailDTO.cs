@@ -11,6 +11,10 @@
         public bool? FAssemblyRequired { get; set; }
         public int? FDiscount { get; set; }
 
+
+        public string F3dModelPath { get; set; }        // 3D 模型檔案路徑
+        public string EnvMapUrl { get; set; }
+
         // ===== 素材 =====
         public List<ResProductAssetDTO> Assets { get; set; }
 
