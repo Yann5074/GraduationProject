@@ -243,5 +243,43 @@ namespace ApiProject.Controllers
             return Ok(new { url = absolute, relative, fileName });
         }
 
+        // 8) 確認目前密碼
+        [Authorize] // 只有登入的人能檢查
+        // POST/api/Member/me/checkPassword
+        [HttpPost("me/checkPassword")]
+        public async Task<ActionResult<CheckPasswordResponseDTO>> CheckPassword(
+            [FromBody] CheckPasswordRequestDTO req,
+            CancellationToken ct)
+        {
+            // 從 Claims 取出當前登入會員ID
+            var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(idStr))
+            {
+                return Unauthorized(new CheckPasswordResponseDTO
+                {
+                    Ok = false,
+                    Message = "尚未登入或 Session 已過期"
+                });
+            }
+
+            if (!int.TryParse(idStr, out var memberId))
+            {
+                return BadRequest(new CheckPasswordResponseDTO
+                {
+                    Ok = false,
+                    Message = "無效的會員識別"
+                });
+            }
+
+            // 呼叫 service 驗證密碼
+            bool ok = await _memberService.CheckPasswordAsync(memberId, req.Password ?? "", ct);
+
+            return Ok(new CheckPasswordResponseDTO
+            {
+                Ok = ok,
+                Message = ok ? "密碼正確" : "密碼錯誤"
+            });
+        }
+
     }
 }
