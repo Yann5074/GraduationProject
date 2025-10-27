@@ -56,7 +56,7 @@ namespace ApiProject.Controllers
                 else
                     return StatusCode(StatusCodes.Status500InternalServerError, "伺服器內部錯誤");
             }
-            return NoContent();
+            return Ok(result);
         }
 
         // 更改配送地址 -V
