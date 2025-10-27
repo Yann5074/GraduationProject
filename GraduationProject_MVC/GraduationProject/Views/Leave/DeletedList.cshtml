@@ -1,7 +1,21 @@
-﻿@using GraduationProject.Enum
+﻿@using GraduationProject.DTOs
+@using GraduationProject.Dictionary
+@using GraduationProject.Enum
 @using GraduationProject.ViewModels
 @model IEnumerable<CLeaveListItemViewModel>
+@{
+    // 狀態Enum
+    var deleted = (int)LeaveRequestStatusEnum.Deleted;
+}
 <h3>取消申請清單</h3>
+<div class="d-flex align-items-center mb-3">
+    <!-- 右側按鈕群組 -->
+    <div class="ms-auto d-flex gap-2">
+        <a asp-action="List" class="btn btn-light">
+            返回清單
+        </a>
+    </div>
+</div>
 <table class="table table-striped">
     <thead>
         <tr>
@@ -39,9 +53,16 @@
                     </td>
                     <td>@x.Description</td>
                     <td>
-                        <form method="post" asp-action="Delete" asp-route-leaveId="@x.LeaveId">
-                            <button type="submit" class="btn btn-danger" onclick="return confirm('確定要刪除嗎？')">刪除</button>
-                        </form>
+                        @if (x.StatusId == deleted)
+                        {
+                            <form method="post" asp-action="HardDelete" asp-route-id="@x.LeaveId">
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('確定要刪除嗎？')">刪除</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <button disabled type="submit" class="btn btn-danger" )">例外</button>
+                        }
                     </td>
                 </tr>
             }

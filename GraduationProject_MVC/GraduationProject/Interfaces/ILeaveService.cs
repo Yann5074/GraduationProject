@@ -1,4 +1,5 @@
 ﻿using GraduationProject.DTOs;
+using GraduationProject.Models;
 
 namespace GraduationProject.Interfaces
 {
@@ -8,10 +9,9 @@ namespace GraduationProject.Interfaces
         Task<int> CreateAsync(CLeaveCreateDTO dto, CancellationToken ct = default);
 
         // 申請人清單
-        Task<List<CLeaveItemDTO>> GetMyLeavesAsync(int employeeId, CancellationToken ct = default);
+        Task<PagedList<CLeaveItemDTO>> GetMyLeavesAsync(int employeeId, string? keyword, DateTime? start, DateTime? end, int page = 1, int pageSize = 10, CancellationToken ct = default);
 
         //軟刪清單
-        // 申請人清單
         Task<List<CLeaveItemDTO>> GetMyDeletedLeavesAsync(int employeeId, CancellationToken ct = default);
 
         // 主管審核清單

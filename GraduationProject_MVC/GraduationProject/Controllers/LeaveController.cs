@@ -33,6 +33,7 @@ namespace GraduationProject.Controllers
                 LeaveType = x.LeaveType,
                 StartDate = x.StartDate,
                 EndDate = x.EndDate,
+                StatusId = x.StatusId,
                 Status = x.StatusName,
                 Description = x.Description,
                 PictureUrl = string.IsNullOrEmpty(x.PictureFileName)
@@ -58,6 +59,7 @@ namespace GraduationProject.Controllers
                 LeaveType = x.LeaveType,
                 StartDate = x.StartDate,
                 EndDate = x.EndDate,
+                StatusId = x.StatusId,
                 Status = x.StatusName,
                 Description = x.Description,
                 PictureUrl = string.IsNullOrEmpty(x.PictureFileName)
@@ -182,7 +184,9 @@ namespace GraduationProject.Controllers
         }
 
         //硬刪
-        public async Task<IActionResult> Delete(int id, CancellationToken ct)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> HardDelete(int id, CancellationToken ct)
         {
             try
             {
