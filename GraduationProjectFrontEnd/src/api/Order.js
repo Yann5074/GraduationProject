@@ -14,9 +14,9 @@ export const getAllOrders = async () => {
 }
 
 // 尋找指定訂單
-export const lookupOrder = async () => {
+export const lookupOrder = async (keyword) => {
     try {
-        const result = await http.get(`/Order/${orderId}`);
+        const result = await http.get(`/Order/${encodeURIComponent(keyword)}`);
         return mapToOrderDTOList(result.data);
     } catch (err) {
         console.error('查無指定訂單:', err);
