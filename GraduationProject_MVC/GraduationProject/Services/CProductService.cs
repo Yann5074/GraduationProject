@@ -382,6 +382,13 @@ namespace GraduationProject.Services
             return product.FProductId;
         }
 
+
+
+      
+
+
+
+
         public bool Delete(int productId)
         {
             var p = _db.TProducts
@@ -397,6 +404,9 @@ namespace GraduationProject.Services
             _db.SaveChanges();
             return true;
         }
+
+
+
     }
 
 }

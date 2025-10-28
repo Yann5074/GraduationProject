@@ -31,7 +31,6 @@ namespace ApiProject.Services
                 .Include(p => p.PStatus)
                 .Include(p => p.ProductAssets)
                 .Include(p => p.ProductVariants)
-                .Include(p => p.ProductParts)
                 .AsQueryable();
 
             // 篩選
@@ -67,14 +66,7 @@ namespace ApiProject.Services
                     TotalStock = p.ProductVariants.Sum(v => v.FStock ?? 0),
                     IsAvailable = p.FPstatus == 1 && p.ProductVariants.Sum(v => v.FStock ?? 0) > 0,
                     MinPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Min(v => v.FPrice),
-                    MaxPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Max(v => v.FPrice),
-
-                    //可自訂資訊
-                    IsCustomizable = p.ProductParts.Any(),
-
-                    CustomizablePartsCount = p.ProductParts.Count(),
-
-
+                    MaxPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Max(v => v.FPrice)
                 })
                 .ToListAsync();
 
@@ -98,7 +90,8 @@ namespace ApiProject.Services
             var q = _db.TProducts
         .AsNoTracking()
         .Include(p => p.Category)
-        .Include(p => p.ProductVariants)      // + Color 如需：.ThenInclude(v => v.Color)
+        .Include(p => p.ProductVariants)
+            .ThenInclude(v => v.Color)
         .Include(p => p.ProductAssets)
         .AsQueryable();
 
@@ -131,9 +124,9 @@ namespace ApiProject.Services
                                     FSku = v.FSku,
                                     FPrice = v.FPrice,
                                     FStock = v.FStock,
-                                    // ColorId   = v.ColorId,
-                                    // ColorName = v.Color?.ColorName,
-                                    // ColorCode = v.Color?.ColorCode,
+                                    FColorId = v.FColorId,
+                                    ColorName = v.Color.ColorName,
+                                    ColorCode = v.Color.ColorCode,
                                     FSizeLabel = v.FSizeLabel
                                 }).ToList(),
                     Assets = p.ProductAssets
@@ -199,48 +192,33 @@ namespace ApiProject.Services
         }
 
 
-        public async Task<ResProductDetailDTO> GetProductByIdAsync(int id, bool includeCustomization = false)
+        public async Task<ResProductDetailDTO?> GetProductByIdAsync(int id)
         {
-            // 基本查詢
-            var query = _db.TProducts
+            // 基本查詢 - 只使用 7 個資料表
+            var product = await _db.TProducts
                 .Include(p => p.Category)
                 .Include(p => p.ProductAssets)
                 .Include(p => p.ProductVariants)
-                .AsQueryable();
-
-            if (includeCustomization)
-            {
-                query = query
-                    .Include(p => p.ProductParts)
-                        .ThenInclude(part => part.ColorOptions)
-                            .ThenInclude(option => option.Textures);
-            }
-            else
-            {
-                
-                query = query.Include(p => p.ProductParts);
-            }
-
-            var product = await query.FirstOrDefaultAsync(p => p.FProductId == id);
+                .FirstOrDefaultAsync(p => p.FProductId == id);
 
             if (product == null)
             {
                 return null;
             }
 
+            // 取得主圖
             var primaryAsset = product.ProductAssets
-               .Where(a => !string.IsNullOrEmpty(a.FUrl) && (a.FIsPrimary ?? false))
-               .OrderBy(a => a.FSortOrder)
-               .FirstOrDefault();
+                .Where(a => !string.IsNullOrEmpty(a.FUrl) && (a.FIsPrimary ?? false))
+                .OrderBy(a => a.FSortOrder)
+                .FirstOrDefault();
 
-            // 3D
+            // 取得 3D 模型
             var modelAsset = product.ProductAssets
                 .FirstOrDefault(a => a.FAssetType == "3D" || a.FAssetType == "Model");
 
-            // 環境貼圖
+            // 取得環境貼圖
             var envMapAsset = product.ProductAssets
                 .FirstOrDefault(a => a.FAssetType == "EnvMap");
-
 
             var result = new ResProductDetailDTO
             {
@@ -251,6 +229,9 @@ namespace ApiProject.Services
                 CategoryName = product.Category?.FName,
                 FWarrantyMonth = product.FWarrantyMonth,
                 FAssemblyRequired = product.FAssemblyRequired,
+               
+
+                // 主圖 URL
                 MainImageUrl = primaryAsset?.FUrl
                     ?? product.ProductAssets
                         .Where(a => !string.IsNullOrEmpty(a.FUrl))
@@ -258,13 +239,14 @@ namespace ApiProject.Services
                         .Select(a => a.FUrl)
                         .FirstOrDefault()
                     ?? "/ProductImages/default.png",
+
                 // 3D 模型路徑
                 F3dModelPath = modelAsset?.FUrl,
 
                 // 環境貼圖路徑
                 EnvMapUrl = envMapAsset?.FUrl,
 
-                // 素材
+                // 素材列表
                 Assets = product.ProductAssets
                     .Where(a => !string.IsNullOrEmpty(a.FUrl))
                     .OrderBy(a => a.FSortOrder)
@@ -273,13 +255,14 @@ namespace ApiProject.Services
                         FAssetId = a.FAssetId,
                         FAssetType = a.FAssetType,
                         FFilePath = a.FUrl,
+                        FUrl = a.FUrl,
                         FMimeType = a.FMimeType,
                         FPosterUrl = a.FPosterUrl,
                         FIsPrimary = a.FIsPrimary ?? false,
                         FSortOrder = a.FSortOrder ?? 0
                     }).ToList(),
 
-                // 變體
+                // 變體列表（只顯示上架中的）
                 Variants = product.ProductVariants
                     .Where(v => v.FPstatus == 1)
                     .Select(v => new ResProductVariantDTO
@@ -288,17 +271,21 @@ namespace ApiProject.Services
                         FSku = v.FSku,
                         FPrice = v.FPrice,
                         FStock = v.FStock,
+                        FSizeLabel = v.FSizeLabel
                     }).ToList(),
 
+                // 庫存總計（只計算上架中的變體）
                 TotalStock = product.ProductVariants
                     .Where(v => v.FPstatus == 1)
                     .Sum(v => v.FStock ?? 0),
 
+                // 是否可購買
                 IsAvailable = product.FPstatus == 1 &&
                               product.ProductVariants
                                   .Where(v => v.FPstatus == 1)
                                   .Sum(v => v.FStock ?? 0) > 0,
 
+                // 價格區間（只計算上架中的變體）
                 MinPrice = product.ProductVariants
                     .Where(v => v.FPrice.HasValue && v.FPstatus == 1)
                     .Min(v => v.FPrice),
@@ -307,40 +294,8 @@ namespace ApiProject.Services
                     .Where(v => v.FPrice.HasValue && v.FPstatus == 1)
                     .Max(v => v.FPrice),
 
-                IsCustomizable = product.ProductParts.Any(),
 
-                //  只有當 includeCustomization = true 時才載入
-                CustomizationParts = includeCustomization && product.ProductParts.Any()
-                    ? product.ProductParts
-                        .OrderBy(p => p.FDiaplayOrder)
-                        .Select(part => new ResPartDTO
-                        {
-                            FPartId = part.FPartId,
-                            FPartName = part.FPartName,
-                            FPartCode = part.FPartCode,
-                            fDisplayOrder = part.FDiaplayOrder,
-                            ColorOptions = part.ColorOptions
-                                .OrderBy(o => o.FDisplayOrder)
-                                .Select(option => new ResColorOptionDTO 
-                                {
-                                    FColorOptionId = option.FColorOptionId,
-                                    FOptionName = option.FOptionName,
-                                    FColorHex = option.FColorHex,
-                                    FThumbnail = option.FThumbnail,
-                                    FIsDefault = option.FIsDefault,
-                                    fDisplayOrder = option.FDisplayOrder,
-                                    Textures = option.Textures
-                                        .Select(t => new ResTextureDTO
-                                        {
-                                            FTextureId = t.FTextureId,
-                                            FTextureType = t.FTextureType,
-                                            FFilePath = t.FFilePath,
-                                            FTiling = t.FTiling
-                                        }).ToList()
-                                }).ToList()
-                        }).ToList()
-                    : null,
-
+                // 時間戳記
                 FCreateTime = product.FCreateTime,
                 FUpdateTime = product.FUpdateTime
             };

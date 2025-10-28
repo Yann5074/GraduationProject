@@ -139,7 +139,7 @@ export const ProductAPI = {
      */
     async getProductById(productId, includeCustomization = true) {
         try {
-            // ⭐ includeCustomization=true 會取得 3D 模型路徑
+            // ncludeCustomization=true 會取得 3D 模型路徑
             const url = `/Product/${productId}?includeCustomization=${includeCustomization}`
 
             const response = await apiClient.get(url)
@@ -221,7 +221,7 @@ export const ProductAPI = {
     /**
      * 根據自訂選項取得價格（用於 3D 客製化）
      * @param {number} id - 產品 ID
-     * @param {Object} selectedOptions - 選中的顏色選項 { partCode: colorOptionId }
+     * @param {Object} selectedOptions 
      * @returns {Promise<Object>} 價格資訊
      */
     getPriceByCustomization(id, selectedOptions) {

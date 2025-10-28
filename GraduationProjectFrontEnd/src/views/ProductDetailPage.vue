@@ -242,10 +242,10 @@
           <!-- 操作按鈕 -->
           <div class="d-grid gap-2">
             <button class="btn btn-primary btn-lg" :disabled="!canAddToCart" @click="addToCart">
-              <i class="bi bi-cart-plus me-2"></i>加入購物車
+              加入購物車
             </button>
             <button class="btn btn-outline-primary btn-lg" :disabled="!canAddToCart" @click="buyNow">
-              <i class="bi bi-lightning-fill me-2"></i>立即購買
+              立即購買
             </button>
           </div>
 
@@ -329,11 +329,11 @@ const selectedImage = ref('')
 const productImages = ref([])
 const relatedProducts = ref([])
 
-// ⭐ 客製化相關
+// 客製化相關
 const customizationParts = ref([])
 const selectedOptions = ref({}) // { partId: colorOptionId }
 
-// ⭐ 3D 檢視模式
+// 3D 檢視模式
 const viewMode = ref('image') // 'image' 或 '3d'
 
 const maxQuantity = computed(() => {
@@ -367,7 +367,7 @@ const canAddToCart = computed(() => {
   return quantity.value >= 1 && quantity.value <= maxQuantity.value
 })
 
-// ⭐ SKU 解析函數（對應後端 ParseSKUForCart 的邏輯）
+// SKU 解析函數（對應後端 ParseSKUForCart 的邏輯）
 const PRODUCT_CODE_LENGTH = 4  // 產品代碼長度
 const PART_CODE_LENGTH = 3     // 部位代碼長度  
 const OPTION_ID_LENGTH = 2     // 選項 ID 長度
@@ -419,13 +419,13 @@ function parseSkuToOptions(sku) {
   return result
 }
 
-// ⭐ 根據選擇找到對應的 variant
+// 根據選擇找到對應的 variant
 function matchVariantBySelection() {
   if (!product.value?.isCustomizable || variants.value.length === 0) {
     return
   }
   
-  console.log('🔍 尋找對應的變體')
+  console.log('尋找對應的變體')
   console.log('  選擇:', selectedOptions.value)
   
   // 確認所有部位都已選擇
@@ -434,7 +434,7 @@ function matchVariantBySelection() {
   )
   
   if (!allPartsSelected) {
-    console.log('  ⚠️ 尚未選擇所有部位')
+    console.log('  尚未選擇所有部位')
     selectedVariant.value = null
     return
   }
@@ -454,19 +454,19 @@ function matchVariantBySelection() {
   
   if (matchedVariant) {
     selectedVariant.value = matchedVariant
-    console.log('✅ 找到匹配的變體:', matchedVariant.fSku || matchedVariant.FSku)
+    console.log('找到匹配的變體:', matchedVariant.fSku || matchedVariant.FSku)
     console.log('  價格:', matchedVariant.fPrice || matchedVariant.FPrice)
     console.log('  庫存:', matchedVariant.fStock || matchedVariant.FStock)
   } else {
     selectedVariant.value = null
-    console.log('❌ 沒有找到匹配的變體')
+    console.log('沒有找到匹配的變體')
   }
 }
 
-// ⭐ 選擇顏色選項
+// 選擇顏色選項
 function selectColorOption(partId, optionId) {
   selectedOptions.value[partId] = optionId
-  console.log('🎨 選擇:', { partId, optionId, selectedOptions: selectedOptions.value })
+  console.log('選擇:', { partId, optionId, selectedOptions: selectedOptions.value })
   matchVariantBySelection()
 }
 
@@ -500,12 +500,12 @@ async function loadProductDetail() {
   loading.value = true
   error.value = null
 
-  console.log('📦 載入產品詳情:', productId)
+  console.log('載入產品詳情:', productId)
 
   try {
-    // ⭐ 使用 includeCustomization=true
+    // 使用 includeCustomization=true
     const response = await ProductAPI.getProductById(productId, true)
-    console.log('📥 API 回應:', response)
+    console.log('API 回應:', response)
     
     if (response.success && response.data) {
       const rawData = response.data
@@ -534,12 +534,12 @@ async function loadProductDetail() {
       rawData.fAssemblyRequired = rawData.fAssemblyRequired ?? false
       
       product.value = rawData
-      console.log('✅ 產品資料:', product.value)
+      console.log('產品資料:', product.value)
       
-      // ⭐ 處理客製化資料
+      // 處理客製化資料
       if (rawData.isCustomizable && rawData.customizationParts) {
         customizationParts.value = rawData.customizationParts
-        console.log('🎨 客製化部位:', customizationParts.value.length, '個')
+        console.log('客製化部位:', customizationParts.value.length, '個')
         
         // 初始化選擇（選擇第一個或預設選項）
         customizationParts.value.forEach(part => {
@@ -548,7 +548,7 @@ async function loadProductDetail() {
             selectedOptions.value[part.fPartId] = defaultOption.fColorOptionId
           }
         })
-        console.log('✅ 預設選擇:', selectedOptions.value)
+        console.log('預設選擇:', selectedOptions.value)
       }
       
       setupProductImages()
@@ -561,11 +561,11 @@ async function loadProductDetail() {
       
       await loadRelatedProducts(product.value.fCategoryId)
     } else {
-      console.error('❌ 載入失敗:', response)
+      console.error('載入失敗:', response)
       error.value = response.message || '載入產品失敗'
     }
   } catch (err) {
-    console.error('❌ 發生錯誤:', err)
+    console.error('發生錯誤:', err)
     error.value = err.message || '載入產品時發生錯誤'
   } finally {
     loading.value = false
@@ -603,7 +603,7 @@ async function loadVariants(productId) {
       const available = variants.value.find(v => (v.fStock || v.FStock) > 0)
       if (available) {
         selectVariant(available)
-        console.log('✅ 已選擇變體:', available.fSku || available.FSku)
+        console.log('已選擇變體:', available.fSku || available.FSku)
       }
     }
   }

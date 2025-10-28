@@ -155,7 +155,7 @@ namespace GraduationProject.Controllers
             {
                 TempData["Error"] = "刪除失敗或商品不存在";
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(List));
         }
 
 

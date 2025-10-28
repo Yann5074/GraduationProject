@@ -70,7 +70,7 @@ namespace ApiProject.Controllers
         {
             try
             {
-                var result = await _ProductService.GetProductByIdAsync(id, includeCustomization);
+                var result = await _ProductService.GetProductByIdAsync(id);
 
                 if (result == null)
                 {
