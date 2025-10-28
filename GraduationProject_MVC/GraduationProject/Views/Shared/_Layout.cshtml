@@ -113,63 +113,14 @@
                 </a>
             </li>
         </ul>
-        <ul class="side-menu bottom">
-            <li>
-                <form asp-area="" asp-controller="Home" asp-action="LogoutPost" method="post" class="d-inline">
-                    <button type="submit" class="logoutbtn btn btn-secondary p-0 border-0 text-start">
-                        <i class="bx bx-power-off bx-sm bx-burst-hover"></i>
-                        <span class="text" onclick="return confirm('確定要登出嗎？')">登出</span>
-                    </button>
-                    <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                        <ul class="navbar-nav flex-grow-1">
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Order" asp-action="List">訂單管理</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Products" asp-action="List">產品管理</a>
-                            </li>
-                            @* <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li> *@
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Member" asp-action="List">會員管理</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Employee" asp-action="List">員工清單</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Analytics" asp-action="OrderDashboard">訂單圖表</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="ChatRoom" asp-action="Index">客服聊天室</a>
-                            </li>
-                        </ul>
-                        @* <partial name="_LoginPartial" /> *@
-                        @* <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Login">登入</a> *@
-                        
-                        <!-- 右側：登入者資訊 + 登出 -->
-                        <div class="d-flex align-items-center">
-                            @if (me is not null)
-                            {
-                                <div class="dropdown">
-                                    <a class="d-flex align-items-center text-decoration-none dropdown-toggle"
-                                       href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <img src="@headshot"
-                                             alt="頭貼"
-                                             class="rounded-circle border me-2"
-                                             style="width:36px;height:36px;object-fit:cover"
-                                             onerror="this.onerror=null;this.src='@Url.Content("~/HeadShotImages/default.png")';" />
-                                        <div class="d-none d-sm-block text-start">
-                                            <div class="fw-semibold small">@me.Name</div>
-                                            @if (!string.IsNullOrEmpty(roleName))
-                                            {
-                                                <div class="text-muted small">@roleName</div>
-                                            }
-                                        </div>
-                                    </a>
+    </section>
+
+    <section id="content">
+        
+        <!-- NAVBAR -->
+        <nav class="navbar bg-body-tertiary px-3">
+            <!-- 這顆要讓你的 JS 能抓到：#content nav .bx.bx-menu -->
+            <i class="bx bx-menu bx-sm"></i>
 
             <!-- 深淺色切換：JS 會讀取 #switch-mode 並在 body 上切 .dark -->
             <input type="checkbox" class="checkbox" id="switch-mode" hidden />
@@ -178,8 +129,7 @@
                 <i class="bx bx-sun"></i>
                 <div class="ball"></div>
             </label>
-            <!-- 右側：登入者資訊 + 登出 -->
-            <div class="d-flex align-items-center">
+            <div class="ms-auto d-flex align-items-center">
                 @if (me is not null)
                 {
                     <div class="dropdown">
@@ -216,13 +166,6 @@
                                 </a>
                             </li>
 
-                            <!-- 修改密碼（導去你自己的頁面/控制器） -->
-                            @* <li>
-                                            <a class="dropdown-item" asp-controller="Employee" asp-action="Edit">
-                                                <i class="bi bi-key me-2"></i> 修改密碼
-                                            </a>
-                                        </li> *@
-
                             <li><hr class="dropdown-divider" /></li>
 
                             <!-- 登出：用 POST + 防偽 -->
@@ -245,7 +188,7 @@
         </nav>
         <!-- /NAVBAR -->
         <!-- MAIN：頁面內容渲染在這 -->
-        <main>
+        <main class="p-3">
             @RenderBody()
         </main>
 
