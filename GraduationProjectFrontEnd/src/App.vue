@@ -151,12 +151,13 @@ onMounted(() => {
 
     <RouterView />
 
-    <!-- Start Footer Section -->
-    <footer class="footer-section">
+    <!-- Footer（把 public 圖片改成 / 開頭） -->
+        <footer class="footer-section">
       <div class="container relative">
-        <!-- <div class="sofa-img">
-          <img src="/asset/images/sofa.png" alt="Image" class="img-fluid" />
-        </div> -->
+        <div class="sofa-img">
+          <!-- public 底下的圖，請用 /asset/... -->
+          <!-- <img src="/asset/images/sofa.png" alt="Image" class="img-fluid" /> -->
+        </div>
 
         <div class="row">
           <div class="col-lg-8">
@@ -276,7 +277,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.app-container {
+ /* .app-container {
   position: relative;
   min-height: 100vh;
 }
@@ -288,7 +289,7 @@ header {
 .logo {
   display: block;
   margin: 0 auto 2rem;
-}
+} */
 
 .chat-popup {
   position: fixed;
@@ -304,7 +305,7 @@ header {
   z-index: 9999;
 }
 
-nav {
+/* nav {
   width: 100%;
   font-size: 12px;
   text-align: center;
@@ -327,9 +328,9 @@ nav a {
 
 nav a:first-of-type {
   border: 0;
-}
+} */
 
-@media (min-width: 1024px) {
+/* @media (min-width: 1024px) {
   header {
     display: flex;
     place-items: center;
@@ -354,5 +355,5 @@ nav a:first-of-type {
     padding: 1rem 0;
     margin-top: 1rem;
   }
-}
+} */
 </style>

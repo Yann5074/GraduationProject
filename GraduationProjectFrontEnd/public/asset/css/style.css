@@ -54,7 +54,7 @@ a.more {
   font-weight: 600;
 }
 
-.custom-navbar .navbar-brand > span {
+.custom-navbar .navbar-brand>span {
   opacity: 0.4;
 }
 
@@ -480,7 +480,8 @@ a.more {
 .we-help-section .imgs-grid {
   display: -ms-grid;
   display: grid;
-  grid-template-columns: repeat(27, minmax(0, 1fr));
+  -ms-grid-columns: (1fr);
+  grid-template-columns: repeat(27, 1fr);
   position: relative;
 }
 
@@ -664,7 +665,7 @@ a.more {
   }
 }
 
-.testimonial-slider-wrap #testimonial-nav > span {
+.testimonial-slider-wrap #testimonial-nav>span {
   cursor: pointer;
   position: absolute;
   width: 58px;
@@ -678,7 +679,7 @@ a.more {
   transition: 0.3s all ease;
 }
 
-.testimonial-slider-wrap #testimonial-nav > span:hover {
+.testimonial-slider-wrap #testimonial-nav>span:hover {
   background: #3b5d50;
   color: #ffffff;
 }
