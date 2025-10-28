@@ -16,7 +16,11 @@
         public decimal? FLength { get; set; }
         public decimal? FWidth { get; set; }
         public decimal? FHeight { get; set; }
-        public string FSizeLabel { get; set; }
+        public string? FSizeLabel { get; set; }
         public decimal? FWeight { get; set; }
+
+      
+
+
     }
 }

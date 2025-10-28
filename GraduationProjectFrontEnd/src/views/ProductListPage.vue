@@ -35,7 +35,7 @@
             </div>
             <div class="card-body">
               <!-- 類別篩選 -->
-              <div class="mb-4">
+              <!-- <div class="mb-4">
                 <h6 class="fw-bold mb-3">
                   <i class="bi bi-grid me-2"></i>產品類別
                 </h6>
@@ -72,9 +72,9 @@
                   <div class="spinner-border spinner-border-sm me-2"></div>
                   載入中...
                 </div>
-              </div>
+              </div> -->
 
-              <hr>
+              <!-- <hr> -->
 
               <!-- 顏色篩選 -->
               <div v-if="filterOptions.colors && filterOptions.colors.length > 0" class="mb-4">
@@ -303,7 +303,7 @@
                     <div class="mb-2">
                       <span class="badge bg-secondary">{{ product.categoryName }}</span>
                       <span v-if="product.isAvailable" class="badge bg-success ms-1">
-                        <i class="bi bi-check-circle"></i>
+                        <!-- <i class="bi bi-check-circle"></i> -->
                       </span>
                     </div>
                     
@@ -311,9 +311,9 @@
                     <h5 class="card-title mb-2">{{ product.fName }}</h5>
                     
                     <!-- 產品描述 -->
-                    <p v-if="product.fDescription" class="card-text text-muted small mb-3">
+                    <!-- <p v-if="product.fDescription" class="card-text text-muted small mb-3">
                       {{ truncateText(product.fDescription, 60) }}
-                    </p>
+                    </p> -->
 
                     <!-- 價格與庫存 -->
                     <div class="mt-auto">
@@ -773,28 +773,29 @@ function truncateText(text, maxLength) {
 function getProductImageUrl(product) {
   // 如果產品已經有錯誤標記，直接返回預設圖
   if (product._imageError) {
-    return '/images/default-product.jpg'
+    return '/ProductImages/default.png'
   }
   
   // 如果有主圖 URL
   if (product.mainImageUrl) {
-    return product.mainImageUrl
+    const url = product.mainImageUrl
+    
+    //  如果已經是完整 URL，直接返回
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url
+    }
+    
+    // 如果是相對路徑，加上 API Base
+    if (url.startsWith('/')) {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7131'
+      return `${API_BASE}${url}`
+    }
+    
+    return url
   }
   
   // 預設圖片
-  return '/images/default-product.jpg'
-}
-
-// 圖片載入失敗處理（穩定的，不會重複觸發）
-function handleImageError(event, product) {
-  // 標記此產品的圖片載入失敗（只執行一次）
-  if (!product._imageError) {
-    product._imageError = true
-    console.warn('圖片載入失敗:', product.fName, event.target.src)
-    
-    // 設定預設圖片
-    event.target.src = '/images/default-product.jpg'
-  }
+  return '/ProductImages/default.png'
 }
 </script>
 

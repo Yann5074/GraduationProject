@@ -1,4 +1,5 @@
 ﻿using ApiProject.Models;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ApiProject.Models

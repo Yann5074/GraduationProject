@@ -1,16 +1,23 @@
 ﻿@model GraduationProject.ViewModels.CProductEditViewModel
 @{
     ViewData["Title"] = "新增商品";
+
+    // 確保 Data/Variants/Assets 不為 null
     Model.Data ??= new GraduationProject.DTOs.CProductUpdateDTO();
     Model.Data.Variants ??= new List<GraduationProject.DTOs.CProductVariantDTO> { new GraduationProject.DTOs.CProductVariantDTO() };
-    Model.Data.Assets ??= new List<GraduationProject.DTOs.CProductAssetDTO>(); // 空即可
+    Model.Data.Assets ??= new List<GraduationProject.DTOs.CProductAssetDTO>();
+
     var d = Model.Data;
 
-    // 把資產帶上原始索引，方便輸出正確 name
+    // 把資產加上原始索引方便輸出正確的 name
     var assetsWithIndex = (d.Assets ?? new List<GraduationProject.DTOs.CProductAssetDTO>())
                           .Select((a, idx) => new { A = a, Index = idx }).ToList();
+
+    // 依暫存變體索引分組（Create 階段）
     Func<int, IEnumerable<dynamic>> assetsOfVariantTemp = (tempIdx) =>
         assetsWithIndex.Where(x => (x.A.VariantTempIndex ?? -1) == tempIdx);
+
+    // 商品通用資產（未綁任何變體）
     var productAssets = assetsWithIndex.Where(x => (x.A.VariantTempIndex ?? -1) < 0);
 }
 
@@ -22,12 +29,22 @@
         </a>
     </div>
 
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+    @if (TempData["Ok"] != null)
+    {
+        <div class="alert alert-success">@TempData["Ok"]</div>
+    }
+
     <form asp-action="Create" method="post">
         @Html.AntiForgeryToken()
 
         <div class="row g-3">
             <!-- 左側主內容 -->
             <div class="col-lg-8">
+
                 <!-- 基本資料 -->
                 <div class="card shadow-sm">
                     <div class="card-header">基本資料</div>
@@ -104,6 +121,7 @@
                                             <label class="form-label">SKU</label>
                                             <input class="form-control" name="Data.Variants[@i].SKU" value="@v.SKU" required />
                                         </div>
+
                                         <div class="col-md-2">
                                             <label class="form-label">顏色</label>
                                             <select class="form-select" name="Data.Variants[@i].ColorId">
@@ -121,18 +139,22 @@
                                                 }
                                             </select>
                                         </div>
+
                                         <div class="col-md-2">
                                             <label class="form-label">售價</label>
                                             <input class="form-control" name="Data.Variants[@i].Price" value="@(v.Price?.ToString() ?? "")" />
                                         </div>
+
                                         <div class="col-md-2">
                                             <label class="form-label">成本</label>
                                             <input class="form-control" name="Data.Variants[@i].Cost" value="@(v.Cost?.ToString() ?? "")" />
                                         </div>
+
                                         <div class="col-md-2">
                                             <label class="form-label">庫存</label>
                                             <input class="form-control" name="Data.Variants[@i].Stock" value="@(v.Stock?.ToString() ?? "")" />
                                         </div>
+
                                         <div class="col-md-2">
                                             <label class="form-label">狀態</label>
                                             <select class="form-select" name="Data.Variants[@i].PStatus">
@@ -149,6 +171,7 @@
                                                 }
                                             </select>
                                         </div>
+
                                         <div class="col-md-2">
                                             <label class="form-label">尺寸</label>
                                             <input class="form-control" name="Data.Variants[@i].SizeLabel" value="@v.SizeLabel" />
@@ -169,6 +192,7 @@
                                             <label class="form-label">重量</label>
                                             <input class="form-control" name="Data.Variants[@i].Weight" value="@(v.Weight?.ToString() ?? "")" />
                                         </div>
+
                                         <div class="col-md-2 d-flex align-items-end">
                                             <button type="button" class="btn btn-outline-danger w-100 btn-delete-variant">刪除變體</button>
                                         </div>
@@ -309,6 +333,7 @@
                         </div>
                     </div>
                 </div>
+
             </div>
 
             <!-- 右側動作 -->
@@ -324,14 +349,6 @@
                 </div>
 
                 <div class="mt-3">
-                    @if (TempData["Ok"] != null)
-                    {
-                        <div class="alert alert-success">@TempData["Ok"]</div>
-                    }
-                    @if (TempData["Error"] != null)
-                    {
-                        <div class="alert alert-danger">@TempData["Error"]</div>
-                    }
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 </div>
             </div>
@@ -344,11 +361,13 @@
     <div class="border rounded p-2 mb-3 variant-item" data-variant-temp-index="__vidx__">
         <input type="hidden" name="Data.Variants[__vidx__].VariantId" value="" />
         <input type="hidden" name="Data.Variants[__vidx__].Deleted" value="" />
+
         <div class="row g-2">
             <div class="col-md-2">
                 <label class="form-label">SKU</label>
                 <input class="form-control" name="Data.Variants[__vidx__].SKU" required />
             </div>
+
             <div class="col-md-2">
                 <label class="form-label">顏色</label>
                 <select class="form-select" name="Data.Variants[__vidx__].ColorId">
@@ -359,18 +378,22 @@
                     }
                 </select>
             </div>
+
             <div class="col-md-2">
                 <label class="form-label">售價</label>
                 <input class="form-control" name="Data.Variants[__vidx__].Price" />
             </div>
+
             <div class="col-md-2">
                 <label class="form-label">成本</label>
                 <input class="form-control" name="Data.Variants[__vidx__].Cost" />
             </div>
+
             <div class="col-md-2">
                 <label class="form-label">庫存</label>
                 <input class="form-control" name="Data.Variants[__vidx__].Stock" />
             </div>
+
             <div class="col-md-2">
                 <label class="form-label">狀態</label>
                 <select class="form-select" name="Data.Variants[__vidx__].PStatus">
@@ -380,6 +403,7 @@
                     }
                 </select>
             </div>
+
             <div class="col-md-2">
                 <label class="form-label">尺寸</label>
                 <input class="form-control" name="Data.Variants[__vidx__].SizeLabel" />
@@ -400,6 +424,7 @@
                 <label class="form-label">重量</label>
                 <input class="form-control" name="Data.Variants[__vidx__].Weight" />
             </div>
+
             <div class="col-md-2 d-flex align-items-end">
                 <button type="button" class="btn btn-outline-danger w-100 btn-delete-variant">刪除變體</button>
             </div>
@@ -420,6 +445,7 @@
         <input type="hidden" name="Data.Assets[__aidx__].AssetId" value="" />
         <input type="hidden" name="Data.Assets[__aidx__].Deleted" value="" />
         <input type="hidden" name="Data.Assets[__aidx__].VariantTempIndex" value="__vidx__" />
+
         <div class="row g-2 align-items-end">
             <div class="col-md-3">
                 <label class="form-label">URL</label>
@@ -451,6 +477,7 @@
             <div class="col-md-1 d-grid">
                 <button type="button" class="btn btn-outline-danger btn-delete-asset">刪除</button>
             </div>
+
             <div class="col-md-3">
                 <label class="form-label">上傳圖片</label>
                 <input type="file" class="form-control asset-file" accept="image/*" />
@@ -470,6 +497,7 @@
         <input type="hidden" name="Data.Assets[__aidx__].AssetId" value="" />
         <input type="hidden" name="Data.Assets[__aidx__].Deleted" value="" />
         <input type="hidden" name="Data.Assets[__aidx__].VariantTempIndex" value="-1" />
+
         <div class="row g-2 align-items-end">
             <div class="col-md-3">
                 <label class="form-label">URL</label>
@@ -501,6 +529,7 @@
             <div class="col-md-1 d-grid">
                 <button type="button" class="btn btn-outline-danger btn-delete-asset">刪除</button>
             </div>
+
             <div class="col-md-3">
                 <label class="form-label">上傳圖片</label>
                 <input type="file" class="form-control asset-file" accept="image/*" />
@@ -595,7 +624,7 @@
         function isImageMime(m) { return typeof m === 'string' && m.startsWith('image/'); }
 
         async function uploadImage(file) {
-          const url = '@Url.Action("UploadAsset", "Product")'; // 若在 Area 改成 new { area="Admin" }
+          const url = '@Url.Action("UploadAsset", "Products")'; 
           const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
           const fd = new FormData(); fd.append('file', file);
           const res = await fetch(url, { method: 'POST', headers: { 'RequestVerificationToken': token }, body: fd });
@@ -640,5 +669,19 @@
           if (preview && img && isImageMime(mime) && url) { img.src = url; preview.classList.remove('d-none'); }
           else if (preview) { preview.classList.add('d-none'); }
         });
+
+
+        
+       
+        const UPLOAD_URL = '@Url.Action("UploadAsset", "Products")';
+
+                async function uploadImage(file) {
+          const url = '@Url.Action("UploadAsset", "Products")';
+          const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+          const fd = new FormData(); fd.append('file', file);
+          const res = await fetch(url, { method: 'POST', headers: { 'RequestVerificationToken': token ?? '' }, body: fd });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return await res.json();
+        }
     </script>
 }

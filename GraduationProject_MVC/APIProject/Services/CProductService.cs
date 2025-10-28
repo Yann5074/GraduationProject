@@ -125,8 +125,9 @@ namespace ApiProject.Services
                                     FPrice = v.FPrice,
                                     FStock = v.FStock,
                                     FColorId = v.FColorId,
-                                    ColorName = v.Color.FColorName,
-                                    ColorCode = v.Color.FColorCode,
+                                    ColorName = v.Color != null ? v.Color.FColorName : null,  
+                                    ColorCode = v.Color != null ? v.Color.FColorCode : null,  
+                                    ColorHex = v.Color != null ? v.Color.FColorHex : null,
                                     FSizeLabel = v.FSizeLabel
                                 }).ToList(),
                     Assets = p.ProductAssets

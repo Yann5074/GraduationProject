@@ -399,7 +399,7 @@
         function isImageMime(m) { return typeof m === 'string' && m.startsWith('image/'); }
 
         async function uploadImage(file) {
-          const url = '@Url.Action("UploadAsset", "Product")'; // 若控制器有 Area，改 new { area = "Admin" }
+          const url = '@Url.Action("UploadAsset", "Products")'; // 若控制器有 Area，改 new { area = "Admin" }
           const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
           const fd = new FormData();
           fd.append('file', file);
