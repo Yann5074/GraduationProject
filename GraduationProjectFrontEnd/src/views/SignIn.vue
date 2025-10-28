@@ -46,7 +46,7 @@ const onSubmit = async (e) => {
     await auth.login({ user: model })
 
     // 5) 導回首頁
-    router.push('/')
+    router.push('/home')
   } catch (err) {
     const status = err?.response?.status
     errorMsg.value =
