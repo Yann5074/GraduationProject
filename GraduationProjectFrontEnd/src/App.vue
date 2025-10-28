@@ -3,7 +3,7 @@ import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { onMounted, ref } from 'vue'
 import { Dropdown } from 'bootstrap'
 import http from '../src/api/axios'
-import { useAuthStore } from './stores/auth'
+import { useAuthStore } from '@/stores/auth'
 import ChatWidget from './components/Chat/ChatWidget.vue'
 
 const route = useRoute()
@@ -11,12 +11,6 @@ const router = useRouter()
 const isActive = (path) => route.path.startsWith(path)
 const auth = useAuthStore()
 
-/** 統一 axios：一定要帶 cookie 才能讓後端辨識 Session */
-const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE || 'https://localhost:7131',
-  withCredentials: true,
-  timeout: 10000,
-})
 
 /** ✅ 啟動時同步伺服器 Session 狀態 */
 // ✅ 修正版：讓 Pinia 自動用 MemberDTO 處理 imageUrl

@@ -4,13 +4,14 @@ import { useAuthStore } from '@/stores/auth'
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:7131'
 
 const http = axios.create({
-  baseURL: 'https://localhost:7131', // 後端網址
+  baseURL: apiBaseUrl, // 後端網址
   timeout: 10000, // 等待上限10秒
   withCredentials: true, // ⬅️ 關鍵！讓 Cookie / Session 一起送出
 })
 
 http.interceptors.response.use(
     response =>{
+      console.log(response)
         return response
     },
     error => {
