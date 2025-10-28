@@ -2,8 +2,8 @@
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { onMounted, ref } from 'vue'
 import { Dropdown } from 'bootstrap'
-import http from '../src/api/axios'
-import { useAuthStore } from './stores/auth'
+import axios from 'axios'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
