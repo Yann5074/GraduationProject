@@ -29,6 +29,7 @@ namespace GraduationProject.ViewModels
         public List<SelectListItem> CategoryOptions { get; set; } = new();
         public List<SelectListItem> PStatusOptions { get; set; } = new();
         public List<SelectListItem> ColorOptions { get; set; } = new();
+        public List<SelectListItem> TextureOptions { get; set; } = new();
 
         public CProductUpdateDTO ToUpdateDto() => new CProductUpdateDTO
         {

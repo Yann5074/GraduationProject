@@ -1,0 +1,352 @@
+﻿@model GraduationProject.ViewModels.CProductDetailViewModel
+@{
+    ViewData["Title"] = "商品明細";
+
+    var d = Model?.Data;
+
+    // 安全預設
+    d ??= new GraduationProject.DTOs.CProductDetailDTO
+    {
+        Assets = new List<GraduationProject.DTOs.CProductAssetDTO>(),
+        Variants = new List<GraduationProject.DTOs.CProductVariantDTO>(),
+        ImageUrls = new List<string>()
+    };
+
+    var assets = d.Assets ?? new List<GraduationProject.DTOs.CProductAssetDTO>();
+    var variants = d.Variants ?? new List<GraduationProject.DTOs.CProductVariantDTO>();
+
+    // 主圖（先找 IsPrimary，再用排序最前）
+    var hero = assets
+        .Where(a => a.IsPrimary == true && (a.MimeType?.StartsWith("image/") ?? false))
+        .OrderBy(a => a.SortOrder ?? int.MaxValue)
+        .FirstOrDefault()
+        ?? assets
+            .Where(a => a.MimeType?.StartsWith("image/") == true)
+            .OrderBy(a => a.SortOrder ?? int.MaxValue)
+            .FirstOrDefault();
+
+    // 輪播其他圖（同為 image/*）
+    var gallery = assets
+        .Where(a => a.MimeType?.StartsWith("image/") == true && (hero == null || a.AssetId != hero.AssetId))
+        .OrderBy(a => a.SortOrder ?? int.MaxValue)
+        .ThenBy(a => a.AssetId ?? int.MaxValue)
+        .ToList();
+
+    // 商品通用資產（未綁任何變體）
+    var productAssets = assets
+        .Where(a => (a.ProductVariantId ?? -1) < 0)
+        .OrderBy(a => a.SortOrder ?? int.MaxValue)
+        .ThenBy(a => a.AssetId ?? int.MaxValue)
+        .ToList();
+
+    // 依變體分組的資產
+    var assetsByVariant = assets
+        .Where(a => (a.ProductVariantId ?? -1) >= 0)
+        .GroupBy(a => a.ProductVariantId ?? 0)
+        .ToDictionary(g => g.Key, g => g
+            .OrderBy(a => a.SortOrder ?? int.MaxValue)
+            .ThenBy(a => a.AssetId ?? int.MaxValue)
+            .ToList()
+        );
+
+    string StatusBadge(int? s) => s switch
+    {
+        1 => "bg-success",
+        2 => "bg-secondary",
+        3 => "bg-warning text-dark",
+        4 => "bg-danger",
+        _ => "bg-info"
+    };
+
+    string StatusText(string? name, int? code)
+        => string.IsNullOrWhiteSpace(name) ? $"狀態 {code?.ToString() ?? "未知"}" : name;
+}
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="mb-0">商品明細</h2>
+        <div class="d-flex gap-2">
+            <a asp-action="List" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> 返回列表
+            </a>
+            <a asp-action="Edit" asp-route-id="@d.ProductId" class="btn btn-primary">
+                <i class="bi bi-pencil-square me-1"></i> 編輯
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+    @if (TempData["Ok"] != null)
+    {
+        <div class="alert alert-success">@TempData["Ok"]</div>
+    }
+
+    <div class="row g-3">
+        <!-- 左側：圖片主視覺 + 輪播 -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    @if (hero != null)
+                    {
+                        <div class="mb-3 text-center">
+                            <img src="@hero.Url" class="img-fluid rounded" alt="主圖" />
+                        </div>
+
+                        @if (gallery.Any())
+                        {
+                            <div id="thumbs" class="row g-2">
+                                @foreach (var img in gallery)
+                                {
+                                    <div class="col-3">
+                                        <img src="@img.Url" class="img-fluid rounded border" alt="圖" />
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-muted text-center p-5">
+                            <i class="bi bi-image fs-1 d-block mb-2"></i>
+                            尚未上傳商品圖片
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側：商品資訊 -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="mb-1">@d.Name</h3>
+
+                    <div class="mb-2">
+                        <span class="badge @StatusBadge(d.PStatus)">
+                            @StatusText(d.PStatusName, d.PStatus)
+                        </span>
+                        @if (d.CategoryId.HasValue)
+                        {
+                            <span class="badge bg-light text-dark border ms-1">分類 #@d.CategoryId</span>
+                        }
+                        <span class="badge bg-light text-dark border ms-1">商品ID #@d.ProductId</span>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(d.Description))
+                    {
+                        <p class="text-muted">@d.Description</p>
+                    }
+
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="small text-secondary">保固(月)</div>
+                            <div>@(d.WarrantyMonth?.ToString() ?? "-")</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="small text-secondary">需組裝</div>
+                            <div>@(d.AssemblyRequired == true ? "是" : d.AssemblyRequired == false ? "否" : "-")</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="small text-secondary">組裝零件</div>
+                            <div>@(string.IsNullOrWhiteSpace(d.AssemblyPart) ? "-" : d.AssemblyPart)</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="small text-secondary">折扣</div>
+                            <div>@(d.Discount?.ToString() ?? "-")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 變體列表 -->
+    <div class="card shadow-sm mt-3">
+        <div class="card-header">變體</div>
+        <div class="card-body p-0">
+            @if (variants.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 120px;">顏色</th>
+                                <th>SKU</th>
+                                <th>售價</th>
+                                <th>庫存</th>
+                                <th>尺寸</th>
+                                <th>長×寬×高</th>
+                                <th>重量</th>
+                                <th>狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var v in variants)
+                            {
+                                var colorChip = v.ColorCode;
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="rounded-circle border d-inline-block" style="width:20px;height:20px; background:@(string.IsNullOrWhiteSpace(colorChip) ? "transparent" : colorChip)"></span>
+                                            <span>@(string.IsNullOrWhiteSpace(v.ColorName) ? "-" : v.ColorName)</span>
+                                        </div>
+                                    </td>
+                                    <td>@(string.IsNullOrWhiteSpace(v.SKU) ? "-" : v.SKU)</td>
+                                    <td>@(v.Price?.ToString() ?? "-")</td>
+                                    <td>@(v.Stock?.ToString() ?? "-")</td>
+                                    <td>@(string.IsNullOrWhiteSpace(v.SizeLabel) ? "-" : v.SizeLabel)</td>
+                                    <td>
+                                        @((v.Length?.ToString() ?? "-")) × @((v.Width?.ToString() ?? "-")) × @((v.Height?.ToString() ?? "-"))
+                                    </td>
+                                    <td>@(v.Weight?.ToString() ?? "-")</td>
+                                    <td>
+                                        <span class="badge @StatusBadge(v.PStatus)">@StatusText(v.PStatusName, v.PStatus)</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="p-3 text-muted">尚無變體</div>
+            }
+        </div>
+    </div>
+
+    <!-- 商品通用資產 -->
+    <div class="card shadow-sm mt-3">
+        <div class="card-header">商品通用資產（非變體專屬）</div>
+        <div class="card-body">
+            @if (productAssets.Any())
+            {
+                <div class="row g-3">
+                    @foreach (var a in productAssets)
+                    {
+                        <div class="col-md-4 col-lg-3">
+                            <div class="border rounded p-2 h-100">
+                                @* 圖片 *@
+                                @if (a.MimeType?.StartsWith("image/") == true)
+                                {
+                                    <img src="@a.Url" class="img-fluid rounded mb-2" alt="資產" />
+                                }
+                                @* 影片 *@
+                                else if (a.MimeType?.StartsWith("video/") == true)
+                                {
+                                    <video class="w-100 rounded mb-2" controls poster="@a.PosterUrl">
+                                        <source src="@a.Url" type="@a.MimeType" />
+                                    </video>
+                                }
+                                @* 其他（3D/檔案） *@
+                                else
+                                {
+                                    <div class="bg-light rounded p-3 mb-2 small">
+                                        <div class="fw-bold">類型：@(a.AssetType ?? a.MimeType ?? "未知")</div>
+                                        @if (!string.IsNullOrWhiteSpace(a.PosterUrl))
+                                        {
+                                            <div class="mt-2">Poster：<a href="@a.PosterUrl" target="_blank">@a.PosterUrl</a></div>
+                                        }
+                                    </div>
+                                    <a class="btn btn-sm btn-outline-primary" href="@a.Url" target="_blank">
+                                        開啟資產
+                                    </a>
+                                }
+
+                                <div class="small text-secondary mt-1">
+                                    排序：@(a.SortOrder?.ToString() ?? "-")
+                                    @if (a.IsPrimary == true)
+                                    {
+                                        <span class="badge bg-primary ms-2">主圖</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-muted">尚無商品通用資產</div>
+            }
+        </div>
+    </div>
+
+    <!-- 各變體資產 -->
+    <div class="card shadow-sm mt-3">
+        <div class="card-header">各變體資產</div>
+        <div class="card-body">
+            @if (assetsByVariant.Any())
+            {
+                @foreach (var kv in assetsByVariant)
+                {
+                    var vid = kv.Key;
+                    var list = kv.Value;
+
+                    var vInfo = variants.FirstOrDefault(v => (v.VariantId ?? 0) == vid);
+                    var chip = vInfo?.ColorCode;
+                    var vName = !string.IsNullOrWhiteSpace(vInfo?.ColorName) ? vInfo.ColorName : $"變體 #{vid}";
+
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="rounded-circle border me-2" style="width:16px;height:16px;background:@(string.IsNullOrWhiteSpace(chip) ? "transparent" : chip)"></span>
+                            <strong>@vName</strong>
+                            @if (!string.IsNullOrWhiteSpace(vInfo?.SKU))
+                            {
+                                <span class="text-muted ms-2">SKU：@vInfo.SKU</span>
+                            }
+                        </div>
+
+                        <div class="row g-3">
+                            @foreach (var a in list)
+                            {
+                                <div class="col-md-4 col-lg-3">
+                                    <div class="border rounded p-2 h-100">
+                                        @if (a.MimeType?.StartsWith("image/") == true)
+                                        {
+                                            <img src="@a.Url" class="img-fluid rounded mb-2" alt="資產" />
+                                        }
+                                        else if (a.MimeType?.StartsWith("video/") == true)
+                                        {
+                                            <video class="w-100 rounded mb-2" controls poster="@a.PosterUrl">
+                                                <source src="@a.Url" type="@a.MimeType" />
+                                            </video>
+                                        }
+                                        else
+                                        {
+                                            <div class="bg-light rounded p-3 mb-2 small">
+                                                <div class="fw-bold">類型：@(a.AssetType ?? a.MimeType ?? "未知")</div>
+                                                @if (!string.IsNullOrWhiteSpace(a.PosterUrl))
+                                                {
+                                                    <div class="mt-2">Poster：<a href="@a.PosterUrl" target="_blank">@a.PosterUrl</a></div>
+                                                }
+                                            </div>
+                                            <a class="btn btn-sm btn-outline-primary" href="@a.Url" target="_blank">
+                                                開啟資產
+                                            </a>
+                                        }
+
+                                        <div class="small text-secondary mt-1">
+                                            排序：@(a.SortOrder?.ToString() ?? "-")
+                                            @if (a.IsPrimary == true)
+                                            {
+                                                <span class="badge bg-primary ms-2">主圖</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-muted">尚無變體資產</div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,4 +1,4 @@
-<!-- 產品詳情頁 - 對應 7 個資料表後端 API (無客製化功能) -->
+<!-- 簡化版：帶有視覺化顏色選擇的產品詳情頁 -->
 <template>
   <div class="product-detail-page">
     <!-- 麵包屑導航 -->
@@ -14,72 +14,47 @@
 
     <!-- 載入中 -->
     <div v-if="loading" class="container py-5 text-center">
-      <div class="spinner-border text-primary" role="status"></div>
+      <div class="spinner-border text-primary"></div>
       <p class="mt-3 text-muted">載入產品資訊...</p>
     </div>
 
     <!-- 錯誤訊息 -->
     <div v-else-if="error" class="container py-5">
-      <div class="alert alert-danger">
-        <i class="bi bi-exclamation-triangle me-2"></i>
-        {{ error }}
-      </div>
-      <button class="btn btn-primary" @click="loadProductDetail">
-        <i class="bi bi-arrow-clockwise me-2"></i>重新載入
-      </button>
+      <div class="alert alert-danger">{{ error }}</div>
+      <button class="btn btn-primary" @click="loadProductDetail">重新載入</button>
     </div>
 
     <!-- 產品詳情 -->
     <div v-else-if="product" class="container py-4">
       <div class="row g-4">
-        <!-- 左側：圖片/3D 模型區 -->
+        <!-- 左側：圖片區 -->
         <div class="col-lg-6">
-          <!-- 切換按鈕 -->
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div class="btn-group" role="group">
-              <button 
-                class="btn" 
-                :class="viewMode === 'image' ? 'btn-primary' : 'btn-outline-primary'"
-                @click="viewMode = 'image'"
-              >
-                <i class="bi bi-image me-1"></i>照片
-              </button>
-              <button 
-                v-if="product.f3dModelPath"
-                class="btn" 
-                :class="viewMode === '3d' ? 'btn-primary' : 'btn-outline-primary'"
-                @click="viewMode = '3d'"
-              >
-                <i class="bi bi-badge-3d me-1"></i>3D 模型
-              </button>
-            </div>
-            
-            <!-- 3D 可用提示 -->
-            <small v-if="product.f3dModelPath && viewMode === 'image'" class="text-muted">
-              <i class="bi bi-info-circle me-1"></i>可切換 3D 預覽
-            </small>
-          </div>
-
-          <!-- 照片視窗 -->
-          <div v-show="viewMode === 'image'" class="product-images">
-            <div class="main-image-container mb-3 position-relative">
+          <!-- 主圖 -->
+          <div class="product-images">
+            <div class="main-image-container mb-3">
               <img 
                 :src="selectedImage" 
                 :alt="product.fName" 
                 class="img-fluid rounded main-image" 
                 @error="handleImageError" 
               />
-              <!-- 折扣標籤 -->
-              <div v-if="product.fDiscount && product.fDiscount > 0" class="position-absolute top-0 start-0 p-3">
+              <div v-if="product.fDiscount > 0" class="position-absolute top-0 start-0 p-3">
                 <span class="badge bg-danger fs-6">{{ Math.round(product.fDiscount * 100) }}% OFF</span>
               </div>
+              <!-- 當前選擇的顏色標籤 -->
+              <!-- <div v-if="selectedVariant && (selectedVariant.colorName || selectedVariant.ColorName)" 
+                   class="position-absolute bottom-0 start-0 p-3">
+                <span class="badge bg-dark bg-opacity-75 fs-6">
+                  <i class="bi bi-palette me-1"></i>{{ selectedVariant.colorName || selectedVariant.ColorName }}
+                </span>
+              </div> -->
             </div>
             
-            <!-- 縮圖列表 -->
-            <div v-if="productImages.length > 1" class="d-flex gap-2 overflow-auto pb-2">
+            <!-- 縮圖 -->
+            <div v-if="productImages.length > 1" class="d-flex gap-2 overflow-auto">
               <img 
                 v-for="(image, index) in productImages" 
-                :key="index" 
+                :key="`thumb-${index}`"
                 :src="image" 
                 class="thumbnail" 
                 :class="{ active: selectedImage === image }" 
@@ -88,129 +63,138 @@
               />
             </div>
           </div>
-
-          <!-- 3D 模型視窗 -->
-          <div v-show="viewMode === '3d' && product.f3dModelPath" class="viewer-3d-wrapper">
-            <Furniture3DViewer 
-              v-if="product.f3dModelPath"
-              :model-url="product.f3dModelPath"
-              :env-map-url="product.envMapUrl || null"
-              @model-loaded="on3DModelLoaded"
-              @model-error="on3DModelError"
-            />
-          </div>
-
-          <!-- 沒有 3D 模型的提示 -->
-          <div v-if="!product.f3dModelPath && viewMode === '3d'" class="alert alert-info">
-            <i class="bi bi-info-circle me-2"></i>
-            此產品暫無 3D 模型
-          </div>
         </div>
 
         <!-- 右側：產品資訊 -->
         <div class="col-lg-6">
-          <!-- 產品標題 -->
           <h1 class="product-title mb-3">{{ product.fName }}</h1>
           
-          <!-- 狀態標籤 -->
+          <!-- 徽章 -->
           <div class="mb-3">
-            <span class="badge bg-secondary">{{ product.categoryName }}</span>
-            <span v-if="product.isAvailable" class="badge bg-success ms-2">
-              <i class="bi bi-check-circle me-1"></i>有貨
-            </span>
-            <span v-else class="badge bg-secondary ms-2">
-              <i class="bi bi-x-circle me-1"></i>缺貨
-            </span>
-            <span v-if="product.fWarrantyMonth" class="badge bg-info ms-2">
-              <i class="bi bi-shield-check me-1"></i>保固 {{ product.fWarrantyMonth }} 個月
-            </span>
+            <span class="badge bg-success">{{ product.categoryName }}</span>
+            <span v-if="isAvailable" class="badge bg-success ms-2">有貨</span>
+            <span v-else class="badge bg-secondary ms-2">缺貨</span>
           </div>
 
-          <!-- 價格區 -->
+          <!-- 價格 -->
           <div class="price-section mb-4 p-3 bg-light rounded">
             <div v-if="selectedVariant">
-              <!-- 有折扣時顯示劃線價格 -->
-              <div v-if="product.fDiscount && product.fDiscount > 0" class="mb-2">
-                <span class="text-decoration-line-through text-muted fs-5">
-                  NT$ {{ formatPrice(calculateOriginalPrice(selectedVariant.fPrice)) }}
+              <div v-if="product.fDiscount > 0" class="mb-2">
+                <span class="text-decoration-line-through text-muted">
+                  NT$ {{ formatPrice(selectedVariant.fPrice * (1 + product.fDiscount / 100)) }}
                 </span>
               </div>
-              <!-- 實際價格 -->
-              <div class="text-primary fw-bold fs-2">
-                NT$ {{ formatPrice(selectedVariant.fPrice) }}
-              </div>
+              <div class="text-primary fw-bold fs-2">NT$ {{ formatPrice(selectedVariant.fPrice) }}</div>
             </div>
-            <!-- 未選擇變體時顯示價格範圍 -->
             <div v-else class="text-primary fw-bold fs-2">
-              <span v-if="product.minPrice === product.maxPrice">
-                NT$ {{ formatPrice(product.minPrice) }}
-              </span>
-              <span v-else>
-                NT$ {{ formatPrice(product.minPrice) }} - {{ formatPrice(product.maxPrice) }}
-              </span>
+              NT$ {{ formatPrice(product.minPrice) }}
+              <span v-if="product.minPrice !== product.maxPrice"> - {{ formatPrice(product.maxPrice) }}</span>
             </div>
           </div>
 
           <!-- 產品描述 -->
-          <div v-if="product.fDescription" class="mb-4">
-            <p class="text-muted">{{ product.fDescription }}</p>
-          </div>
+          <p v-if="product.fDescription" class="text-muted mb-4">{{ product.fDescription }}</p>
           
           <hr />
 
-          <!-- 變體選擇 -->
-          <div v-if="variants.length > 0" class="mb-4">
+          <!-- 顏色選擇（視覺化圓圈） -->
+          <div v-if="colorVariants.length > 0" class="mb-4">
             <h5 class="mb-3">
-              <i class="bi bi-box-seam me-2"></i>選擇規格
+              <i class="bi bi-palette me-2"></i>選擇顏色
             </h5>
+            <div class="d-flex flex-wrap gap-3">
+              <div 
+                v-for="variant in colorVariants" 
+                :key="variant.fProductVariantId || variant.FProductVariantId"
+                class="color-option-wrapper"
+              >
+                <button
+                  class="color-option-btn"
+                  :class="{ 
+                    active: isVariantSelected(variant),
+                    'out-of-stock': getVariantStock(variant) <= 0
+                  }"
+                  :disabled="getVariantStock(variant) <= 0"
+                  :title="getVariantTitle(variant)"
+                  @click="selectVariant(variant)"
+                >
+                  <!-- 顏色圓圈 -->
+                  <div 
+                    class="color-circle"
+                    :style="{ 
+                      backgroundColor: variant.colorHex || variant.ColorHex || '#ccc',
+                      borderColor: isVariantSelected(variant) ? '#0d6efd' : '#dee2e6'
+                    }"
+                  >
+                    <!-- 缺貨標記 -->
+                    <div v-if="getVariantStock(variant) <= 0" class="out-of-stock-overlay">
+                      <i class="bi bi-x-lg"></i>
+                    </div>
+                    <!-- 選中標記 -->
+                    <!-- <div v-if="isVariantSelected(variant)" class="selected-check">
+                      <i class="bi bi-check-lg"></i>
+                    </div> -->
+                  </div>
+                </button>
+                <!-- 顏色名稱 -->
+                <small class="color-name d-block text-center mt-2">
+                  {{ variant.colorName || variant.ColorName || variant.fSku }}
+                </small>
+                <!-- 庫存狀態 -->
+                <small class="stock-status d-block text-center">
+                  <span v-if="getVariantStock(variant) > 0" class="text-success">
+                    庫存 {{ getVariantStock(variant) }}
+                  </span>
+                  <span v-else class="text-danger">缺貨</span>
+                </small>
+              </div>
+            </div>
+          </div>
+
+          <!-- 其他變體選擇（如尺寸等，非顏色） -->
+          <div v-else-if="variants.length > 1" class="mb-4">
+            <h5 class="mb-3">選擇規格</h5>
             <div class="row g-2">
               <div 
                 v-for="variant in variants" 
-                :key="variant.fProductVariantId" 
+                :key="variant.fProductVariantId || variant.FProductVariantId" 
                 class="col-6 col-md-4"
               >
                 <button 
-                  class="variant-button w-100 p-3" 
+                  class="variant-button w-100" 
                   :class="{ 
-                    active: selectedVariant?.fProductVariantId === variant.fProductVariantId,
-                    disabled: !variant.fStock || variant.fStock <= 0
+                    active: isVariantSelected(variant),
+                    disabled: getVariantStock(variant) <= 0 
                   }" 
-                  :disabled="!variant.fStock || variant.fStock <= 0" 
+                  :disabled="getVariantStock(variant) <= 0" 
                   @click="selectVariant(variant)"
                 >
-                  <!-- SKU / 尺寸標籤 -->
-                  <div class="fw-bold mb-2">
-                    {{ variant.fSizeLabel || variant.fSku }}
-                  </div>
-                  
-                  <!-- 價格 -->
-                  <div class="text-primary fw-bold mb-1">
-                    NT$ {{ formatPrice(variant.fPrice) }}
-                  </div>
-                  
-                  <!-- 庫存狀態 -->
-                  <small v-if="!variant.fStock || variant.fStock <= 0" class="text-danger">
-                    缺貨
-                  </small>
-                  <small v-else class="text-muted">
-                    庫存: {{ variant.fStock }} 件
-                  </small>
+                  <div class="fw-bold mb-2">{{ variant.fSku || variant.FSku }}</div>
+                  <div class="text-primary fw-bold">NT$ {{ formatPrice(variant.fPrice || variant.FPrice) }}</div>
+                  <small v-if="getVariantStock(variant) <= 0" class="text-danger">缺貨</small>
+                  <small v-else class="text-muted">庫存: {{ getVariantStock(variant) }} 件</small>
                 </button>
               </div>
             </div>
           </div>
 
+          <!-- 當前選擇摘要 -->
+          <!-- <div v-if="selectedVariant" class="alert alert-info mb-4">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+              <div>
+                <strong>已選擇：</strong>
+                {{ selectedVariant.colorName || selectedVariant.ColorName || selectedVariant.fSku }}
+                <span class="ms-2 text-primary fw-bold">NT$ {{ formatPrice(selectedVariant.fPrice || selectedVariant.FPrice) }}</span>
+              </div>
+            </div>
+          </div> -->
+
           <!-- 數量選擇 -->
           <div class="mb-4">
-            <h5 class="mb-3">
-              <i class="bi bi-bag me-2"></i>數量
-            </h5>
+            <h5 class="mb-3">數量</h5>
             <div class="input-group" style="max-width: 200px">
-              <button 
-                class="btn btn-outline-secondary" 
-                :disabled="quantity <= 1" 
-                @click="quantity--"
-              >
+              <button class="btn btn-outline-secondary" :disabled="quantity <= 1" @click="decreaseQuantity">
                 <i class="bi bi-dash"></i>
               </button>
               <input 
@@ -218,98 +202,85 @@
                 type="number" 
                 class="form-control text-center" 
                 min="1" 
-                :max="maxQuantity"
+                :max="maxQuantity" 
+                @input="validateQuantity" 
               />
-              <button 
-                class="btn btn-outline-secondary" 
-                :disabled="quantity >= maxQuantity" 
-                @click="quantity++"
-              >
+              <button class="btn btn-outline-secondary" :disabled="quantity >= maxQuantity" @click="increaseQuantity">
                 <i class="bi bi-plus"></i>
               </button>
             </div>
-            <small v-if="maxQuantity > 0" class="text-muted d-block mt-2">
-              最多可購買 {{ maxQuantity }} 件
-            </small>
+            <small v-if="maxQuantity > 0" class="text-muted">庫存: {{ maxQuantity }} 件</small>
           </div>
 
           <hr />
 
           <!-- 操作按鈕 -->
           <div class="d-grid gap-2">
-            <button 
-              class="btn btn-primary btn-lg" 
-              :disabled="!canAddToCart" 
-              @click="addToCart"
-            >
+            <button class="btn btn-primary btn-lg" :disabled="!canAddToCart" @click="addToCart">
               <i class="bi bi-cart-plus me-2"></i>加入購物車
             </button>
-            <button 
-              class="btn btn-outline-primary btn-lg" 
-              :disabled="!canAddToCart" 
-              @click="buyNow"
-            >
+            <button class="btn btn-outline-primary btn-lg" :disabled="!canAddToCart" @click="buyNow">
               <i class="bi bi-lightning-fill me-2"></i>立即購買
             </button>
           </div>
 
-          <!-- 產品資訊 -->
-          <div class="mt-4">
-            <div class="card">
-              <div class="card-body">
-                <h6 class="card-title">
-                  <i class="bi bi-info-circle me-2"></i>產品資訊
-                </h6>
-                <ul class="list-unstyled mb-0">
-                  <li v-if="product.fWarrantyMonth" class="mb-2">
-                    <strong>保固期限：</strong>{{ product.fWarrantyMonth }} 個月
-                  </li>
-                  <li v-if="product.fAssemblyRequired !== undefined" class="mb-2">
-                    <strong>需要組裝：</strong>{{ product.fAssemblyRequired ? '是' : '否' }}
-                  </li>
-                  <li class="mb-2">
-                    <strong>類別：</strong>{{ product.categoryName }}
-                  </li>
-                  <li v-if="product.totalStock !== undefined">
-                    <strong>總庫存：</strong>{{ product.totalStock }} 件
-                  </li>
-                </ul>
+          <div v-if="!canAddToCart" class="alert alert-warning mt-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>{{ getDisabledReason() }}
+          </div>
+        </div>
+      </div>
+
+      <!-- 產品詳細資訊標籤 -->
+      <div class="row mt-5">
+        <div class="col-12">
+          <ul class="nav nav-tabs">
+            <li class="nav-item">
+              <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#details">產品規格</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" data-bs-toggle="tab" data-bs-target="#description">詳細說明</button>
+            </li>
+          </ul>
+          <div class="tab-content border border-top-0 rounded-bottom p-4">
+            <div id="details" class="tab-pane fade show active">
+              <div class="row g-3">
+                <div class="col-md-6"><strong>類別：</strong> {{ product.categoryName }}</div>
+                <div v-if="product.fWarrantyMonth" class="col-md-6">
+                  <strong>保固：</strong> {{ product.fWarrantyMonth }} 個月
+                </div>
+                <div class="col-md-6">
+                  <strong>組裝：</strong> {{ product.fAssemblyRequired ? '需要組裝' : '無需組裝' }}
+                </div>
+                <div v-if="colorVariants.length > 0" class="col-md-6">
+                  <strong>顏色選項：</strong> {{ colorVariants.length }} 種
+                </div>
+                <div v-else-if="variants.length > 0" class="col-md-6">
+                  <strong>規格選項：</strong> {{ variants.length }} 種
+                </div>
               </div>
+            </div>
+            <div id="description" class="tab-pane fade">
+              <p v-if="product.fDescription">{{ product.fDescription }}</p>
+              <p v-else class="text-muted">暫無詳細說明</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 相似產品推薦 -->
-      <div v-if="similarProducts.length > 0" class="mt-5">
-        <h3 class="mb-4">
-          <i class="bi bi-stars me-2"></i>您可能也喜歡
-        </h3>
-        <div class="row g-3">
-          <div 
-            v-for="item in similarProducts" 
-            :key="item.fProductId" 
-            class="col-6 col-md-4 col-lg-3"
-          >
-            <router-link 
-              :to="`/products/${item.fProductId}`" 
-              class="text-decoration-none"
-            >
-              <div class="card h-100 similar-product-card">
-                <img 
-                  :src="item.mainImageUrl || '/images/default-product.jpg'" 
-                  class="card-img-top" 
-                  :alt="item.fName"
-                  @error="handleImageError"
-                />
+      <!-- 相關產品 -->
+      <div v-if="relatedProducts.length > 0" class="row mt-5">
+        <div class="col-12">
+          <h3 class="mb-4">相關產品</h3>
+          <div class="row g-3">
+            <div v-for="p in relatedProducts" :key="p.fProductId" class="col-6 col-md-3">
+              <div class="card h-100 related-card" @click="goToProduct(p.fProductId)">
+                <img :src="p.mainImageUrl" class="card-img-top" :alt="p.fName" @error="handleImageError" />
                 <div class="card-body">
-                  <h6 class="card-title text-truncate">{{ item.fName }}</h6>
-                  <p class="card-text text-primary fw-bold">
-                    NT$ {{ formatPrice(item.minPrice) }}
-                  </p>
+                  <h6 class="card-title text-truncate">{{ p.fName }}</h6>
+                  <p class="text-primary fw-bold mb-0">NT$ {{ formatPrice(p.minPrice) }}</p>
                 </div>
               </div>
-            </router-link>
+            </div>
           </div>
         </div>
       </div>
@@ -318,48 +289,56 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import ProductAPI from '@/api/Product'
-import Furniture3DViewer from '@/components/Furniture3DViewer.vue'
+import { ProductAPI } from '@/api/Product'
 
 const route = useRoute()
 const router = useRouter()
 
-// 狀態
 const loading = ref(false)
 const error = ref(null)
 const product = ref(null)
 const variants = ref([])
 const selectedVariant = ref(null)
+const quantity = ref(1)
 const selectedImage = ref('')
 const productImages = ref([])
-const viewMode = ref('image') // 'image' | '3d'
-const quantity = ref(1)
-const similarProducts = ref([])
+const relatedProducts = ref([])
+
+//  圖片錯誤追蹤（防止閃爍）
+const imageErrors = ref(new Set())
+
+// ⭐ 計算顏色變體（有 colorName 或 colorHex 的變體）
+const colorVariants = computed(() => {
+  return variants.value.filter(v => 
+    (v.colorName || v.ColorName) || (v.colorHex || v.ColorHex)
+  )
+})
 
 // 計算屬性
 const maxQuantity = computed(() => {
-  if (!selectedVariant.value) return 0
-  return selectedVariant.value.fStock || 0
+  if (selectedVariant.value) {
+    return selectedVariant.value.fStock || selectedVariant.value.FStock || 0
+  }
+  return product.value?.totalStock || 0
+})
+
+const isAvailable = computed(() => {
+  if (selectedVariant.value) {
+    return (selectedVariant.value.fStock || selectedVariant.value.FStock) > 0
+  }
+  return product.value?.isAvailable || false
 })
 
 const canAddToCart = computed(() => {
-  if (!product.value?.isAvailable) return false
-  if (variants.value.length > 0 && !selectedVariant.value) return false
-  if (!selectedVariant.value?.fStock || selectedVariant.value.fStock <= 0) return false
+  if (!isAvailable.value) return false
+  if (variants.value.length > 1 && !selectedVariant.value) return false
   return quantity.value >= 1 && quantity.value <= maxQuantity.value
 })
 
-// 監聽路由變化
-watch(() => route.params.id, (newId) => {
-  if (newId) {
-    loadProductDetail()
-  }
-})
-
-// 方法
-const loadProductDetail = async () => {
+// 載入產品詳情
+async function loadProductDetail() {
   const productId = route.params.id
   if (!productId) {
     error.value = '產品 ID 不正確'
@@ -369,72 +348,182 @@ const loadProductDetail = async () => {
   loading.value = true
   error.value = null
 
+  console.log('載入產品詳情:', productId)
+
   try {
-    // ✅ 使用新版 API（無 includeCustomization 參數）
     const response = await ProductAPI.getProductById(productId)
+    console.log('API 回應:', response)
     
     if (response.ok && response.data) {
       const rawData = response.data
       
       // 處理圖片
-      if (response.data.assets && response.data.assets.length > 0) {
-        productImages.value = response.data.assets
-          .filter(a => a.fAssetType === 'Image' || !a.fAssetType)
-          .sort((a, b) => (a.fSortOrder || 0) - (b.fSortOrder || 0))
-          .map(a => a.fUrl)
+      const mainImg = rawData.mainImageUrl || rawData.MainImageUrl
+      const assetsList = rawData.assets || rawData.Assets
+      
+      if ((!mainImg || mainImg === 'null') && assetsList && assetsList.length > 0) {
+        const primaryAsset = assetsList.find(a => a.fIsPrimary || a.FIsPrimary)
+        rawData.mainImageUrl = primaryAsset 
+          ? (primaryAsset.fUrl || primaryAsset.FUrl) 
+          : (assetsList[0].fUrl || assetsList[0].FUrl)
+      } else if (mainImg) {
+        rawData.mainImageUrl = mainImg
       }
       
-      // 設定主圖
-      selectedImage.value = product.value.mainImageUrl || productImages.value[0] || '/images/default-product.jpg'
+      rawData.mainImageUrl = rawData.mainImageUrl || '/images/default-product.jpg'
       
-      // 自動選擇第一個有庫存的變體
-      if (variants.value.length > 0) {
-        const firstAvailableVariant = variants.value.find(v => v.fStock && v.fStock > 0)
-        if (firstAvailableVariant) {
-          selectedVariant.value = firstAvailableVariant
-        }
+      if (!rawData.assets && assetsList) {
+        rawData.assets = assetsList
       }
       
-      // 載入相似產品
-      loadSimilarProducts(productId)
+      // 設定預設值
+      rawData.fPstatus = rawData.fPstatus ?? 1
+      rawData.statusName = rawData.statusName || '上架中'
+      rawData.fWarrantyMonth = rawData.fWarrantyMonth ?? 0
+      rawData.fAssemblyRequired = rawData.fAssemblyRequired ?? false
       
+      product.value = rawData
+      console.log('產品資料:', product.value)
+      
+      setupProductImages()
+      await loadVariants(productId)
+      await loadRelatedProducts(product.value.fCategoryId)
     } else {
-      error.value = response.message || '產品不存在'
+      console.error('載入失敗:', response)
+      error.value = response.message || '載入產品失敗'
     }
   } catch (err) {
-    console.error('載入產品詳情錯誤:', err)
-    error.value = '載入產品失敗，請稍後再試'
+    console.error('發生錯誤:', err)
+    error.value = err.message || '載入產品時發生錯誤'
   } finally {
     loading.value = false
   }
 }
 
-const loadSimilarProducts = async (productId) => {
-  try {
-    const response = await ProductAPI.getSimilarProducts(productId, 4)
-    if (response.ok && response.data.data) {
-      similarProducts.value = response.data.data
+// 設定產品圖片
+function setupProductImages() {
+  console.log('設定產品圖片')
+  
+  const newImages = []
+  
+  if (product.value.mainImageUrl) {
+    const mainImg = getStableImageUrl(product.value.mainImageUrl)
+    newImages.push(mainImg)
+    console.log('  主圖:', mainImg)
+  }
+  
+  const assetsList = product.value.assets || product.value.Assets
+  if (assetsList && Array.isArray(assetsList)) {
+    assetsList.forEach((asset, index) => {
+      const url = asset.fUrl || asset.FUrl || asset.fAssetUrl || asset.FAssetUrl
+      if (url) {
+        const stableUrl = getStableImageUrl(url)
+        if (!newImages.includes(stableUrl)) {
+          newImages.push(stableUrl)
+          console.log(`  資產圖片 ${index}:`, stableUrl)
+        }
+      }
+    })
+  }
+  
+  if (newImages.length === 0) {
+    console.warn(' 沒有圖片，使用預設圖')
+    newImages.push('/images/default-product.jpg')
+  }
+  
+  productImages.value = newImages
+  selectedImage.value = newImages[0]
+  
+  console.log('圖片設定完成，共', newImages.length, '張')
+}
+
+// 載入變體
+async function loadVariants(productId) {
+  if (product.value.variants && Array.isArray(product.value.variants)) {
+    console.log('使用產品資料中的變體:', product.value.variants.length, '個')
+    
+    variants.value = product.value.variants
+    
+    // 自動選擇第一個有庫存的變體
+    const available = variants.value.find(v => (v.fStock || v.FStock) > 0)
+    if (available) {
+      selectVariant(available)
+      console.log('已選擇變體:', available.fSku || available.FSku)
+    } else if (variants.value.length === 1) {
+      // 如果只有一個變體，即使缺貨也選擇它
+      selectVariant(variants.value[0])
     }
-  } catch (err) {
-    console.error('載入相似產品失敗:', err)
   }
 }
 
-const selectVariant = (variant) => {
-  selectedVariant.value = variant
-  quantity.value = 1
+// 載入相關產品
+async function loadRelatedProducts(categoryId) {
+  if (!categoryId) return
+  try {
+    const response = await ProductAPI.getProducts({ 
+      categoryId, 
+      pageNumber: 1, 
+      pageSize: 8 
+    })
+    
+    if (response.ok && response.data.data) {
+      relatedProducts.value = response.data.data
+        .filter(p => p.fProductId !== product.value.fProductId)
+        .slice(0, 4)
+        .map(p => {
+          let imageUrl = p.mainImageUrl || p.MainImageUrl
+          if (!imageUrl && p.assets && p.assets.length > 0) {
+            const primaryAsset = p.assets.find(a => a.fIsPrimary) || p.assets[0]
+            imageUrl = primaryAsset.fUrl || primaryAsset.FUrl
+          }
+          return { ...p, mainImageUrl: getStableImageUrl(imageUrl) }
+        })
+    }
+  } catch (err) {
+    console.error('載入相關產品失敗:', err)
+  }
 }
 
+// 選擇變體
+function selectVariant(variant) {
+  selectedVariant.value = variant
+  quantity.value = 1
+  
+  // 如果變體有專屬圖片，切換到該圖片
+  const variantImage = variant.colorThumbnail || variant.ColorThumbnail
+  if (variantImage) {
+    const imageUrl = getStableImageUrl(variantImage)
+    if (productImages.value.includes(imageUrl)) {
+      selectedImage.value = imageUrl
+    }
+  }
+}
+
+// 檢查是否選中
 function isVariantSelected(variant) {
   const variantId = variant.fProductVariantId || variant.FProductVariantId
   const selectedId = selectedVariant.value?.fProductVariantId || selectedVariant.value?.FProductVariantId
   return variantId === selectedId
 }
 
+// 取得變體庫存
 function getVariantStock(variant) {
   return variant.fStock || variant.FStock || 0
 }
 
+// 取得變體提示文字
+function getVariantTitle(variant) {
+  const name = variant.colorName || variant.ColorName || variant.fSku
+  const stock = getVariantStock(variant)
+  const price = formatPrice(variant.fPrice || variant.FPrice)
+  
+  if (stock <= 0) {
+    return `${name} - 缺貨`
+  }
+  return `${name} - NT$ ${price} (庫存 ${stock} 件)`
+}
+
+// 數量控制
 function increaseQuantity() {
   if (quantity.value < maxQuantity.value) quantity.value++
 }
@@ -448,136 +537,239 @@ function validateQuantity() {
   else if (quantity.value > maxQuantity.value) quantity.value = maxQuantity.value
 }
 
-//加入購物車方法
-async function addToCart() {
-  if (!canAddToCart.value) return
-  try{
-    const productVariantId = selectedVariant.value?.fProductVariantId || selectedVariant.value?.FProductVariantId
-    const qty = quantity.value
 
-    if(!productVariantId){
-      alert('請先選擇商品規格')
-    }
 
-    const atc = {
-      productVariantId,
-      qty
-    }
-    const result = await memberAddToCart(atc)
-    if (result.ok){
-      alert(result.message)
-    }else{
-      alert(result.message)
-    }
-  }catch(err){
-    console.error('錯誤', err)
-    alert('加入購物車時發生問題，請重新確認')
-  }
-}
 
-async function buyNow() {
-  if (!canAddToCart.value) return
-  try{
-    await memberAddToCart()
-    router.push('/cart')
-  }catch(err){
-    console.error('立即購買發生錯誤', err)
-  }
-}
-
+// 前往產品
 function goToProduct(productId) {
   router.push(`/products/${productId}`)
 }
-const formatPrice = (price) => {
-  if (price === null || price === undefined) return '0'
-  return Math.round(price).toLocaleString()
+
+// 取得禁用原因
+function getDisabledReason() {
+  if (!isAvailable.value) return '產品暫時缺貨'
+  if (variants.value.length > 1 && !selectedVariant.value) return '請選擇規格'
+  if (quantity.value < 1 || quantity.value > maxQuantity.value) return '數量不正確'
+  return ''
 }
 
-const calculateOriginalPrice = (discountedPrice) => {
-  if (!product.value?.fDiscount) return discountedPrice
-  return discountedPrice / (1 - product.value.fDiscount)
+// 格式化價格
+function formatPrice(price) {
+  return price ? Math.round(price).toLocaleString() : '0'
 }
 
-const handleImageError = (e) => {
-  e.target.src = '/images/default-product.jpg'
+// 穩定的圖片 URL 函數（防止閃爍）
+function getStableImageUrl(url, fallback = '/images/default-product.jpg') {
+  if (imageErrors.value.has(url)) {
+    return fallback
+  }
+  
+  if (!url || url === 'null' || url === '') {
+    return fallback
+  }
+  
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  
+  if (url.startsWith('/')) {
+    const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7131'
+    return `${API_BASE}${url}`
+  }
+  
+  return url
 }
 
-const on3DModelLoaded = () => {
-  console.log('✅ 3D 模型載入成功')
-}
-
-const on3DModelError = (error) => {
-  console.error('❌ 3D 模型載入失敗:', error)
-  viewMode.value = 'image'
+// 穩定的錯誤處理（防止重複執行）
+function handleImageError(event) {
+  const failedUrl = event.target.src
+  
+  if (!imageErrors.value.has(failedUrl)) {
+    imageErrors.value.add(failedUrl)
+    console.warn('圖片載入失敗:', failedUrl)
+    event.target.src = '/images/default-product.jpg'
+  }
 }
 
 // 生命週期
-onMounted(() => {
-  loadProductDetail()
+onMounted(() => loadProductDetail())
+
+watch(() => route.params.id, (newId) => {
+  if (newId && route.name === 'ProductDetail') {
+    imageErrors.value.clear()
+    loadProductDetail()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 })
 </script>
 
 <style scoped>
-/* 主圖容器 */
+.product-detail-page {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
 .main-image-container {
-  aspect-ratio: 1 / 1;
-  overflow: hidden;
+  position: relative;
+  background-color: #f8f9fa;
   border-radius: 8px;
-  background: #f8f9fa;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .main-image {
   width: 100%;
-  height: 100%;
+  height: auto;
   object-fit: contain;
+  max-height: 600px;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  background-color: #f8f9fa;
 }
 
-/* 縮圖 */
 .thumbnail {
   width: 80px;
   height: 80px;
   object-fit: cover;
   border-radius: 4px;
   cursor: pointer;
-  border: 2px solid transparent;
-  transition: all 0.2s;
+  border: 2px solid #dee2e6;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  background-color: #f8f9fa;
 }
 
 .thumbnail:hover {
-  border-color: var(--bs-primary);
+  border-color: #0d6efd;
+  opacity: 0.9;
 }
 
 .thumbnail.active {
-  border-color: var(--bs-primary);
+  border-color: #0d6efd;
   box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
 }
 
-/* 3D 視窗 */
-.viewer-3d-wrapper {
-  aspect-ratio: 1 / 1;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #f8f9fa;
+.product-title {
+  font-size: 2rem;
+  font-weight: 700;
 }
 
-/* 變體按鈕 */
+/* 顏色選擇樣式 */
+.color-option-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.color-option-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.color-option-btn:hover:not(:disabled) {
+  transform: scale(1.1);
+}
+
+.color-option-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.color-option-btn.active {
+  transform: scale(1.15);
+}
+
+.color-circle {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 3px solid #dee2e6;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.color-option-btn:hover:not(:disabled) .color-circle {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.color-option-btn.active .color-circle {
+  border-width: 4px;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+}
+
+.out-of-stock-overlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #dc3545;
+  font-size: 1.5rem;
+}
+
+.selected-check {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background-color: #0d6efd;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.color-name {
+  font-size: 0.875rem;
+  color: #495057;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stock-status {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* 其他變體按鈕 */
 .variant-button {
+  padding: 0.75rem;
   border: 2px solid #dee2e6;
   border-radius: 8px;
-  background: white;
-  transition: all 0.2s;
-  text-align: center;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: left;
 }
 
-.variant-button:not(.disabled):hover {
-  border-color: var(--bs-primary);
+.variant-button:hover:not(.disabled) {
+  border-color: #0d6efd;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .variant-button.active {
-  border-color: var(--bs-primary);
-  background: rgba(13, 110, 253, 0.1);
+  border-color: #0d6efd;
+  background-color: #e7f1ff;
 }
 
 .variant-button.disabled {
@@ -585,34 +777,40 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
-/* 價格區 */
-.price-section {
-  border-left: 4px solid var(--bs-primary);
+.related-card {
+  cursor: pointer;
+  transition: transform 0.3s;
 }
 
-/* 相似產品卡片 */
-.similar-product-card {
-  transition: transform 0.2s, box-shadow 0.2s;
+.related-card:hover {
+  transform: translateY(-5px);
 }
 
-.similar-product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.similar-product-card .card-img-top {
-  aspect-ratio: 1 / 1;
+.related-card .card-img-top {
+  height: 200px;
   object-fit: cover;
+  background-color: #f8f9fa;
 }
 
-/* 響應式 */
-@media (max-width: 768px) {
+@media (max-width: 991px) {
   .product-title {
     font-size: 1.5rem;
   }
   
-  .price-section .fs-2 {
-    font-size: 1.5rem !important;
+  .color-circle {
+    width: 45px;
+    height: 45px;
+  }
+}
+
+@media (max-width: 576px) {
+  .color-circle {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .color-name {
+    font-size: 0.75rem;
   }
 }
 </style>

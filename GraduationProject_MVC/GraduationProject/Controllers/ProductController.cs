@@ -53,6 +53,8 @@ namespace GraduationProject.Controllers
             return View(data);
         }
 
+
+
         public IActionResult Detail(int id)
         {
             var dto = _ProductService.GetDetail(id);
@@ -63,37 +65,70 @@ namespace GraduationProject.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            var vm = new CProductEditViewModel
-            {
-                Data = new CProductUpdateDTO(),
-                CategoryOptions = GetCategoryOptions(),
-                PStatusOptions = GetPStatusOptions(),
-                ColorOptions = GetColorOptions()
-            };
+            var vm = BuildCreateViewModel(new CProductUpdateDTO());
+            // 至少給一筆空變體，方便直接編輯
+            vm.Data.Variants = vm.Data.Variants ?? new List<CProductVariantDTO> { new CProductVariantDTO() };
+            vm.Data.Assets = vm.Data.Assets ?? new List<CProductAssetDTO>();
             return View(vm);
         }
 
+        // --------- Create (POST) ----------
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create([Bind(Prefix = "Data")] CProductUpdateDTO dto)
         {
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    var vm = new CProductEditViewModel
-                    {
-                        Data = dto,
-                        CategoryOptions = GetCategoryOptions(),
-                        PStatusOptions = GetPStatusOptions(),
-                        ColorOptions = GetColorOptions()
-                    };
-                    return View(vm);
-                }
-                var id = _ProductService.Create(dto);
-                TempData["Ok"] = "已建立商品";
-                return RedirectToAction(nameof(Edit), new { id });
+                var vmInvalid = BuildCreateViewModel(dto);
+                return View(vmInvalid);
             }
+
+            // (1) 先建 product + variants，取得 tempIndex -> real VariantId 對照
+            var (pid, map) = _ProductService.CreateProductAndVariants(dto);
+
+            // (2) 將資產的 ProductVariantId 對齊對應變體
+            if (dto.Assets != null)
+            {
+                foreach (var a in dto.Assets)
+                {
+                    if (a?.Deleted == true) continue;
+                    var tmp = a?.VariantTempIndex ?? -1;
+                    if (tmp >= 0 && map.TryGetValue(tmp, out var realVid))
+                        a.ProductVariantId = realVid;
+                    else
+                        a.ProductVariantId = null; // 商品層資產
+                }
+
+                _ProductService.CreateAssetsForProduct(pid, dto.Assets);
+            }
+
+            TempData["Ok"] = "已建立商品";
+            return RedirectToAction(nameof(Edit), new { id = pid });
         }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult UploadAsset(IFormFile file)
+        {
+            if (file == null || file.Length == 0) return BadRequest("No file.");
+            var (url, mime) = _ProductService.UploadAsset(file);
+            return Json(new { url, mime });
+        }
+
+        // --------- 小工具：建置 Create 用 VM ----------
+        private CProductEditViewModel BuildCreateViewModel(CProductUpdateDTO dto)
+        {
+            return new CProductEditViewModel
+            {
+                Data = dto,
+                CategoryOptions = _ProductService.GetCategoryOptions(),
+                PStatusOptions = _ProductService.GetPStatusOptions(),
+                ColorOptions = _ProductService.GetColorOptions(),
+                TextureOptions = _ProductService.GetTextureOptions()
+            };
+        }
+
 
         [HttpGet]
         public IActionResult Edit(int id)
