@@ -109,7 +109,7 @@ namespace ApiProject.Controllers
                 else
                     return StatusCode(StatusCodes.Status500InternalServerError, "伺服器內部錯誤");
             }
-            return NoContent();
+            return Ok(result);
         }
 
         //登入時購物車轉換 -V
