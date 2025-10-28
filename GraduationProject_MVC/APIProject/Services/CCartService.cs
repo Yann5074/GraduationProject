@@ -36,6 +36,7 @@ namespace ApiProject.Services
                 .Select(c => new ResCartDTO
                 {
                     MemberId = c.FMemberId,
+                    CartId = c.FCartId,
                     TotalPrice = c.FTotalPrice,
                     CartItem = c.CartItem
                     .Where(ci => ci.FIsDeleted != 1)
@@ -86,6 +87,7 @@ namespace ApiProject.Services
             {
                 Ok = true,
                 Code = StatusCodes.Status204NoContent,
+                Message = "購物車已清空"
             };
         }
 
@@ -110,7 +112,7 @@ namespace ApiProject.Services
                 {
                     Ok = false,
                     Code = StatusCodes.Status400BadRequest,
-                    Message = "商品數量錯誤或超過庫存，請重新操作"
+                    Message = $"商品數量錯誤或超過庫存，最大可選值為 {pv.FStock}，請重新操作"
                 };
             cartItem.FQuantity = reqDto.Qty;
             await _context.SaveChangesAsync();

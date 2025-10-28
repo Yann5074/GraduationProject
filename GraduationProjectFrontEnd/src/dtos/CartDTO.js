@@ -3,11 +3,11 @@ import { formatCurrency, formatImageUrl } from "@/utils/format"
 // 定義 Class
 export class CartDTO{
     constructor({
-        orderId = null,
+        cartId = null,
         totalPrice = 0,
         cartItem = []
     } = {}){
-        this.orderId = orderId
+        this.cartId = cartId
         this.totalPrice = totalPrice
         this.cartItem = cartItem.map(CartItemDTO.fromApi)
     }
