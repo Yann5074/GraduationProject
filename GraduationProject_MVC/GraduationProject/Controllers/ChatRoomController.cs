@@ -15,6 +15,14 @@ namespace GraduationProject.Controllers
             _context = context;
         }
 
+        public static class SenderTypes
+        {
+            public const string Employee = "employee";
+            public const string Member = "member";
+            public const string Visitor = "visitor";
+            public const string Bot = "bot";
+        }
+
         //每個聊天室 對應一個id
 
         //新增聊天室 
@@ -29,7 +37,7 @@ namespace GraduationProject.Controllers
                 return View("Error");
             }
             //若是id 正確 就新增一筆資料到 TChatRoom
-            var a =  _context.TChatRooms.Add(new TChatRoom
+            var a = _context.TChatRooms.Add(new TChatRoom
             {
                 FMemberId = memberid,
                 FVisitorKey = visitorid,
@@ -38,7 +46,7 @@ namespace GraduationProject.Controllers
                 FCreatedAt = DateTime.Now,
                 FStatus = "open",
             });
-            await _context.SaveChangesAsync(); 
+            await _context.SaveChangesAsync();
             var ChatRoomid = a.Entity.FChatRoomId;
             //接著output ChatRoomid
             return View(ChatRoomid);
@@ -82,7 +90,7 @@ namespace GraduationProject.Controllers
             return View();
         }
 
-        public async Task<IActionResult> Index(string? q ,int? chatRoomId)
+        public async Task<IActionResult> Index(string? q, int? chatRoomId)
         {
             var roomsQuery = await (
                 from c in _context.TChatRooms
@@ -102,7 +110,7 @@ namespace GraduationProject.Controllers
 
                     FName = (m != null && !string.IsNullOrEmpty(m.FName))
            ? m.FName
-            : (c.FMemberId==null ? "訪客" : c.FMemberId.ToString()),
+            : (c.FMemberId == null ? "訪客" : c.FMemberId.ToString()),
 
                     FLastMessageTime = last != null ? (DateTime?)last.FCreatedAt : null,
                     FLastMessage = last != null ? last.FContent : null
@@ -129,16 +137,17 @@ namespace GraduationProject.Controllers
                 messages = await _context.TMessages
                     .Where(m => m.FChatRoomId == chatRoomId)
                     .OrderBy(m => m.FCreatedAt)
-                    .Select(m => new MessageDto {
-                    MessageId = m.FMessagesId,
-                    SenderType = m.FSenderType,
-                    SenderId = m.FSenderId,
-                    Content = m.FContent,
-                    CreatedAt = m.FCreatedAt
+                    .Select(m => new MessageDto
+                    {
+                        MessageId = m.FMessagesId,
+                        SenderType = m.FSenderType,
+                        SenderId = m.FSenderId,
+                        Content = m.FContent,
+                        CreatedAt = m.FCreatedAt
                     })
                     .ToListAsync();
             }
-            
+
             var vm = new CChatRoomsPageVm { Rooms = rooms, SelectedId = chatRoomId, Messages = messages };
             return View(vm);
         }
@@ -152,41 +161,25 @@ namespace GraduationProject.Controllers
         /// <param name="content">     前端畫面右側的messagelist 下面的 對話框裡面的 輸入內容 </param>
         /// <returns></returns>
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SendMessage(int chatRoomId,string content,string? visitordId ,int? memberId)
+        //[ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendMessage( int chatRoomId, string content)
         {
-            TChatRoom room = await _context.TChatRooms
-                //AsTracking嘿～這些資料你要幫我記住它原本的樣子喔！」
-                .AsTracking()
-                .FirstOrDefaultAsync(r => r.FChatRoomId == chatRoomId);
-            // senderid 用途 : 驗證身分  為何null  因為這裡少一個方法 
-            // 少一個功能  去member裡拿出來的資料  伏筆:interface
-            string senderId = null;
-
-
-            //判定 訊息回覆者為 訪客 會員 bot 並給予值 
-            string senderType = null;
-            string? senderKey = null;
-
-
-            if (memberId.HasValue)
             {
-                // 前台會員或半會員
-                senderType = "member";
-                senderKey = memberId.Value.ToString();
-            }
+                TChatRoom room = await _context.TChatRooms
+                    //AsTracking嘿～這些資料你要幫我記住它原本的樣子喔！」
+                    .AsTracking()
+                    .FirstOrDefaultAsync(r => r.FChatRoomId == chatRoomId);
+                // senderid 用途 : 驗證身分  為何null  因為這裡少一個方法 
+                // 少一個功能  去member裡拿出來的資料  伏筆:interface
+                // 後台固定是員工
+                var senderType = SenderTypes.Employee; // "employee"
+                                                       // 1) 先試圖從登入者 Claims 取得員工編號
+                var employeeIdFromClaims =
+                    User?.FindFirst("EmployeeId")?.Value ??
+                    User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                // 2) 取不到就用 1（依您的規則）
+                var senderId = string.IsNullOrWhiteSpace(employeeIdFromClaims) ? "1000" : employeeIdFromClaims;
 
-            else if (!string.IsNullOrWhiteSpace(visitordId))
-            {
-                senderId = "visitor";
-                senderKey = visitordId;
-            }
-
-            else
-            {
-                senderType = "employye";
-                senderKey = null;
-            }
 
                 //為何不加new會爆掉
                 var msg = new TMessage
@@ -199,46 +192,33 @@ namespace GraduationProject.Controllers
                     FCreatedAt = DateTime.Now
                 };
 
-            _context.TMessages.Add(msg);
-            await _context.SaveChangesAsync();
-            // 5) 更新聊天室最後訊息時間（若您表上有此欄位）
-
-            room.FLastMessageAt = DateTime.Now;
-            _context.TChatRooms.Update(room);
-            await _context.SaveChangesAsync();
-
-
-            // ✅ 直接回 JSON，不重整頁面
-            if (Request.Headers["X-Requested-With"] == "fetch" || Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-            {
-                return Json(new
-                {
-                    ok = true,
-                    message = new
+                _context.TMessages.Add(msg);
+                await _context.SaveChangesAsync();
+                // 5) 更新聊天室最後訊息時間（若您表上有此欄位）
+                room.FLastMessageAt = DateTime.Now;
+                _context.TChatRooms.Update(room);
+                await _context.SaveChangesAsync();
+                // ✅ 直接回 JSON，不重整頁面
+                
+                    return Json(new
                     {
-                        senderType = senderType,
-                        content = content,
-                        createdAt = msg.FCreatedAt?.ToString("yyyy/MM/dd HH:mm")
-                    }
-                });
+                        ok = true,
+                        message = new
+                        {
+                            senderType = senderType,
+                            content = content,
+                            createdAt = msg.FCreatedAt?.ToString("yyyy/MM/dd HH:mm")
+                        }
+                    });
+                
+
+                // 6) 回到 Index，維持目前聊天室與搜尋字  RedirectToAction跳轉到指定的動作方法
+                // 為不重整頁面 註解下面這行
+                //return RedirectToAction(nameof(Index), new { chatRoomId });
             }
 
-            // 6) 回到 Index，維持目前聊天室與搜尋字  RedirectToAction跳轉到指定的動作方法
-            // 為不重整頁面 註解下面這行
-            //return RedirectToAction(nameof(Index), new { chatRoomId });
+
         }
-
-            
-
-        // 以登入系統取得目前使用者的字串 Id（沒有登入就回空字串）
-        //private string GetCurrentUserIdString()
-        //{
-        //    // 常見做法：Identity 的 NameIdentifier
-        //    // using System.Security.Claims;
-        //    var claim = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-        //    return claim?.Value ?? string.Empty;
-        //}
-
     }
 }
 
