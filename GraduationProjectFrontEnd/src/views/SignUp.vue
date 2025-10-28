@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { registerAPI, loginAPI } from '@/api/Member'
-import api from '@/api/axios'
+import http from '@/api/axios'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -67,11 +67,11 @@ const canFinish = computed(() => {
 
 // --- API wrappers ---
 function sendEmailCodeAPI(payload) {
-  return api.post('/api/Member/send-email-code', payload)
+  return http.post('/api/Member/send-email-code', payload)
 }
 
 function verifyEmailCodeAPI(payload) {
-  return api.post('/api/Member/verify-email-code', payload)
+  return http.post('/api/Member/verify-email-code', payload)
 }
 
 // Step1 -> Step2
