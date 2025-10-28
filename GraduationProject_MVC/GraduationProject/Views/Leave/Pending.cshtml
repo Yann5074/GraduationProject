@@ -1,12 +1,43 @@
-﻿@using GraduationProject.ViewModels
-@model CLeaveRequestItemViewModel
+﻿@using GraduationProject.DTOs
+@using GraduationProject.Dictionary
+@model PagedList<GraduationProject.DTOs.CLeaveItemDTO>
 
 <h3>待審請假申請</h3>
-
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <p class="mb-0">總請假申請數量：@Model.TotalRequests</p>
-    <a asp-action="List" class="btn btn-light">返回清單</a>
+<!-- 功能按鈕群組 -->
+<div class="d-flex justify-content-between mb-3 gap-2">
+    <p class="mb-0">總請假申請數量：@ViewBag.TotalRequests</p>
+    <a asp-action="List" class="btn btn-light">
+        返回清單
+    </a>
 </div>
+
+<!-- 篩選清單 -->
+<form method="get" class="row align-items-end mb-4">
+    <div class="col-md-3 col-sm-6">
+        <label class="form-label">關鍵字</label>
+        <input type="text" name="Keyword" value="@ViewBag.Keyword" class="form-control" placeholder="輸入關鍵字">
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <label class="form-label">開始日期</label>
+        <input type="date" name="Start" value="@ViewBag.Start" class="form-control">
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <label class="form-label">結束日期</label>
+        <input type="date" name="End" value="@ViewBag.End" class="form-control">
+    </div>
+
+    <div class="col-md-3 col-sm-6 d-flex justify-content-end gap-2">
+        <button type="submit" class="btn btn-primary flex-grow-1">
+            <i class="fa-solid fa-search"></i> 搜尋
+        </button>
+        <a href="@Url.Action("Pending")" class="btn btn-outline-secondary flex-grow-1">
+            <i class="fa-solid fa-rotate-left"></i> 清除
+        </a>
+    </div>
+</form>
+
 <table class="table">
     <thead>
         <tr>
@@ -20,9 +51,8 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var x in Model.LeaveRequests)
+        @foreach (var x in Model.Items)
         {
-            var url = string.IsNullOrEmpty(x.PictureFileName) ? null : Url.Content($"~/LeaveEvidence/{x.PictureFileName}");
             <tr>
                 <td>@x.EmployeeName</td>
                 <td>@x.LeaveType</td>
@@ -30,9 +60,15 @@
                 <td>@x.EndDate</td>
                 <td>@x.Description</td>
                 <td>
-                    @if (url is not null)
+                    @if (string.IsNullOrEmpty(x.PictureFileName))
                     {
-                        <a href="@url" target="_blank">檢視</a>
+                        <span>無</span>
+                    }
+                    else
+                    {
+                        var url = Url.Content($"~/LeaveEvidence/{x.PictureFileName}");
+                        var ext = System.IO.Path.GetExtension(x.PictureFileName)?.ToLowerInvariant();
+                        <a href="@url" target="_blank" rel="noopener">預覽</a>
                     }
                 </td>
                 <td class="text-nowrap">
@@ -51,4 +87,24 @@
         }
     </tbody>
 </table>
+<!-- 分頁按鈕 -->
+<nav class="d-flex justify-content-between align-items-center">
+    <div>共 @Model.TotalCount 筆，第 @Model.Page / @(Model.TotalPages <= 0 ? 1 : Model.TotalPages) 頁</div>
+    <ul class="pagination mb-0">
+        <li class="page-item @(Model.HasPrev ? "" : "disabled")">
+            <a class="page-link"
+               asp-action="List"
+               asp-route-Keyword="@(ViewBag.Keyword)"
+               asp-route-Page="@(Model.Page - 1)"
+               asp-route-Size="@(Model.PageSize)">上一頁</a>
+        </li>
 
+        <li class="page-item @(Model.HasNext ? "" : "disabled")">
+            <a class="page-link"
+               asp-action="List"
+               asp-route-Keyword="@(ViewBag.Keyword)"
+               asp-route-Page="@(Model.Page + 1)"
+               asp-route-Size="@(Model.PageSize)">下一頁</a>
+        </li>
+    </ul>
+</nav>

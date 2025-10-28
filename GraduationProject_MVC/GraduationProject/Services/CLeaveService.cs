@@ -19,17 +19,29 @@ namespace GraduationProject.Services
             _logger = logger;
         }
 
+        // 關鍵字搜尋方法
+        private static IQueryable<TLeave> KeywordFilter(IQueryable<TLeave> q, string? keyword)
+        {
+            if (string.IsNullOrWhiteSpace(keyword)) return q;
+
+            var pattern = $"%{keyword.Trim()}%";
+            return q.Where(e =>
+                EF.Functions.Like(e.FLeaveType ?? "", pattern) ||
+                EF.Functions.Like(e.FDescription ?? "", pattern) ||
+                (e.FStatus != null && EF.Functions.Like(e.FStatus.FStatus ?? "", pattern))
+            );
+        }
+
         //List
-        public async Task<PagedList<CLeaveItemDTO>> GetMyLeavesAsync(int employeeId, string? keyword, DateTime? start, DateTime? end, int page = 1, int pageSize = 10, CancellationToken ct = default)
+        public async Task<PagedList<CLeaveItemDTO>> GetMyLeavesAsync(int Id, string? keyword, DateTime? start, DateTime? end, int page = 1, int pageSize = 10, CancellationToken ct = default)
         {
             IQueryable<TLeave> q = _db.TLeaves.AsNoTracking()
-                    .Where(x => x.FEmployeeId == employeeId && x.FStatusId != (int)LeaveRequestStatusEnum.Deleted);
+                    .Where(x => x.FEmployeeId == Id && x.FStatusId != (int)LeaveRequestStatusEnum.Deleted);
 
             // 關鍵字
-            if (!string.IsNullOrWhiteSpace(keyword))
-                q = q.Where(x => (x.FDescription ?? "").Contains(keyword));
+            q = KeywordFilter(q, keyword);
 
-            // 時間區間（以 FStartDate 或 FCreatetime 篩選都可，選你要的欄位）
+            // 時間區間（以 FStartDate篩選）
             if (start.HasValue)
             {
                 var s = start.Value.Date;                 // 當天 00:00
@@ -37,19 +49,23 @@ namespace GraduationProject.Services
             }
             if (end.HasValue)
             {
-                var e = end.Value.Date.AddDays(1);        // 取「小於隔天 00:00」→ 等同「包含結束日整天」
+                var e = end.Value.Date.AddDays(1);        // 包含結束日整天
                 q = q.Where(x => x.FStartDate < e);       // 迄：不含隔天
             }
 
-            // 投影 + 分頁（用你現成的 ToPagedListAsync 擴充方法）
+            // 投影 + 分頁
             var list = q.OrderByDescending(x => x.FCreatetime)
                 .Select(x => new CLeaveItemDTO
                 {
                     LeaveId = x.FLeaveId,
+                    EmployeeId = (int)x.FEmployeeId,
+                    EmployeeName = _db.TEmployees
+                                      .Where(e => e.FEmployeeId == x.FEmployeeId)
+                                      .Select(e => e.FName).FirstOrDefault() ?? "",
                     LeaveType = x.FLeaveType!,
-                    StartDate = x.FStartDate ?? DateTime.MinValue,
-                    EndDate = x.FEndDate ?? DateTime.MinValue,
-                    StatusId = x.FStatusId ?? 0,
+                    StartDate = (DateTime)x.FStartDate,
+                    EndDate = (DateTime)x.FEndDate,
+                    StatusId = (int)x.FStatusId,
                     StatusName = _db.TRequestStatuses
                                     .Where(s => s.FStatusId == x.FStatusId)
                                     .Select(s => s.FStatus)
@@ -62,11 +78,27 @@ namespace GraduationProject.Services
         }
 
         //Deleted List
-        public async Task<List<CLeaveItemDTO>> GetMyDeletedLeavesAsync(int employeeId, CancellationToken ct = default)
+        public async Task<PagedList<CLeaveItemDTO>> GetMyDeletedLeavesAsync(int Id, string? keyword, DateTime? start, DateTime? end, int page = 1, int pageSize = 10, CancellationToken ct = default)
         {
-            return await _db.TLeaves.AsNoTracking()
-                .Where(x => x.FEmployeeId == employeeId && x.FStatusId == (int)LeaveRequestStatusEnum.Deleted)
-                .OrderByDescending(x => x.FCreatetime)
+            IQueryable<TLeave> q = _db.TLeaves.AsNoTracking()
+                    .Where(x => x.FEmployeeId == Id && x.FStatusId == (int)LeaveRequestStatusEnum.Deleted);
+
+            // 關鍵字
+            q = KeywordFilter(q, keyword);
+
+            // 時間區間（以 FStartDate篩選）
+            if (start.HasValue)
+            {
+                var s = start.Value.Date;
+                q = q.Where(x => x.FStartDate >= s);
+            }
+            if (end.HasValue)
+            {
+                var e = end.Value.Date.AddDays(1);
+                q = q.Where(x => x.FStartDate < e);
+            }
+
+            var list = q.OrderByDescending(x => x.FCreatetime)
                 .Select(x => new CLeaveItemDTO
                 {
                     LeaveId = x.FLeaveId,
@@ -74,18 +106,19 @@ namespace GraduationProject.Services
                     EmployeeName = _db.TEmployees
                                       .Where(e => e.FEmployeeId == x.FEmployeeId)
                                       .Select(e => e.FName).FirstOrDefault() ?? "",
-                    LeaveType = x.FLeaveType,
+                    LeaveType = x.FLeaveType!,
                     StartDate = (DateTime)x.FStartDate,
                     EndDate = (DateTime)x.FEndDate,
-                    Description = x.FDescription,
                     StatusId = (int)x.FStatusId,
                     StatusName = _db.TRequestStatuses
                                     .Where(s => s.FStatusId == x.FStatusId)
-                                    .Select(s => s.FStatus).FirstOrDefault() ?? "",
+                                    .Select(s => s.FStatus)
+                                    .FirstOrDefault() ?? "未知",
                     PictureFileName = x.FPicture,
                     CreateTime = x.FCreatetime
-                })
-                .ToListAsync(ct);
+                });
+
+            return await list.ToPagedListAsync(page, pageSize, ct);
         }
 
         //Create
@@ -111,29 +144,51 @@ namespace GraduationProject.Services
         }
 
         // 主管審核List
-        public async Task<List<CLeaveItemDTO>> GetPendingAsync(CancellationToken ct = default)
+        public async Task<PagedList<CLeaveItemDTO>> GetPendingAsync(string? keyword, DateTime? start, DateTime? end, int page = 1, int pageSize = 10, CancellationToken ct = default)
         {
             var pending = (int)LeaveRequestStatusEnum.Pending;
-            return await _db.TLeaves.AsNoTracking()
-                .Where(x => x.FStatusId == pending)
-                .OrderBy(x => x.FCreatetime)
-                .Select(x => new CLeaveItemDTO
-                {
-                    LeaveId = x.FLeaveId,
-                    EmployeeId = (int)x.FEmployeeId,
-                    EmployeeName = _db.TEmployees
+            IQueryable<TLeave> q = _db.TLeaves.AsNoTracking()
+                    .Where(x =>x.FStatusId == pending);
+
+            // 關鍵字
+            q = KeywordFilter(q, keyword);
+
+            // 時間區間（以 FStartDate篩選）
+            if (start.HasValue)
+            {
+                var s = start.Value.Date;
+                q = q.Where(x => x.FStartDate >= s);
+            }
+            if (end.HasValue)
+            {
+                var e = end.Value.Date.AddDays(1);
+                q = q.Where(x => x.FStartDate < e);
+            }
+
+            var list = 
+                q.Where(x => x.FStatusId == pending)
+                 .OrderBy(x => x.FCreatetime)
+                 .Select(x => new CLeaveItemDTO
+                 {
+                     LeaveId = x.FLeaveId,
+                     EmployeeId = (int)x.FEmployeeId,
+                     EmployeeName = _db.TEmployees
                                       .Where(e => e.FEmployeeId == x.FEmployeeId)
                                       .Select(e => e.FName).FirstOrDefault() ?? "",
-                    LeaveType = x.FLeaveType,
-                    StartDate = (DateTime)x.FStartDate,
-                    EndDate = (DateTime)x.FEndDate,
-                    Description = x.FDescription,
-                    StatusId = (int)x.FStatusId,
-                    StatusName = "待審核",
-                    PictureFileName = x.FPicture,
-                    CreateTime = x.FCreatetime
-                })
-                .ToListAsync(ct);
+                     LeaveType = x.FLeaveType,
+                     StartDate = (DateTime)x.FStartDate,
+                     EndDate = (DateTime)x.FEndDate,
+                     Description = x.FDescription,
+                     StatusId = (int)x.FStatusId,
+                     StatusName = _db.TRequestStatuses
+                                    .Where(s => s.FStatusId == x.FStatusId)
+                                    .Select(s => s.FStatus)
+                                    .FirstOrDefault() ?? "未知",
+                     PictureFileName = x.FPicture,
+                     CreateTime = x.FCreatetime
+                 });
+
+            return await list.ToPagedListAsync(page, pageSize, ct);
         }
 
         //Approve
