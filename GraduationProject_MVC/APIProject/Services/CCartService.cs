@@ -274,6 +274,8 @@ namespace ApiProject.Services
 
             // 確認該商品狀態與數量正常
             var invalidItem = new List<string>();
+            // 確認是否有修正過
+            bool modified = false;
             foreach (var item in cart.CartItem)
             {
                 var pro = await _context.TProductVariants
@@ -282,21 +284,31 @@ namespace ApiProject.Services
                 // 確認商品是否存在
                 if (pro == null)
                 {
-                    invalidItem.Add($"商品 {item.ProductVariant.Product.FName} 不存在，請重新操作");
+                    item.FIsDeleted = 1;
+                    modified = true;
+                    invalidItem.Add($"商品 {item.ProductVariant.Product.FName} 不存在，請選購其他商品");
                     continue;
                 }
                 // 確認商品數量正常
                 if (item.FQuantity >= pro.FStock || item.FQuantity <= 0)
                 {
-                    invalidItem.Add($"商品 {item.ProductVariant.Product.FName} 數量異常，請重新操作");
+                    item.FQuantity = 1;
+                    modified = true;
+                    invalidItem.Add($"商品 {item.ProductVariant.Product.FName} 數量異常或超過庫存，以重設為1");
                     continue;
                 }
 
                 //確認商品價格正常
                 if (item.FUnitPrice != pro.FPrice)
                 {
-                    invalidItem.Add($"商品 {item.ProductVariant.Product.FName} 價格異常，請重新操作購物車");
+                    item.FUnitPrice = (decimal)pro.FPrice;
+                    modified = true;
+                    invalidItem.Add($"商品 {item.ProductVariant.Product.FName} 價格異常，已重設為當前售價");
                 }
+            }
+            if (modified)
+            {
+                await _context.SaveChangesAsync(ct);
             }
             if (invalidItem.Any())
             {
@@ -311,7 +323,9 @@ namespace ApiProject.Services
             return new ResultDTO
             {
                 Ok = true,
-                Code = StatusCodes.Status204NoContent,
+                //Code = StatusCodes.Status204NoContent,
+                Code = StatusCodes.Status200OK,
+                Message = "購物車狀態正確"
             };
         }
 

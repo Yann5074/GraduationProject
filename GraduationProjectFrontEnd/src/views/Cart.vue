@@ -135,7 +135,7 @@
 
 <script setup>
 import { onMounted, ref, computed } from 'vue'
-import { getAllCarts, deleteItem, editCartItem, deleteCart } from '@/api/Cart'
+import { getAllCarts, deleteItem, editCartItem, deleteCart, checkCart } from '@/api/Cart'
 import QtyControl from '@/components/QtyControl.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 
@@ -206,6 +206,10 @@ const formatTotal = computed(() =>{
 //初始化載入
 onMounted(async () => {
   try{
+    const checkResult = await checkCart();
+    if (!checkResult.ok){
+      alert(checkResult.message)
+    }
     const result = await getAllCarts()
     if(!Array.isArray(result)){
       cartId.value = null
@@ -217,7 +221,8 @@ onMounted(async () => {
     cartItems.value = result[0]?.cartItem || []
   }catch (err){
     console.error('載入購物車錯誤', err)
-    alert(err.message)
+    if (err.code !== '401')
+      alert(err.message)
     cartItems.value = []
   }
 }

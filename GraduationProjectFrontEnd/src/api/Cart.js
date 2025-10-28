@@ -55,5 +55,13 @@ export const editCartItem = async (cartItemId, newQty) => {
 // 商品加入購物車 (有登入)
 
 // 確認購物車是否正常
-
+export const checkCart = async () =>{
+    try{
+        const result = await http.get('/Cart/Check')
+        return handleApiResult(result.data)
+    }catch(err){
+        console.error('確認購物車失敗', err)
+        throw err
+    }
+}
 // 登入時購物車轉換
