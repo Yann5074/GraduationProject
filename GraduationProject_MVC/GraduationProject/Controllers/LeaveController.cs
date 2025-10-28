@@ -21,54 +21,40 @@ namespace GraduationProject.Controllers
 
         //List
         [HttpGet]
-        public async Task<IActionResult> List(CancellationToken ct)
+        public async Task<IActionResult> List(CLeaveListItemViewModel vm, CancellationToken ct)
         {
-            var empId = _user.GetEmployeeId();
-            if (empId is null) return RedirectToAction("Login", "Home");
+            var Id = _user.GetEmployeeId();
+            if (Id is null) return RedirectToAction("Login", "Home");
 
-            var rows = await _svc.GetMyLeavesAsync(empId.Value, ct);
-            var vm = rows.Select(x => new CLeaveListItemViewModel
-            {
-                LeaveId = x.LeaveId,
-                LeaveType = x.LeaveType,
-                StartDate = x.StartDate,
-                EndDate = x.EndDate,
-                StatusId = x.StatusId,
-                Status = x.StatusName,
-                Description = x.Description,
-                PictureUrl = string.IsNullOrEmpty(x.PictureFileName)
-                    ? null
-                    : Url.Content($"~/LeaveEvidence/{x.PictureFileName}"),
-                CreateTime = x.CreateTime
-            }).ToList();
+            var page = vm.Page <= 0 ? 1 : vm.Page;
+            var size = vm.Size <= 0 ? 10 : Math.Min(vm.Size, 100);
 
-            return View(vm);
+            var rows = await _svc.GetMyLeavesAsync(Id.Value, vm.Keyword, vm.Start, vm.End, page, size, ct);
+
+            ViewBag.Keyword = vm.Keyword;
+            ViewBag.Start = vm.Start?.ToString("yyyy-MM-dd");
+            ViewBag.End = vm.End?.ToString("yyyy-MM-dd");
+
+            return View(rows);
         }
 
         //Deleted List
         [HttpGet]
-        public async Task<IActionResult> DeletedList(CancellationToken ct)
+        public async Task<IActionResult> DeletedList(CLeaveListItemViewModel vm, CancellationToken ct)
         {
-            var empId = _user.GetEmployeeId();
-            if (empId is null) return RedirectToAction("Login", "Home");
+            var Id = _user.GetEmployeeId();
+            if (Id is null) return RedirectToAction("Login", "Home");
 
-            var rows = await _svc.GetMyDeletedLeavesAsync(empId.Value, ct);
-            var vm = rows.Select(x => new CLeaveListItemViewModel
-            {
-                LeaveId = x.LeaveId,
-                LeaveType = x.LeaveType,
-                StartDate = x.StartDate,
-                EndDate = x.EndDate,
-                StatusId = x.StatusId,
-                Status = x.StatusName,
-                Description = x.Description,
-                PictureUrl = string.IsNullOrEmpty(x.PictureFileName)
-                    ? null
-                    : Url.Content($"~/LeaveEvidence/{x.PictureFileName}"),
-                CreateTime = x.CreateTime
-            }).ToList();
+            var page = vm.Page <= 0 ? 1 : vm.Page;
+            var size = vm.Size <= 0 ? 10 : Math.Min(vm.Size, 100);
 
-            return View(vm);
+            var rows = await _svc.GetMyDeletedLeavesAsync(Id.Value, vm.Keyword, vm.Start, vm.End, page, size, ct);
+
+            ViewBag.Keyword = vm.Keyword;
+            ViewBag.Start = vm.Start?.ToString("yyyy-MM-dd");
+            ViewBag.End = vm.End?.ToString("yyyy-MM-dd");
+
+            return View(rows);
         }
 
         //Create
@@ -97,9 +83,11 @@ namespace GraduationProject.Controllers
             {
                 var ext = Path.GetExtension(vm.Picture.FileName).ToLowerInvariant();
                 var allow = new[] { ".jpg", ".jpeg", ".png", ".webp", ".pdf" };
-                if (!allow.Contains(ext))
+                const long max = 2 * 1024 * 1024; // 2MB
+                if (!allow.Contains(ext) && vm.Picture.Length > max)
                 {
                     ModelState.AddModelError(nameof(vm.Picture), "僅支援 jpg/png/webp/pdf");
+                    ModelState.AddModelError(nameof(vm.Picture), "檔案大小必須小於 2MB");
                     return View(vm);
                 }
 
@@ -128,15 +116,19 @@ namespace GraduationProject.Controllers
         // 主管審核清單
         [HttpGet]
         [AdminOnly]
-        public async Task<IActionResult> Pending(CancellationToken ct)
+        public async Task<IActionResult> Pending(CLeaveRequestItemViewModel vm, CancellationToken ct)
         {
-            var pending = await _svc.GetPendingAsync(ct);
-            var vm = new CLeaveRequestItemViewModel
-            {
-                LeaveRequests = pending,
-                TotalRequests = pending.Count()
-            };
-            return View(vm);
+            var page = vm.Page <= 0 ? 1 : vm.Page;
+            var size = vm.Size <= 0 ? 10 : Math.Min(vm.Size, 100);
+
+            var pending = await _svc.GetPendingAsync(vm.Keyword, vm.Start, vm.End, page, size, ct);
+
+            ViewBag.Keyword = vm.Keyword;
+            ViewBag.Start = vm.Start?.ToString("yyyy-MM-dd");
+            ViewBag.End = vm.End?.ToString("yyyy-MM-dd");
+            ViewBag.TotalRequests = pending.TotalCount;
+
+            return View(pending);
         }
 
         // 核准

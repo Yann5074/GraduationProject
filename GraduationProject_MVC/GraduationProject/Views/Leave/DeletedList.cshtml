@@ -1,21 +1,46 @@
 ﻿@using GraduationProject.DTOs
 @using GraduationProject.Dictionary
 @using GraduationProject.Enum
-@using GraduationProject.ViewModels
-@model IEnumerable<CLeaveListItemViewModel>
+@model PagedList<GraduationProject.DTOs.CLeaveItemDTO>
 @{
     // 狀態Enum
     var deleted = (int)LeaveRequestStatusEnum.Deleted;
 }
 <h3>取消申請清單</h3>
-<div class="d-flex align-items-center mb-3">
-    <!-- 右側按鈕群組 -->
-    <div class="ms-auto d-flex gap-2">
-        <a asp-action="List" class="btn btn-light">
-            返回清單
+<!-- 功能按鈕群組 -->
+<div class="d-flex justify-content-end mb-3 gap-2">
+    <a asp-action="List" class="btn btn-light">
+        返回清單
+    </a>
+</div>
+
+<!-- 篩選清單 -->
+<form method="get" class="row align-items-end mb-4">
+    <div class="col-md-3 col-sm-6">
+        <label class="form-label">關鍵字</label>
+        <input type="text" name="Keyword" value="@ViewBag.Keyword" class="form-control" placeholder="輸入關鍵字">
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <label class="form-label">開始日期</label>
+        <input type="date" name="Start" value="@ViewBag.Start" class="form-control">
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <label class="form-label">結束日期</label>
+        <input type="date" name="End" value="@ViewBag.End" class="form-control">
+    </div>
+
+    <div class="col-md-3 col-sm-6 d-flex justify-content-end gap-2">
+        <button type="submit" class="btn btn-primary flex-grow-1">
+            <i class="fa-solid fa-search"></i> 搜尋
+        </button>
+        <a href="@Url.Action("DeletedList")" class="btn btn-outline-secondary flex-grow-1">
+            <i class="fa-solid fa-rotate-left"></i> 清除
         </a>
     </div>
-</div>
+</form>
+
 <table class="table table-striped">
     <thead>
         <tr>
@@ -32,7 +57,7 @@
     <tbody>
         @{
             var count = 0;
-            foreach (var x in Model)
+            foreach (var x in Model.Items)
             {
                 count++;
                 <tr>
@@ -40,15 +65,17 @@
                     <td>@x.LeaveType</td>
                     <td>@x.StartDate</td>
                     <td>@x.EndDate</td>
-                    <td>@x.Status</td>
+                    <td>@x.StatusName</td>
                     <td>
-                        @if (string.IsNullOrEmpty(x.PictureUrl))
+                        @if (string.IsNullOrEmpty(x.PictureFileName))
                         {
-                            <p>無</p>
+                            <span>無</span>
                         }
-                        @if (!string.IsNullOrEmpty(x.PictureUrl))
+                        else
                         {
-                            <a href="@x.PictureUrl" target="_blank">檢視</a>
+                            var url = Url.Content($"~/LeaveEvidence/{x.PictureFileName}");
+                            var ext = System.IO.Path.GetExtension(x.PictureFileName)?.ToLowerInvariant();
+                            <a href="@url" target="_blank" rel="noopener">預覽</a>
                         }
                     </td>
                     <td>@x.Description</td>
@@ -56,12 +83,12 @@
                         @if (x.StatusId == deleted)
                         {
                             <form method="post" asp-action="HardDelete" asp-route-id="@x.LeaveId">
-                                <button type="submit" class="btn btn-danger" onclick="return confirm('確定要刪除嗎？')">刪除</button>
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('確定要刪除嗎？')">刪除</button>
                             </form>
                         }
                         else
                         {
-                            <button disabled type="submit" class="btn btn-danger" )">例外</button>
+                            <button disabled type="submit" class="btn btn-sm btn-danger" )">例外</button>
                         }
                     </td>
                 </tr>
@@ -69,3 +96,24 @@
         }
     </tbody>
 </table>
+<!-- 分頁按鈕 -->
+<nav class="d-flex justify-content-between align-items-center">
+    <div>共 @Model.TotalCount 筆，第 @Model.Page / @(Model.TotalPages <= 0 ? 1 : Model.TotalPages) 頁</div>
+    <ul class="pagination mb-0">
+        <li class="page-item @(Model.HasPrev ? "" : "disabled")">
+            <a class="page-link"
+               asp-action="List"
+               asp-route-Keyword="@(ViewBag.Keyword)"
+               asp-route-Page="@(Model.Page - 1)"
+               asp-route-Size="@(Model.PageSize)">上一頁</a>
+        </li>
+
+        <li class="page-item @(Model.HasNext ? "" : "disabled")">
+            <a class="page-link"
+               asp-action="List"
+               asp-route-Keyword="@(ViewBag.Keyword)"
+               asp-route-Page="@(Model.Page + 1)"
+               asp-route-Size="@(Model.PageSize)">下一頁</a>
+        </li>
+    </ul>
+</nav>
