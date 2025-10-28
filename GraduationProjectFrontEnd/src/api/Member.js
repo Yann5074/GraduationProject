@@ -1,4 +1,3 @@
-
 import http from './axios'
 
 // 註冊
@@ -30,7 +29,7 @@ export function updateMeAPI(payload) {
 // 修改密碼
 export function updatePasswordAPI(dto) {
   // dto = { oldPassword, newPassword, confirmPassword }
-  return http.put('/api/Member/me/UpdatePassword', dto)
+  return http.put('/Member/me/UpdatePassword', dto)
 }
 
 // 上傳大頭貼（multipart/form-data）
@@ -38,5 +37,5 @@ export function updatePasswordAPI(dto) {
 export function uploadPhotoAPI(file) {
   const form = new FormData()
   form.append('file', file)
-  return api.post('/Member/me/uploadphoto', form)
+  return http.post('/Member/me/uploadphoto', form)
 }

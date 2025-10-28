@@ -4,7 +4,7 @@ import { onMounted, ref } from 'vue'
 import { Dropdown } from 'bootstrap'
 import http from '../src/api/axios'
 import { useAuthStore } from '@/stores/auth'
-import ChatWidget from './components/Chat/ChatWidget.vue'
+import ChatWidget from '@/components/Chat/ChatWidget.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -361,5 +361,21 @@ nav a:first-of-type {
     padding: 1rem 0;
     margin-top: 1rem;
   }
-} */
+}
+.floating-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #007bff;
+  color: white;
+  font-size: 24px;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 99999;
+}
 </style>
