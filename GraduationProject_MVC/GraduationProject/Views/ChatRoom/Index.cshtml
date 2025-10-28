@@ -1,4 +1,4 @@
-﻿@model GraduationProject.ViewModels.CChatRoomsPageVm
+﻿﻿@model GraduationProject.ViewModels.CChatRoomsPageVm
 @{
     ViewData["Title"] = "Chat Rooms";
     var selectedId = Model?.SelectedId;
@@ -214,7 +214,7 @@
             </div>
         </div>
 
-        <!-- 訊息可滾動 -->
+        <!-- 訊息可滾動 訊息列表 -->
         <div id="messages" class="messages">
             @if (Model?.Messages != null && Model.Messages.Any())
             {
@@ -267,7 +267,87 @@
 
 
     @@section Scripts {
+    <!-- 引入 SignalR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"
+        integrity="sha512-sQfLeZzxDQqEXAMPLEHASHbld0s...." crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+
     <script>
+        // 1) 建立連線（指向 API 專案的 Hub；Cookie 驗證要 withCredentials）
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("https://localhost:7131/chatHub", { withCredentials: true })
+            .withAutomaticReconnect()
+            .build();
+
+        // 2️⃣ 接收訊息
+        // 2️⃣ 接收訊息（僅 content, senderType）
+        connection.on("ReceiveMessage", function (content, senderType) {
+            console.log("收到訊息：", { senderType, content });
+
+            // 取得當前時間字串
+            const now = new Date();
+            const pad = n => (n < 10 ? "0" + n : n);
+            const formattedTime = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+            // 建立氣泡框結構
+            const isEmployee = (senderType || "").toLowerCase() === "employee";
+            console.log(isEmployee);
+            const row = document.createElement("div");
+            row.className = `msg-row ${isEmployee ? "from-employee" : "from-others"}`;
+
+            const bubble = document.createElement("div");
+            bubble.className = "bubble";
+
+            const contentDiv = document.createElement("div");
+            contentDiv.className = "content";
+            contentDiv.textContent = content ?? ""; // 安全輸出文字
+
+            const metaDiv = document.createElement("div");
+            metaDiv.className = "meta";
+
+            const senderSpan = document.createElement("span");
+            senderSpan.className = "sender";
+            senderSpan.textContent = senderType ?? "";
+
+            const timeSpan = document.createElement("span");
+            timeSpan.textContent = formattedTime; // ✅ 當前時間
+
+            metaDiv.appendChild(senderSpan);
+            metaDiv.appendChild(timeSpan);
+            bubble.appendChild(contentDiv);
+            bubble.appendChild(metaDiv);
+            row.appendChild(bubble);
+
+            // 加入訊息容器
+            const container = document.getElementById("messages");
+            container.appendChild(row);
+            container.scrollTop = container.scrollHeight; // 自動捲到底
+        });
+
+
+        // 3️⃣ 啟動連線後加入群組
+        async function startConnection() {
+            try {
+                await connection.start();
+                console.log("SignalR connected ✅");
+
+                // 假設後台開某個聊天室的頁面，例如 /Chat/Detail/5
+                // 那我們可以從後端 Razor 傳入 chatRoomId
+
+
+                const chatRoomId = "@Model.SelectedId";
+                console.log(chatRoomId);
+                await connection.invoke("JoinRoom", chatRoomId);
+                console.log(`加入群組：room:${chatRoomId}`);
+            } catch (err) {
+                console.error(err);
+                setTimeout(startConnection, 3000);
+            }
+        }
+
+
+        // 5️⃣ 啟動
+        startConnection();
         document.addEventListener('DOMContentLoaded', function () {
             const box = document.getElementById('messages');
             const form = document.querySelector('form.composer');
@@ -290,8 +370,8 @@
 
             ta.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if (ta.value.trim()) form.requestSubmit();
+                    e.preventDefault();   // 阻止 textarea 自動換行
+                    form.requestSubmit(); // ✅ 模擬點擊 <button type="submit">
                 }
             });
 
@@ -303,7 +383,12 @@
 
                 const fd = new FormData(form);
 
+                const chatRoomId = "@Model.SelectedId";
+
                 try {
+
+                    await connection.invoke("SendToRole", chatRoomId, "employee", text);
+
                     const res = await fetch(form.action, { method: 'POST', body: fd });
                     if (!res.ok) throw new Error('Network error');
                     const data = await res.json();
@@ -320,7 +405,7 @@
                 </div>`;
                     row.querySelector('.content').textContent = m.content;
 
-                    box.appendChild(row);
+                    // box.appendChild(row);
                     box.scrollTop = box.scrollHeight;
                     ta.value = '';
                     autoresize();
