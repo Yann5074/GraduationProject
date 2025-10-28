@@ -64,24 +64,23 @@ namespace ApiProject.Services
             //
             //    如果找不到，代表使用者沒有做過「email 驗證碼驗證」→ 不給註冊
             //
+            var normalizedEmail = (reqdto.Email ?? "").Trim().ToLower();
+
             var emailVerifiedRecord = await _context.TEmailVerifications
                 .Where(v =>
-                    v.FEmail == reqdto.Email &&
-                    v.FIsUsed == true)
+                    v.FIsUsed == true &&
+                    v.FEmail.ToLower() == normalizedEmail)
                 .OrderByDescending(v => v.FCreateTime)
                 .FirstOrDefaultAsync(ct);
 
             if (emailVerifiedRecord == null)
             {
-                // 沒找到代表根本沒成功驗證
                 throw new InvalidOperationException("請先通過信箱驗證再註冊帳號。");
             }
 
-            if (DateTime.UtcNow > emailVerifiedRecord.FExpireTime)
+            // 這裡跟 VerifyEmailCodeAsync 同一個時間基準
+            if (DateTime.Now > emailVerifiedRecord.FExpireTime)
             {
-                // 極端狀況：他驗證的那筆其實已經過期了（通常不太會發生，
-                // 因為你在 VerifyEmailCodeAsync 時就會把 FIsUsed 設 true
-                // 是「當下」成功的驗證碼，所以理論上不會過期）
                 throw new InvalidOperationException("驗證碼已過期，請重新驗證信箱後再註冊。");
             }
 
@@ -404,11 +403,11 @@ namespace ApiProject.Services
             // 2. 建一筆 DB 記錄 (5 分鐘有效)
             var entity = new TEmailVerification
             {
-                FEmail = email,
+                FEmail = (email ?? "").Trim(),
                 FCode = code,
-                FExpireTime = DateTime.UtcNow.AddMinutes(5),
+                FExpireTime = DateTime.Now.AddMinutes(5),
                 FIsUsed = false,
-                FCreateTime = DateTime.UtcNow
+                FCreateTime = DateTime.Now
             };
 
             _context.TEmailVerifications.Add(entity);
@@ -428,6 +427,8 @@ namespace ApiProject.Services
         //前端輸入驗證碼
         public async Task<ResultDTO> VerifyEmailCodeAsync(string email, string code)
         {
+            email = (email ?? "").Trim().ToLower();
+            code = (code ?? "").Trim();
             // 找最近的一筆該 email + code，還沒用掉的
             var record = await _context.TEmailVerifications
                 .Where(v => v.FEmail == email && v.FCode == code && v.FIsUsed == false)
@@ -445,7 +446,7 @@ namespace ApiProject.Services
             }
 
             // 檢查過期
-            if (DateTime.UtcNow > record.FExpireTime)
+            if (DateTime.Now > record.FExpireTime)
             {
                 return new ResultDTO
                 {
