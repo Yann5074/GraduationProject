@@ -36,3 +36,12 @@ const onInput = (e) => emit('update:modelValue', clamp(e.target.value))
     </button>
   </div>
 </template>
+
+<style scoped>
+.input-group {
+  display: inline-flex;           /* inline-flex 讓它像文字一樣排列 */
+  align-items: center;            /* 垂直置中 */
+  justify-content: center;
+  vertical-align: middle;         /* 與文字中線對齊 */
+}
+</style>

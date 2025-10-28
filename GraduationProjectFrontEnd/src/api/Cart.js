@@ -8,7 +8,11 @@ import { mapToCartDTOList } from '@/dtos/CartDTO'
 export const getAllCarts = async () => {
     try {
         const result = await http.get('/Cart');
-        return mapToCartDTOList(result.data);
+        const carts = mapToCartDTOList(result.data);
+        if (!Array.isArray(carts)){
+            return [];
+        }
+        return carts;
     } catch (err) {
         console.error('取得購物車資料錯誤', err);
         throw err
@@ -25,7 +29,15 @@ export const deleteItem = async (cartItemId) => {
     }
 }
 // 刪除購物車
-
+export const deleteCart = async (cartId) => {
+    try{
+        const result = await http.delete(`/Cart/${cartId}`)
+        return handleApiResult(result.data)
+    }catch (err){
+        console.error('清空購物車失敗', err)
+        throw err
+    }
+}
 // 編輯購物車物品數量
 export const editCartItem = async (cartItemId, newQty) => {
     const reqDTO = {

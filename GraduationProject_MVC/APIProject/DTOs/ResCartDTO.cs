@@ -3,6 +3,7 @@
     public class ResCartDTO
     {
         public int MemberId { get; set; }
+        public int CartId { get; set; }
 
         public decimal TotalPrice { get; set; }
 
