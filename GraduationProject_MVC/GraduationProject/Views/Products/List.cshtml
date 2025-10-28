@@ -14,7 +14,7 @@
         </div>
     </div>
 
-    <!-- 篩選列（如你已有外部 Partial，可用 Html.Partial 取代這塊） -->
+
     <div class="card shadow-sm mb-3">
         <div class="card-body">
             <form method="get" asp-action="List">
@@ -109,7 +109,7 @@
                                             @:<span class="badge bg-danger">刪除</span>
                                             break;
                                         default:
-                                            // 修正點 #2：default 顯示 FPStatusName（你原本若顯示 PStatus 會錯）
+                                           
                                             @:<span class="badge bg-info">@item.FPStatusName</span>
                                             break;
                                     }
@@ -125,15 +125,15 @@
                                 </td>
                                 <td class="text-end">
                                     <div class="btn-group">
-                                        <a class="btn btn-sm btn-outline-secondary" asp-action="Detail" asp-route-id="@item.ProductId">
-                                            <i class="bi bi-eye me-1"></i> 檢視
+                                        <a class="btn btn-sm btn-outline-secondary text-center" asp-action="Detail" asp-route-id="@item.ProductId">
+                                            <i class="bi bi-eye me-1"></i>
                                         </a>
-                                        <a class="btn btn-sm btn-primary" asp-action="Edit" asp-route-id="@item.ProductId">
-                                            <i class="bi bi-pencil-square me-1"></i> 編輯
+                                        <a class="btn btn-sm btn-primary text-center" asp-action="Edit" asp-route-id="@item.ProductId">
+                                            <i class="bi bi-pencil-square me-1"></i>
                                         </a>
                                         <form asp-action="Delete" asp-route-id="@item.ProductId" method="post" onsubmit="return confirm('確定要刪除嗎？');">
-                                            <button class="btn btn-sm btn-outline-danger" type="submit">
-                                                <i class="bi bi-trash me-1"></i> 刪除
+                                            <button class="btn btn-sm btn-outline-danger text-center" type="submit">
+                                                <i class="bi bi-trash me-1"></i>
                                             </button>
                                         </form>
                                     </div>
@@ -275,6 +275,6 @@
 
 @section Scripts {
     <script>
-        // 若你有使用 Bootstrap 5 的 collapse，需確定已載入 bootstrap.bundle.js
+        
     </script>
 }
