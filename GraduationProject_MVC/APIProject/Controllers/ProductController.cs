@@ -16,7 +16,7 @@ namespace ApiProject.Controllers
         public ProductController(IProductService ProductService) => _ProductService = ProductService;
 
         // GET:api/products
-        [HttpGet]
+        [HttpGet("all")]
         public async Task<IActionResult> GetProducts([FromQuery] ReqProductFilterDTO filter)
         {
             try
