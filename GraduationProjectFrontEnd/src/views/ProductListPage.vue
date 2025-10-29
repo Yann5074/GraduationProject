@@ -459,7 +459,7 @@ function syncFiltersFromURL() {
 async function loadFilterOptions() {
   try {
     const response = await ProductAPI.getFilterOptions()
-    if (response.success) {
+    if (response.ok) {
       const options = new ResFilterOptionsDTO(response.data)
       filterOptions.categories = options.categories
       filterOptions.priceRange = options.priceRange
@@ -486,10 +486,13 @@ async function loadProducts() {
   try {
     const filterDTO = new ReqProductFilterDTO(localFilters)
     const response = await ProductAPI.getProducts(filterDTO)
-    
-    if (response.success) {
+    console.log('0', response)
+    console.log('!', response.data)
+    console.log('!!', response.data.data)
+    console.log('!!!', response.data.data.data)
+    if (response.data.success) {
       // 處理產品資料，修正圖片 URL
-      const productsData = (response.data.data || []).map(product => {
+      const productsData = (response.data.data.data || []).map(product => {
         // 支援 mainImageUrl 或 MainImageUrl（大小寫不一致）
         const imageUrl = product.mainImageUrl || product.MainImageUrl
         console.log('🖼️ 產品圖片 URL:', product.fName, '→', imageUrl)
@@ -501,7 +504,7 @@ async function loadProducts() {
       })
       
       products.value = productsData
-      pagination.value = response.data.pagination
+      pagination.value = response.data.data.pagination
       
       console.log('✅ 產品載入成功:', products.value.length, '個產品')
       console.log('📸 第一個產品的圖片:', products.value[0]?.mainImageUrl)

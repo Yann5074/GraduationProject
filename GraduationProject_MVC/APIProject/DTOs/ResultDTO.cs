@@ -6,6 +6,7 @@
         public bool Ok { get; set; }
         public int Code { get; set; }
         public object? Message { get; set; }
+        public object? Data { get; set; }
 
     }
 }

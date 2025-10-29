@@ -507,7 +507,7 @@ async function loadProductDetail() {
     const response = await ProductAPI.getProductById(productId, true)
     console.log('API 回應:', response)
     
-    if (response.success && response.data) {
+    if (response.ok && response.data) {
       const rawData = response.data
       
       // 處理圖片
@@ -613,7 +613,7 @@ async function loadRelatedProducts(categoryId) {
   if (!categoryId) return
   try {
     const response = await ProductAPI.getProducts({ categoryId, pageNumber: 1, pageSize: 8 })
-    if (response.success && response.data?.data) {
+    if (response.ok && response.data?.data) {
       relatedProducts.value = response.data.data
         .filter(p => p.fProductId !== product.value.fProductId)
         .slice(0, 4)
@@ -667,7 +667,7 @@ async function addToCart() {
       fVariantId: selectedVariant.value?.fProductVariantId || selectedVariant.value?.FProductVariantId || null,
       fQuantity: quantity.value
     })
-    if (response.success) {
+    if (response.ok) {
       alert('已加入購物車！')
       quantity.value = 1
     } else {

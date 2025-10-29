@@ -1,37 +1,38 @@
 import axios from 'axios'
+import http from '@/api/axios'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7131'
+// const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7131'
 
-//  axios 實例
-const apiClient = axios.create({
-    baseURL: `${API_BASE}/api`,
-    timeout: 10000,
-    headers: {
-        'Content-Type': 'application/json'
-    }
-})
+// //  axios 實例
+// const apiClient = axios.create({
+//     baseURL: `${API_BASE}/api`,
+//     timeout: 10000,
+//     headers: {
+//         'Content-Type': 'application/json'
+//     }
+// })
 
-// 請求攔截器
-apiClient.interceptors.request.use(
-    (config) => {
-        // 可以在這裡加入 token 等認證資訊
-        return config
-    },
-    (error) => {
-        return Promise.reject(error)
-    }
-)
+// // 請求攔截器
+// apiClient.interceptors.request.use(
+//     (config) => {
+//         // 可以在這裡加入 token 等認證資訊
+//         return config
+//     },
+//     (error) => {
+//         return Promise.reject(error)
+//     }
+// )
 
-// 回應攔截器
-apiClient.interceptors.response.use(
-    (response) => {
-        return response.data
-    },
-    (error) => {
-        console.error('API Error:', error)
-        return Promise.reject(error)
-    }
-)
+// // 回應攔截器
+// apiClient.interceptors.response.use(
+//     (response) => {
+//         return response.data
+//     },
+//     (error) => {
+//         console.error('API Error:', error)
+//         return Promise.reject(error)
+//     }
+// )
 
 /**
  * 產品 API 服務
@@ -60,7 +61,7 @@ export const ProductAPI = {
             }
         })
 
-        return apiClient.get('/Product', { params })
+        return http.get('/Product', { params })
     },
 
     /**
@@ -69,10 +70,10 @@ export const ProductAPI = {
      */
     async getCategories() {
         try {
-            const response = await apiClient.get('/Category')
+            const response = await http.get('/Category')
             return response
         } catch (error) {
-            console.error('取得類別列表失敗:', error)
+            // console.error('取得類別列表失敗:', error)
             return {
                 success: false,
                 message: error.response?.data?.message || '取得類別列表失敗',
@@ -128,7 +129,7 @@ export const ProductAPI = {
         if (!keyword || keyword.trim() === '') {
             return Promise.reject(new Error('請提供搜尋關鍵字'))
         }
-        return apiClient.get(`/Product/search/${encodeURIComponent(keyword)}`)
+        return http.get(`/Product/search/${encodeURIComponent(keyword)}`)
     },
 
     /**
@@ -142,23 +143,23 @@ export const ProductAPI = {
             // ncludeCustomization=true 會取得 3D 模型路徑
             const url = `/Product/${productId}?includeCustomization=${includeCustomization}`
 
-            const response = await apiClient.get(url)
+            const response = await http.get(`/Product/${productId}`)
 
-            console.log('🔍 原始 API 回應:', response.data)
+            console.log('🔍 原始 API 回應:', response)
 
-            const data = response.data
+            const result = response.data
 
-            // 如果後端已經有 success 包裝
-            if (data.hasOwnProperty('success')) {
-                return data
-            }
+            // // 如果後端已經有 success 包裝
+            // if (data.hasOwnProperty('success')) {
+            //     return data
+            // }
 
             // 如果後端直接回傳產品物件
-            if (data.fProductId) {
+            if (result.success && result.data) {
                 return {
-                    success: true,
+                    ok: result.success,
                     message: '取得產品詳情成功',
-                    data: data
+                    data: result.data
                 }
             }
 
@@ -184,7 +185,7 @@ export const ProductAPI = {
      * @returns {Promise<Object>} 產品變體列表
      */
     async getProductVariants(productId) {
-        const response = await apiClient.get(`/Product/${productId}/variants`)
+        const response = await http.get(`/Product/${productId}/variants`)
         return response.data
     },
 
@@ -195,7 +196,7 @@ export const ProductAPI = {
      * @returns {Promise<Object>} 相似產品列表
      */
     getSimilarProducts(id, count = 4) {
-        return apiClient.get(`/Product/${id}/similar`, {
+        return http.get(`/Product/${id}/similar`, {
             params: { count }
         })
     },
@@ -206,7 +207,7 @@ export const ProductAPI = {
      * @returns {Promise<Object>} 產品資訊
      */
     getCartProduct(variantId) {
-        return apiClient.get(`/Product/cart-items/${variantId}`)
+        return http.get(`/Product/cart-items/${variantId}`)
     },
 
     /**
@@ -215,7 +216,7 @@ export const ProductAPI = {
      * @returns {Promise<Object>} 產品資訊列表
      */
     getCartProducts(variantIds) {
-        return apiClient.post('/Product/cart-items', variantIds)
+        return http.post('/Product/cart-items', variantIds)
     },
 
     /**
@@ -225,7 +226,7 @@ export const ProductAPI = {
      * @returns {Promise<Object>} 價格資訊
      */
     getPriceByCustomization(id, selectedOptions) {
-        return apiClient.post(`/Product/${id}/price`, selectedOptions)
+        return http.post(`/Product/${id}/price`, selectedOptions)
     },
 
     /**
@@ -234,7 +235,7 @@ export const ProductAPI = {
      * @returns {Promise<Object>} 庫存檢查結果
      */
     checkStock(items) {
-        return apiClient.post('/Product/check-stock', items)
+        return http.post('/Product/check-stock', items)
     }
 }
 

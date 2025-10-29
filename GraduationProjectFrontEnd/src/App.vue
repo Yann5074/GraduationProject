@@ -58,7 +58,7 @@ onMounted(() => {
     >
       <div class="container">
         <!-- 左上 Logo icon -->
-        <RouterLink class="navbar-brand" to="/">Furni<span>.</span></RouterLink>
+        <RouterLink class="navbar-brand" to="/home">Furni<span>.</span></RouterLink>
         <div class="collapse navbar-collapse" id="navbarsFurni">
           <!-- 上方導覽 -->
           <ul class="custom-navbar-nav navbar-nav ms-auto mb-2 mb-md-0">

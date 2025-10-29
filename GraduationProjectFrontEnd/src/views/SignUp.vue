@@ -170,7 +170,7 @@ async function handleFinish() {
 
     // 4. 成功提示 + 導回首頁
     successMsg.value = '會員註冊成功'
-    router.push('/')
+    router.push('/home')
   } catch (err) {
     errorMsg.value =
       err?.response?.data?.message || err?.response?.data?.Message || '發生錯誤，請稍後再試'

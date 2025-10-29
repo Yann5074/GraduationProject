@@ -125,8 +125,8 @@ namespace ApiProject.Services
                                     FPrice = v.FPrice,
                                     FStock = v.FStock,
                                     FColorId = v.FColorId,
-                                    ColorName = v.Color.ColorName,
-                                    ColorCode = v.Color.ColorCode,
+                                    ColorName = v.Color.FColorName,
+                                    ColorCode = v.Color.FColorCode,
                                     FSizeLabel = v.FSizeLabel
                                 }).ToList(),
                     Assets = p.ProductAssets
@@ -199,6 +199,7 @@ namespace ApiProject.Services
                 .Include(p => p.Category)
                 .Include(p => p.ProductAssets)
                 .Include(p => p.ProductVariants)
+                    .ThenInclude(v => v.Color)
                 .FirstOrDefaultAsync(p => p.FProductId == id);
 
             if (product == null)
@@ -229,7 +230,7 @@ namespace ApiProject.Services
                 CategoryName = product.Category?.FName,
                 FWarrantyMonth = product.FWarrantyMonth,
                 FAssemblyRequired = product.FAssemblyRequired,
-               
+
 
                 // 主圖 URL
                 MainImageUrl = primaryAsset?.FUrl
@@ -271,6 +272,10 @@ namespace ApiProject.Services
                         FSku = v.FSku,
                         FPrice = v.FPrice,
                         FStock = v.FStock,
+                        FColorId = v.FColorId,
+                        ColorName = v.Color?.FColorName,
+                        ColorCode = v.Color?.FColorCode,
+                        ColorHex = v.Color?.FColorHex ?? v.Color?.FColorCode,
                         FSizeLabel = v.FSizeLabel
                     }).ToList(),
 
@@ -294,7 +299,6 @@ namespace ApiProject.Services
                     .Where(v => v.FPrice.HasValue && v.FPstatus == 1)
                     .Max(v => v.FPrice),
 
-                IsCustomizable = product.ProductParts.Any(),
 
                 // 時間戳記
                 FCreateTime = product.FCreateTime,
