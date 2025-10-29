@@ -711,7 +711,7 @@ function handleSearch() {
   updateAndReload()
 }
 
-// 前往指定頁面
+// ⭐ 前往指定頁面（改為直接跳轉）
 async function goToPage(page) {
   if (page < 1 || page > pagination.value.totalPages) return
   
@@ -723,7 +723,8 @@ async function goToPage(page) {
   await router.replace({ query })
   await loadProducts()
   
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  // 直接跳轉到頂部（無動畫）
+  window.scrollTo(0, 0)
 }
 
 // 清除所有篩選

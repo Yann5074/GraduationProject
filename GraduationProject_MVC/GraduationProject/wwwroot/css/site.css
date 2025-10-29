@@ -40,13 +40,12 @@ body {
     }
 }
 
-/* Accordion �˦��u�� */
+
 .accordion-button {
     background-color: #FFFFFF;
     color: #212529;
 }
 
-/*�}�ҫ᪺�C���ܴ�*/
 .accordion-button:not(.collapsed) {
     background-color: #bdbbb9ff;
     color: #272727ff;
@@ -68,7 +67,7 @@ body {
     background-color: #ffffff;
 }
 
-/* �C�����˦� */
+
 .color-box {
     display: inline-block;
     width: 20px;
@@ -78,14 +77,12 @@ body {
     vertical-align: middle;
 }
 
-/* ���椺���s�˦� */
+
 .table-responsive .btn-sm {
     padding: 0.25rem 0.5rem;
     font-size: 0.875rem;
 }
 
-/* �T�����վ� */
-/* ���~�Ϥ��˦� */
 .product-image {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -95,12 +92,12 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* �Ϥ��d���˦� */
+
 .card-img-overlay {
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), transparent);
 }
 
-/* �Y�ϼ˦� */
+
 .img-thumbnail {
     border: 2px solid #dee2e6;
     transition: border-color 0.3s ease;
@@ -110,25 +107,25 @@ body {
     border-color: #0d6efd;
 }
 
-/* Modal �Ϥ��˦� */
+
 #modalImage {
     border-radius: 0.5rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Accordion �����Ϥ��ϰ� */
+
 .row.g-2 {
     gap: 0.5rem;
 }
 
-/* ���~�C���˦� */
+
 .product-list-accordion .accordion-button {
     height: 60px !important;
     min-height: 110px;
     max-height: 110px;
     padding: 1rem 1rem 1rem 3.5rem;
     overflow: hidden;
-    /* ����e���X */
+
 }
 
 .product-list-accordion .accordion-button::after {
@@ -140,7 +137,7 @@ body {
     top: 50%;
 }
 
-/* �ϥ� Font Awesome �ϥ� */
+
 .product-list-accordion .accordion-button::before {
     content: "\f0da";
     font-family: "Font Awesome 5 Free";
@@ -152,12 +149,30 @@ body {
     transition: transform 0.2s ease-in-out;
 }
 
-/* �i�}���A - ����ϥ� */
 .product-list-accordion .accordion-button:not(.collapsed)::before {
     transform: translateY(-50%) rotate(90deg);
 }
 
-/* �T�����վ� */
+
+.asset-preview {
+    width: 200px; /* ← 調整寬度 */
+    height: 200px; /* ← 調整高度 */
+    border-radius: .5rem;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,.1);
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .asset-preview > img, .asset-preview > video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* 視覺裁切：想完整顯示改成 contain */
+    }
+
+
 @media (max-width: 768px) {
     .accordion-button .row>div {
         font-size: 0.875rem;
