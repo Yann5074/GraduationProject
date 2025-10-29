@@ -4,9 +4,9 @@
 @model GraduationProject.ViewModels.CEmployeeEditViewModel
 
 @{
-    // var json = Context.Session.GetString(CEmployeeDictionary.SK_LOGINED_USER);
-    // var me = json is null ? null : JsonSerializer.Deserialize<SessionUser>(json);
-    // var isAdmin = me?.RoleId == 4; 
+    var json = Context.Session.GetString(CEmployeeDictionary.SK_LOGINED_USER);
+    var me = json is null ? null : JsonSerializer.Deserialize<SessionUser>(json);
+    var isAdmin = me?.RoleId == 4; 
     ViewData["Title"] = "Edit";
 }
 
@@ -19,7 +19,7 @@
     <div class="col-md-6">
         <form asp-action="Edit" asp-route-id="@Model.EmployeeId" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-            <input type="hidden" name="fEmployeeId" value="@Model.EmployeeId" />
+            <input type="hidden" asp-for="EmployeeId" value="@Model.EmployeeId" />
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="FromDeleted" />
 
@@ -100,53 +100,54 @@
                 <input asp-for="FHireDate" type="date" class="form-control" />
                 <span asp-validation-for="FHireDate" class="text-danger"></span>
             </div>
-
-            <div class="mb-3">
-                <label asp-for="FRoleId" class="form-label">權限</label>
-                <div>
-                    <label>
-                        <input type="radio" asp-for="FRoleId" value="1" />
-                        實習生
-                    </label>
-                    <label>
-                        <input type="radio" asp-for="FRoleId" value="2" />
-                        職員
-                    </label>
-                    <label>
-                        <input type="radio" asp-for="FRoleId" value="3" />
-                        組長
-                    </label>
-                    <label>
-                        <input type="radio" asp-for="FRoleId" value="4" />
-                        管理者
-                    </label>
+            @if (isAdmin)
+            {
+                <div class="mb-3">
+                    <label asp-for="FRoleId" class="form-label">權限</label>
+                    <div>
+                        <label>
+                            <input type="radio" asp-for="FRoleId" value="1" />
+                            實習生
+                        </label>
+                        <label>
+                            <input type="radio" asp-for="FRoleId" value="2" />
+                            職員
+                        </label>
+                        <label>
+                            <input type="radio" asp-for="FRoleId" value="3" />
+                            組長
+                        </label>
+                        <label>
+                            <input type="radio" asp-for="FRoleId" value="4" />
+                            管理者
+                        </label>
+                    </div>
+                    <span asp-validation-for="FRoleId" class="text-danger"></span>
                 </div>
-                <span asp-validation-for="FRoleId" class="text-danger"></span>
-            </div>
 
-            <div class="mb-3">
-                <label asp-for="FStatusId" class="form-label">狀態</label>
-                <div>
-                    <label>
-                        <input type="radio" asp-for="FStatusId" value="1" />
-                        在職
-                    </label>
-                    <label>
-                        <input type="radio" asp-for="FStatusId" value="2" />
-                        離職
-                    </label>
-                    <label>
-                        <input type="radio" asp-for="FStatusId" value="3" />
-                        退休
-                    </label>
-                    <label>
-                        <input type="radio" asp-for="FStatusId" value="4" />
-                        帳號註銷
-                    </label>
+                <div class="mb-3">
+                    <label asp-for="FStatusId" class="form-label">狀態</label>
+                    <div>
+                        <label>
+                            <input type="radio" asp-for="FStatusId" value="1" />
+                            在職
+                        </label>
+                        <label>
+                            <input type="radio" asp-for="FStatusId" value="2" />
+                            離職
+                        </label>
+                        <label>
+                            <input type="radio" asp-for="FStatusId" value="3" />
+                            退休
+                        </label>
+                        <label>
+                            <input type="radio" asp-for="FStatusId" value="4" />
+                            帳號註銷
+                        </label>
+                    </div>
+                    <span asp-validation-for="FStatusId" class="text-danger"></span>
                 </div>
-                <span asp-validation-for="FStatusId" class="text-danger"></span>
-            </div>
-
+            }
             <div class="mb-3">
                 <label asp-for="FAccount" class="form-label"></label>
                 <input asp-for="FAccount" class="form-control" readonly />
