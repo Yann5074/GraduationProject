@@ -562,7 +562,18 @@ async function addToCart() {
 async function buyNow() {
   if (!canAddToCart.value) return
   try{
-    await memberAddToCart()
+    const productVariantId = selectedVariant.value?.fProductVariantId || selectedVariant.value?.FProductVariantId
+    const qty = quantity.value
+
+    if(!productVariantId){
+      alert('請先選擇商品規格')
+    }
+
+    const atc = {
+      productVariantId,
+      qty
+    }
+    await memberAddToCart(atc)
     router.push('/cart')
   }catch(err){
     console.error('立即購買發生錯誤', err)

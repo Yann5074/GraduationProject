@@ -58,7 +58,7 @@ onMounted(() => {
     >
       <div class="container">
         <!-- 左上 Logo icon -->
-        <RouterLink class="navbar-brand" to="/home">Furni<span>.</span></RouterLink>
+        <RouterLink class="navbar-brand" to="/home"><img src="./assets/images/Viewrniture.png" class="logo"/> Viewrniture<span>.</span></RouterLink>
         <div class="collapse navbar-collapse" id="navbarsFurni">
           <!-- 上方導覽 -->
           <ul class="custom-navbar-nav navbar-nav ms-auto mb-2 mb-md-0">
@@ -79,9 +79,6 @@ onMounted(() => {
             </li>
             <li class="nav-item" :class="{ active: isActive('/Contact') }">
               <RouterLink class="nav-link" to="/Contact">聯絡我們</RouterLink>
-            </li>
-            <li class="nav-item" :class="{ active: isActive('/Order') }">
-              <RouterLink class="nav-link" to="/Order">訂單資訊</RouterLink>
             </li>
           </ul>
           <!-- 右上角 icon -->
@@ -135,6 +132,10 @@ onMounted(() => {
               <ul class="dropdown-menu dropdown-menu-end">
                 <li>
                   <RouterLink class="dropdown-item" to="/account/profile"> 我的帳戶 </RouterLink>
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <RouterLink class="dropdown-item" to="/Order">訂單資訊</RouterLink>
                 </li>
                 <li><hr class="dropdown-divider" /></li>
                 <li>
@@ -304,7 +305,10 @@ header {
   overflow: hidden;
   z-index: 9999;
 }
-
+.logo{
+  width: 75px;
+  height: 75px;
+}
 /* nav {
   width: 100%;
   font-size: 12px;
