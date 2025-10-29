@@ -73,3 +73,12 @@ export const checkCart = async () =>{
     }
 }
 // 登入時購物車轉換
+export const syncCart = async (reqDTO) =>{
+    try{
+        const result = await http.post('/Cart/sync', reqDTO)
+        return handleApiResult(result.data)
+    }catch(err){
+        console.error('同步購物車發生錯誤', err)
+        throw err
+    }
+}

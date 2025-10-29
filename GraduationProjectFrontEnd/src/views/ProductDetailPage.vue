@@ -277,10 +277,14 @@ import { useRoute, useRouter } from 'vue-router'
 import { ProductAPI } from '@/api/Product'
 import Furniture3DViewer from '@/components/Furniture3DViewer.vue'
 import { memberAddToCart } from '@/api/Cart'
+import { useCartStore } from '@/stores/cartStore'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
 
+const auth = useAuthStore()
+const cart = useCartStore()
 const loading = ref(false)
 const error = ref(null)
 const product = ref(null)
@@ -535,7 +539,6 @@ function validateQuantity() {
 //加入購物車方法
 async function addToCart() {
   if (!canAddToCart.value) return
-  try{
     const productVariantId = selectedVariant.value?.fProductVariantId || selectedVariant.value?.FProductVariantId
     const qty = quantity.value
 
@@ -547,12 +550,16 @@ async function addToCart() {
       productVariantId,
       qty
     }
-    const result = await memberAddToCart(atc)
-    if (result.ok){
-      alert(result.message)
-    }else{
-      alert(result.message)
-    }
+    try{
+      if (auth.isLoggedIn){
+        const result = await memberAddToCart(atc)
+        if (result.ok){
+          alert(result.message)
+      }
+      }else{
+        cart.addItem(productVariantId, qty)
+        alert('已加入訪客購物車')
+      }
   }catch(err){
     console.error('錯誤', err)
     alert('加入購物車時發生問題，請重新確認')
@@ -561,7 +568,6 @@ async function addToCart() {
 
 async function buyNow() {
   if (!canAddToCart.value) return
-  try{
     const productVariantId = selectedVariant.value?.fProductVariantId || selectedVariant.value?.FProductVariantId
     const qty = quantity.value
 
@@ -573,8 +579,15 @@ async function buyNow() {
       productVariantId,
       qty
     }
-    await memberAddToCart(atc)
-    router.push('/cart')
+    try{
+      if (auth.isLoggedIn){
+        await memberAddToCart(atc)
+        router.push('/cart')
+      }else{
+        cart.addItem(productVariantId, qty)
+        alert('尚未登入，商品以加入購物車')
+        router.push('/cart')
+      }
   }catch(err){
     console.error('立即購買發生錯誤', err)
   }

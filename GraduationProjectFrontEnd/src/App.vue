@@ -1,15 +1,19 @@
 <script setup>
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { Dropdown } from 'bootstrap'
 import http from '../src/api/axios'
 import { useAuthStore } from '@/stores/auth'
 import ChatWidget from '@/components/Chat/ChatWidget.vue'
+import { useCartStore } from './stores/cartStore'
+import { syncCart } from './api/Cart'
 
 const route = useRoute()
 const router = useRouter()
 const isActive = (path) => route.path.startsWith(path)
 const auth = useAuthStore()
+const cart = useCartStore()
+
 
 
 /** ✅ 啟動時同步伺服器 Session 狀態 */
@@ -44,6 +48,27 @@ onMounted(() => {
   document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((el) => new Dropdown(el))
   auth.hydrate()
   hydrateFromServer()
+})
+
+// 登入後購物車同步
+watch(() => auth.isLoggedIn, async (LoggedIn) =>{
+  if (LoggedIn && cart.items.length > 0){
+    try{
+      const reqDTO ={
+        memberId: auth.user?.MemberId  || auth.user?.fMemberId,
+        cartItem: cart.items.map(i =>({
+          productVariantId: i.productVariantId,
+          quantity: i.qty
+        }))
+      }
+      console.log('同步購物車', reqDTO)
+      await syncCart(reqDTO)
+      cart.clearCart()
+      console.log('購物車已同步')
+    }catch(err){
+      console.log('購物車同步失敗', err)
+    }
+  }
 })
 </script>
 

@@ -65,9 +65,10 @@
               <span class="totalPrice">
                 {{ formatTotal }}
               </span>
-                <RouterLink :to="{path: '/checkout', query: {total: totalAmountNumber}}" class="btn btn-danger custom-checkout-btn ms-3 me-3">
+                <RouterLink v-if="auth.isLoggedIn" :to="{path: '/checkout', query: {total: totalAmountNumber}}" class="btn btn-danger custom-checkout-btn ms-3 me-3">
                   結帳
                 </RouterLink>
+                <button v-else class="btn btn-danger custom-checkout-btn ms-3 me-3" @click="router.push('/signin?redirect=/cart')">登入後結帳</button>
             </h5>
           </div>
         </form>
@@ -138,6 +139,11 @@ import { onMounted, ref, computed } from 'vue'
 import { getAllCarts, deleteItem, editCartItem, deleteCart, checkCart } from '@/api/Cart'
 import QtyControl from '@/components/QtyControl.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
+import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cartStore'
+
+const auth = useAuthStore()
+const guestCart = useCartStore()
 
 // 儲存購物車資訊
 const cartId = ref(null);
@@ -159,28 +165,35 @@ const onQtyChange = async (ci, newQty) =>{
   ci.qty = newQty
   ci.subtotal = ci.unitPrice * newQty
 
-  try{
-    const result = await editCartItem(ci.cartItemId, ci.qty)
-    if (!result.ok){
-      stock = parseMaxStockFromMessage(result.message)  //庫存的最大數量，可選
+  if (auth.isLoggedIn){
+    try{
+        const result = await editCartItem(ci.cartItemId, ci.qty)
+        if (!result.ok){
+          stock = parseMaxStockFromMessage(result.message)  //庫存的最大數量，可選
 
-      isRestoring = true
+          isRestoring = true
 
-      ci.qty = stock
-      ci.subtotal = ci.unitPrice * stock
+          ci.qty = stock
+          ci.subtotal = ci.unitPrice * stock
 
-      isRestoring = false
-    }
-  }catch(err){
-    stock = parseMaxStockFromMessage(err.message) //庫存的最大數量，可選
-    console.log(stock)
-    ci.qty = stock
-    ci.subtotal = ci.unitPrice * stock
-    console.error('更新購物車商品數量失敗-.vue', err)
-    alert(err.message)
+          isRestoring = false
+        }
+      }catch(err){
+        stock = parseMaxStockFromMessage(err.message) //庫存的最大數量，可選
+        console.log(stock)
+        ci.qty = stock
+        ci.subtotal = ci.unitPrice * stock
+        console.error('更新購物車商品數量失敗-.vue', err)
+        alert(err.message)
 
-    isRestoring = false
+        isRestoring = false
+      }
+  }else{
+    const item = guestCart.items.find(i => i.productVariantId === ci.productVariantId)
+    if (item) item.qty = newQty
+    guestCart.persistCart()
   }
+  
 }
 
 // 解析訊息中數量
@@ -211,25 +224,31 @@ const totalAmountNumber = computed(()=>
 
 //初始化載入
 onMounted(async () => {
-  try{
-    const checkResult = await checkCart();
-    if (!checkResult.ok){
-      alert(checkResult.message)
-    }
-    const result = await getAllCarts()
-    const firstCart = Array.isArray(result) && result.length > 0 ? result[0] : null
-    if(!firstCart){
-      cartId.value = null
+  if (auth.isLoggedIn){
+    try{
+      const result = await getAllCarts()
+      const firstCart = Array.isArray(result) && result.length > 0 ? result[0] : null
+      if(!firstCart){
+        cartId.value = null
+        cartItems.value = []
+      }
+      cartId.value = result[0].cartId
+      cartItems.value = result[0]?.cartItem || []
+    }catch(err){
+      console.error('載入購物車錯誤', err)
+      if (err.code !== '401')
+        alert(err.message)
       cartItems.value = []
-      return
     }
-    cartId.value = result[0].cartId
-    cartItems.value = result[0]?.cartItem || []
-  }catch (err){
-    console.error('載入購物車錯誤', err)
-    if (err.code !== '401')
-      alert(err.message)
-    cartItems.value = []
+  }else{
+    guestCart.hydrateCart()
+    cartItems.value = guestCart.items.map(i =>({
+      productName: i.productName,
+      imageUrl: i.imageUrl,
+      qty: i.qty,
+      unitPrice: i.unitPrice,
+      subtotal: i.unitPrice * i.qty
+    }))
   }
 }
 )
@@ -237,10 +256,15 @@ onMounted(async () => {
 // 移除商品
 const removeItem = async (cartItemId) =>{
   try{
-    const result = await deleteItem(cartItemId)
-    if (result.ok){
-      const result = await getAllCarts()
-      cartItems.value = result[0]?.cartItem || []
+    if (auth.isLoggedIn){
+      const result = await deleteItem(cartItemId)
+      if (result.ok){
+        const result = await getAllCarts()
+        cartItems.value = result[0]?.cartItem || []
+      }
+    }else{
+      guestCart.removeItem(cartItemId)
+      cartItems.value = guestCart.items
     }
   }catch(err){
     console.log('刪除購物車商品失敗', err)
@@ -258,12 +282,17 @@ const toggleClean = () =>{
 // 清空購物車
 const cleanCart = async () =>{
   try{
+    if (auth.isLoggedIn){
     const result = await deleteCart(currentCart)
-    if (result.ok){
-      const result = await getAllCarts()
-      cartItems.value = result[0]?.cartItem || []
+        if (result.ok){
+          const result = await getAllCarts()
+          cartItems.value = result[0]?.cartItem || []
+        }
+        alert(result.message)
+    }else{
+      guestCart.clearCart()
+      cartItems.value = []
     }
-    alert(result.message)
   }catch(err){
     console.log('清空購物車失敗', err)
     alert(err.message)

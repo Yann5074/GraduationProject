@@ -24,7 +24,7 @@ http.interceptors.response.use(
 
         switch(status){
             case 401:
-                auth.clear();
+                auth.logout();
                 import('@/router').then(({default: router}) =>{
                   router.push('/signin');
                 })

@@ -349,7 +349,7 @@ namespace ApiProject.Services
             {
                 cart = new TCart
                 {
-                    FMemberId = reqDto.MemberId,
+                    FMemberId = idCheck.Member.FMemberId,
                     FDate = DateTime.Now.ToString(),
                     FIsDeleted = 0,
                     FIsCheckOut = 0,
