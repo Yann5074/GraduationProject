@@ -337,7 +337,7 @@ async function loadProductDetail() {
     const response = await ProductAPI.getProductById(productId)
     console.log('API 回應:', response)
     
-    if (response.ok && response.data) {
+    if (response.success && response.data) {
       const rawData = response.data
       
       // 處理圖片
