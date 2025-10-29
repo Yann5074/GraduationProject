@@ -24,6 +24,8 @@ namespace GraduationProject.DTOs
         public int? PStatus { get; set; }        // tProductVariant.fPStatus
         public bool? Deleted { get; set; }
 
+        public int? ClientTempIndex { get; set; }
+
     }
 
 }

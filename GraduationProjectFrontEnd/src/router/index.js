@@ -100,6 +100,21 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
   ],
+
+  scrollBehavior(to, from, savedPosition) {
+
+    if (savedPosition) {
+      return savedPosition
+    }
+
+
+    if (from.name === 'ProductDetail' && to.name === 'ProductList') {
+      return false
+    }
+
+
+    return { left: 0, top: 0 }
+  }
 })
 // // ✅ 全域守衛：未登入導回 /signin（可先保留，之後接 Pinia 再強化）
 // router.beforeEach(async (to) => {

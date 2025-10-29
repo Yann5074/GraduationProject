@@ -1,4 +1,10 @@
-<!-- 簡化版：帶有視覺化顏色選擇的產品詳情頁 -->
+<!-- 版本 2：智能跳轉（修正版） -->
+<!-- 
+  跳轉邏輯：
+  1. 從列表進入詳情頁 → 直接跳轉到頂部
+  2. 在詳情頁內點擊相關產品切換 → 直接跳轉到頂部
+  3. 從詳情頁返回列表頁 → 列表頁保持原本位置（由 ProductListPage 處理）
+-->
 <template>
   <div class="product-detail-page">
     <!-- 麵包屑導航 -->
@@ -41,20 +47,13 @@
               <div v-if="product.fDiscount > 0" class="position-absolute top-0 start-0 p-3">
                 <span class="badge bg-danger fs-6">{{ Math.round(product.fDiscount * 100) }}% OFF</span>
               </div>
-              <!-- 當前選擇的顏色標籤 -->
-              <!-- <div v-if="selectedVariant && (selectedVariant.colorName || selectedVariant.ColorName)" 
-                   class="position-absolute bottom-0 start-0 p-3">
-                <span class="badge bg-dark bg-opacity-75 fs-6">
-                  <i class="bi bi-palette me-1"></i>{{ selectedVariant.colorName || selectedVariant.ColorName }}
-                </span>
-              </div> -->
             </div>
             
             <!-- 縮圖 -->
             <div v-if="productImages.length > 1" class="d-flex gap-2 overflow-auto">
               <img 
                 v-for="(image, index) in productImages" 
-                :key="`thumb-${index}`"
+                :key="`thumb-${index}-${image}`"
                 :src="image" 
                 class="thumbnail" 
                 :class="{ active: selectedImage === image }" 
@@ -130,10 +129,6 @@
                     <div v-if="getVariantStock(variant) <= 0" class="out-of-stock-overlay">
                       <i class="bi bi-x-lg"></i>
                     </div>
-                    <!-- 選中標記 -->
-                    <!-- <div v-if="isVariantSelected(variant)" class="selected-check">
-                      <i class="bi bi-check-lg"></i>
-                    </div> -->
                   </div>
                 </button>
                 <!-- 顏色名稱 -->
@@ -178,18 +173,6 @@
             </div>
           </div>
 
-          <!-- 當前選擇摘要 -->
-          <!-- <div v-if="selectedVariant" class="alert alert-info mb-4">
-            <div class="d-flex align-items-center">
-              <i class="bi bi-check-circle-fill me-2 fs-5"></i>
-              <div>
-                <strong>已選擇：</strong>
-                {{ selectedVariant.colorName || selectedVariant.ColorName || selectedVariant.fSku }}
-                <span class="ms-2 text-primary fw-bold">NT$ {{ formatPrice(selectedVariant.fPrice || selectedVariant.FPrice) }}</span>
-              </div>
-            </div>
-          </div> -->
-
           <!-- 數量選擇 -->
           <div class="mb-4">
             <h5 class="mb-3">數量</h5>
@@ -217,15 +200,15 @@
           <!-- 操作按鈕 -->
           <div class="d-grid gap-2">
             <button class="btn btn-primary btn-lg" :disabled="!canAddToCart" @click="addToCart">
-              <i class="bi bi-cart-plus me-2"></i>加入購物車
+              加入購物車
             </button>
             <button class="btn btn-outline-primary btn-lg" :disabled="!canAddToCart" @click="buyNow">
-              <i class="bi bi-lightning-fill me-2"></i>立即購買
+              立即購買
             </button>
           </div>
 
           <div v-if="!canAddToCart" class="alert alert-warning mt-3">
-            <i class="bi bi-exclamation-triangle me-2"></i>{{ getDisabledReason() }}
+            {{ getDisabledReason() }}
           </div>
         </div>
       </div>
@@ -348,7 +331,7 @@ async function loadProductDetail() {
   loading.value = true
   error.value = null
 
-  console.log('載入產品詳情:', productId)
+  console.log(' 載入產品詳情:', productId)
 
   try {
     const response = await ProductAPI.getProductById(productId)
@@ -383,64 +366,74 @@ async function loadProductDetail() {
       rawData.fAssemblyRequired = rawData.fAssemblyRequired ?? false
       
       product.value = rawData
-      console.log('產品資料:', product.value)
+      console.log('✅ 產品資料:', product.value)
       
       setupProductImages()
       await loadVariants(productId)
       await loadRelatedProducts(product.value.fCategoryId)
     } else {
-      console.error('載入失敗:', response)
+      console.error('❌ 載入失敗:', response)
       error.value = response.message || '載入產品失敗'
     }
   } catch (err) {
-    console.error('發生錯誤:', err)
+    console.error('❌ 發生錯誤:', err)
     error.value = err.message || '載入產品時發生錯誤'
   } finally {
     loading.value = false
   }
 }
 
-// 設定產品圖片
+// 正：設定產品圖片（避免重複）
 function setupProductImages() {
-  console.log('設定產品圖片')
+  console.log('🖼️ 設定產品圖片')
   
   const newImages = []
+  const imageSet = new Set() // 用 Set 追蹤已加入的圖片
   
-  if (product.value.mainImageUrl) {
-    const mainImg = getStableImageUrl(product.value.mainImageUrl)
-    newImages.push(mainImg)
-    console.log('  主圖:', mainImg)
+  // 輔助函數：加入圖片（避免重複）
+  function addImage(url) {
+    if (!url || url === 'null' || url === '') return
+    
+    const stableUrl = getStableImageUrl(url)
+    if (!imageSet.has(stableUrl)) {
+      imageSet.add(stableUrl)
+      newImages.push(stableUrl)
+      console.log('  ✅ 加入圖片:', stableUrl)
+    } else {
+      console.log('  ⏭️  跳過重複圖片:', stableUrl)
+    }
   }
   
+  // 1. 加入主圖
+  if (product.value.mainImageUrl) {
+    addImage(product.value.mainImageUrl)
+  }
+  
+  // 2. 加入 Assets 中的圖片
   const assetsList = product.value.assets || product.value.Assets
   if (assetsList && Array.isArray(assetsList)) {
     assetsList.forEach((asset, index) => {
       const url = asset.fUrl || asset.FUrl || asset.fAssetUrl || asset.FAssetUrl
-      if (url) {
-        const stableUrl = getStableImageUrl(url)
-        if (!newImages.includes(stableUrl)) {
-          newImages.push(stableUrl)
-          console.log(`  資產圖片 ${index}:`, stableUrl)
-        }
-      }
+      addImage(url)
     })
   }
   
+  // 3. 如果沒有任何圖片，使用預設圖
   if (newImages.length === 0) {
-    console.warn(' 沒有圖片，使用預設圖')
-    newImages.push('/images/default-product.jpg')
+    console.warn('  ⚠️ 沒有圖片，使用預設圖')
+    addImage('/images/default-product.jpg')
   }
   
   productImages.value = newImages
   selectedImage.value = newImages[0]
   
-  console.log('圖片設定完成，共', newImages.length, '張')
+  console.log(`✅ 圖片設定完成，共 ${newImages.length} 張（無重複）`)
 }
 
 // 載入變體
 async function loadVariants(productId) {
   if (product.value.variants && Array.isArray(product.value.variants)) {
-    console.log('使用產品資料中的變體:', product.value.variants.length, '個')
+    console.log('📦 使用產品資料中的變體:', product.value.variants.length, '個')
     
     variants.value = product.value.variants
     
@@ -448,7 +441,7 @@ async function loadVariants(productId) {
     const available = variants.value.find(v => (v.fStock || v.FStock) > 0)
     if (available) {
       selectVariant(available)
-      console.log('已選擇變體:', available.fSku || available.FSku)
+      console.log('✅ 已選擇變體:', available.fSku || available.FSku)
     } else if (variants.value.length === 1) {
       // 如果只有一個變體，即使缺貨也選擇它
       selectVariant(variants.value[0])
@@ -480,7 +473,7 @@ async function loadRelatedProducts(categoryId) {
         })
     }
   } catch (err) {
-    console.error('載入相關產品失敗:', err)
+    console.error('❌ 載入相關產品失敗:', err)
   }
 }
 
@@ -537,8 +530,27 @@ function validateQuantity() {
   else if (quantity.value > maxQuantity.value) quantity.value = maxQuantity.value
 }
 
+// 加入購物車
+async function addToCart() {
+  if (!canAddToCart.value) return
+  
+  try {
+    const variantInfo = selectedVariant.value 
+      ? `\n規格：${selectedVariant.value.colorName || selectedVariant.value.ColorName || selectedVariant.value.fSku}`
+      : ''
+    
+    alert(`已加入購物車！\n產品：${product.value.fName}${variantInfo}\n數量：${quantity.value}`)
+    quantity.value = 1
+  } catch (err) {
+    alert('加入購物車時發生錯誤')
+  }
+}
 
-
+// 立即購買
+function buyNow() {
+  if (!canAddToCart.value) return
+  addToCart().then(() => router.push('/cart'))
+}
 
 // 前往產品
 function goToProduct(productId) {
@@ -591,14 +603,22 @@ function handleImageError(event) {
   }
 }
 
-// 生命週期
-onMounted(() => loadProductDetail())
+// 進入頁面時直接跳轉到頂部
+onMounted(() => {
+  loadProductDetail()
+  // 從列表進入詳情頁時，直接跳轉到頂部（無動畫）
+  window.scrollTo(0, 0)
+  console.log('📜 進入產品頁，直接跳轉到頂部')
+})
 
-watch(() => route.params.id, (newId) => {
+// 切換產品時直接跳轉到頂部
+watch(() => route.params.id, (newId, oldId) => {
   if (newId && route.name === 'ProductDetail') {
     imageErrors.value.clear()
     loadProductDetail()
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    // 在詳情頁內切換產品時，直接跳轉到頂部（無動畫）
+    window.scrollTo(0, 0)
+    console.log('📜 切換產品，直接跳轉到頂部')
   }
 })
 </script>

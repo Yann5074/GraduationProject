@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using NuGet.ContentModel;
 using System.Runtime.Intrinsics.X86;
+using System.Text.RegularExpressions;
 
 
 namespace GraduationProject.Services
@@ -18,18 +19,17 @@ namespace GraduationProject.Services
         private readonly dbFurniMartContext _db;
         private readonly IWebHostEnvironment _env;
         private readonly ILogger<CProductService> _logger;
-        private readonly SkuGenerator _skuGenerator;
-
+        private static readonly object _skuLock = new object();
         public CProductService(
             dbFurniMartContext db,
             IWebHostEnvironment env,
-            ILogger<CProductService> logger,
-            SkuGenerator skuGenerator)
+            ILogger<CProductService> logger
+            )
         {
             _db = db;
             _env = env;
             _logger = logger;
-            _skuGenerator = skuGenerator;
+
         }
 
         public IEnumerable<CProductDTO> SearchProduct(CProductSearchKeywordViewModel vm)
@@ -161,7 +161,7 @@ namespace GraduationProject.Services
 
         public (int ProductId, Dictionary<int, int> VariantIdMap) CreateProductAndVariants(CProductUpdateDTO dto)
         {
-            var now = DateTime.Now;
+            var now = DateTime.UtcNow;
 
             var p = new TProduct
             {
@@ -188,9 +188,15 @@ namespace GraduationProject.Services
                     var v = dto.Variants[i];
                     if (v == null || v.Deleted == true) continue;
 
-                    // 簡單 SKU 重複檢查（可視情況調整）
-                    if (!string.IsNullOrWhiteSpace(v.SKU) && SkuExists(v.SKU, null))
+                    // ★ 若 SKU 空白，自動產生；若有填則檢查重複
+                    if (string.IsNullOrWhiteSpace(v.SKU))
+                    {
+                        v.SKU = GenerateSkuNoTable(dto.CategoryId, dto.Name, v.ColorId, serialDigits: 3).sku;
+                    }
+                    else if (SkuExists(v.SKU, null))
+                    {
                         throw new InvalidOperationException($"SKU 重複：{v.SKU}");
+                    }
 
                     var ev = new TProductVariant
                     {
@@ -212,12 +218,13 @@ namespace GraduationProject.Services
                     _db.TProductVariants.Add(ev);
                     _db.SaveChanges(); // 取得 FProductVariantId
 
-                    map[i] = ev.FProductVariantId;
+                    map[i] = ev.FProductVariantId; // 你目前用迴圈索引做 tempIndex
                 }
             }
 
             return (p.FProductId, map);
         }
+
 
         // ===================== Create：建立 Assets =====================
         public void CreateAssetsForProduct(int productId, List<CProductAssetDTO> assets)
@@ -249,7 +256,7 @@ namespace GraduationProject.Services
             _db.SaveChanges();
         }
 
-        // ===================== Create：一步到位（可選） =====================
+        
         public int Create(CProductUpdateDTO dto)
         {
             var (pid, map) = CreateProductAndVariants(dto);
@@ -270,7 +277,7 @@ namespace GraduationProject.Services
             return pid;
         }
 
-        // ===================== Upload：同步版 =====================
+        
         public (string url, string? mime) UploadAsset(IFormFile file)
         {
             if (file == null || file.Length == 0) throw new InvalidOperationException("Empty file.");
@@ -294,7 +301,7 @@ namespace GraduationProject.Services
             return (url, mime);
         }
 
-        // ===================== 查詢 / 讀取（僅放 Create 需要的選項） =====================
+       
         public List<SelectListItem> GetCategoryOptions()
         {
             return _db.TCategories
@@ -342,12 +349,8 @@ namespace GraduationProject.Services
             if (dto.CategoryId.HasValue && !_db.TCategories.Any(c => c.FCategoryId == dto.CategoryId.Value))
                 throw new ArgumentException("指定的分類不存在");
 
-            // 確保不為 null，避免後續 NRE
             dto.Variants ??= new List<CProductVariantDTO>();
             dto.Assets ??= new List<CProductAssetDTO>();
-
-            // 先對前端傳入的主圖做群組正規化（每個 scope 僅保留一個 true）
-            NormalizePrimaryPerScope(dto.Assets);
 
             using var tx = _db.Database.BeginTransaction();
 
@@ -362,8 +365,8 @@ namespace GraduationProject.Services
             product.FDiscount = dto.Discount;
             product.FUpdateTime = now;
 
-            // ===== Variants：刪除 =====
-            if (product.ProductVariants != null && product.ProductVariants.Count > 0)
+            // ===== 變體刪除 =====
+            if (product.ProductVariants?.Count > 0)
             {
                 foreach (var ev in product.ProductVariants.ToList())
                 {
@@ -373,53 +376,94 @@ namespace GraduationProject.Services
                 }
             }
 
-            // ===== Variants：新增/更新 =====
-            foreach (var v in dto.Variants.Where(x => x.Deleted != true))
+            // ===== 新增變體（先建以取得真實ID）=====
+            var tempMap = new Dictionary<int, int>(); // ClientTempIndex -> New FProductVariantId
+
+            foreach (var v in dto.Variants.Where(x => x.Deleted != true && !x.VariantId.HasValue))
             {
-                if (v.VariantId.HasValue)
+                // ★ 新變體：SKU 空白自動產；不空白就檢查重複
+                if (string.IsNullOrWhiteSpace(v.SKU))
                 {
-                    var ev = product.ProductVariants.FirstOrDefault(x => x.FProductVariantId == v.VariantId.Value);
-                    if (ev != null)
-                    {
-                        ev.FSku = v.SKU;
-                        ev.FPrice = v.Price;
-                        ev.FCost = v.Cost;
-                        ev.FStock = v.Stock;
-                        ev.FPstatus = v.PStatus;
-                        ev.FColorId = v.ColorId;
-                        ev.FLength = v.Length;
-                        ev.FWidth = v.Width;
-                        ev.FHeight = v.Height;
-                        ev.FSizeLabel = v.SizeLabel;
-                        ev.FWeight = v.Weight;
-                        ev.FUpdateTime = now;
-                    }
+                    v.SKU = GenerateSkuNoTable(dto.CategoryId, dto.Name, v.ColorId, serialDigits: 3).sku;
                 }
-                else
+                else if (SkuExists(v.SKU, null))
                 {
-                    _db.TProductVariants.Add(new TProductVariant
+                    throw new InvalidOperationException($"SKU 重複：{v.SKU}");
+                }
+
+                var ev = new TProductVariant
+                {
+                    FProductId = product.FProductId,
+                    FSku = v.SKU,
+                    FPrice = v.Price,
+                    FCost = v.Cost,
+                    FStock = v.Stock,
+                    FPstatus = v.PStatus,
+                    FColorId = v.ColorId,
+                    FLength = v.Length,
+                    FWidth = v.Width,
+                    FHeight = v.Height,
+                    FSizeLabel = v.SizeLabel,
+                    FWeight = v.Weight,
+                    FCreateTime = now,
+                    FUpdateTime = now
+                };
+                _db.TProductVariants.Add(ev);
+                _db.SaveChanges();
+
+                if (v.ClientTempIndex.HasValue)
+                    tempMap[v.ClientTempIndex.Value] = ev.FProductVariantId;
+
+                v.VariantId = ev.FProductVariantId; // 回寫（可選）
+            }
+
+            // ===== 更新既有變體 =====
+            foreach (var v in dto.Variants.Where(x => x.Deleted != true && x.VariantId.HasValue))
+            {
+                var ev = product.ProductVariants.FirstOrDefault(x => x.FProductVariantId == v.VariantId.Value);
+                if (ev != null)
+                {
+                    // ★ 既有變體：若 SKU 空白 → 自動產；若有填 → 檢查是否撞到別人
+                    if (string.IsNullOrWhiteSpace(v.SKU))
                     {
-                        FProductId = product.FProductId,
-                        FSku = v.SKU,
-                        FPrice = v.Price,
-                        FCost = v.Cost,
-                        FStock = v.Stock,
-                        FPstatus = v.PStatus,
-                        FColorId = v.ColorId,
-                        FLength = v.Length,
-                        FWidth = v.Width,
-                        FHeight = v.Height,
-                        FSizeLabel = v.SizeLabel,
-                        FWeight = v.Weight,
-                        FCreateTime = now,
-                        FUpdateTime = now
-                    });
+                        v.SKU = GenerateSkuNoTable(dto.CategoryId, dto.Name, v.ColorId, serialDigits: 3).sku;
+                    }
+                    else if (SkuExists(v.SKU, ev.FProductVariantId))
+                    {
+                        throw new InvalidOperationException($"SKU 重複：{v.SKU}");
+                    }
+
+                    ev.FSku = v.SKU;
+                    ev.FPrice = v.Price;
+                    ev.FCost = v.Cost;
+                    ev.FStock = v.Stock;
+                    ev.FPstatus = v.PStatus;
+                    ev.FColorId = v.ColorId;
+                    ev.FLength = v.Length;
+                    ev.FWidth = v.Width;
+                    ev.FHeight = v.Height;
+                    ev.FSizeLabel = v.SizeLabel;
+                    ev.FWeight = v.Weight;
+                    ev.FUpdateTime = now;
                 }
             }
             _db.SaveChanges();
 
-            // ===== Assets：刪除 =====
-            if (product.ProductAssets != null && product.ProductAssets.Count > 0)
+            // ===== 對齊資產（暫存索引 → 真實 VariantId）=====
+            foreach (var a in dto.Assets.Where(x => x.Deleted != true))
+            {
+                if (!a.ProductVariantId.HasValue && a.VariantTempIndex.HasValue
+                    && tempMap.TryGetValue(a.VariantTempIndex.Value, out var realVid))
+                {
+                    a.ProductVariantId = realVid;
+                }
+            }
+
+            // ===== 主圖唯一化（DTO層）=====
+            NormalizePrimaryPerScope(dto.Assets);
+
+            // ===== 資產刪除 =====
+            if (product.ProductAssets?.Count > 0)
             {
                 foreach (var ea in product.ProductAssets.ToList())
                 {
@@ -429,7 +473,7 @@ namespace GraduationProject.Services
                 }
             }
 
-            // ===== Assets：新增/更新（確保 IsPrimary 正確寫入） =====
+            // ===== 資產新增/更新 =====
             foreach (var a in dto.Assets.Where(x => x.Deleted != true))
             {
                 if (a.AssetId.HasValue)
@@ -437,11 +481,11 @@ namespace GraduationProject.Services
                     var ea = product.ProductAssets.FirstOrDefault(x => x.FAssetId == a.AssetId.Value);
                     if (ea != null)
                     {
-                        ea.FProductVariantId = a.ProductVariantId;                 // null = 商品層
+                        ea.FProductVariantId = a.ProductVariantId;
                         ea.FAssetType = a.AssetType;
                         ea.FMimeType = a.MimeType;
                         ea.FUrl = a.Url;
-                        ea.FIsPrimary = a.IsPrimary == true;                // ★ 轉為 bool，避免 null 不生效
+                        ea.FIsPrimary = a.IsPrimary == true;
                         ea.FSortOrder = a.SortOrder;
                         ea.FPosterUrl = a.PosterUrl;
                         ea.FMaterialId = a.MaterialId;
@@ -453,7 +497,6 @@ namespace GraduationProject.Services
                 }
                 else
                 {
-                    // 以 URL + scope 去重（可視需求保留/移除）
                     var dup = product.ProductAssets?.FirstOrDefault(x =>
                         x.FUrl == a.Url && ((x.FProductVariantId ?? 0) == (a.ProductVariantId ?? 0)));
 
@@ -461,7 +504,7 @@ namespace GraduationProject.Services
                     {
                         dup.FAssetType = a.AssetType;
                         dup.FMimeType = a.MimeType;
-                        dup.FIsPrimary = a.IsPrimary == true;                   
+                        dup.FIsPrimary = a.IsPrimary == true;
                         dup.FSortOrder = a.SortOrder;
                         dup.FPosterUrl = a.PosterUrl;
                         dup.FMaterialId = a.MaterialId;
@@ -475,11 +518,11 @@ namespace GraduationProject.Services
                         _db.TProductAssets.Add(new TProductAsset
                         {
                             FProductId = product.FProductId,
-                            FProductVariantId = a.ProductVariantId,                 // null = 商品層
+                            FProductVariantId = a.ProductVariantId,
                             FAssetType = a.AssetType,
                             FMimeType = a.MimeType,
                             FUrl = a.Url,
-                            FIsPrimary = a.IsPrimary == true,                
+                            FIsPrimary = a.IsPrimary == true,
                             FSortOrder = a.SortOrder,
                             FPosterUrl = a.PosterUrl,
                             FMaterialId = a.MaterialId,
@@ -493,43 +536,38 @@ namespace GraduationProject.Services
                 }
             }
 
-            // 先存一次（確保新增資產拿到 FAssetId，以便做唯一主圖處理）
+            _db.SaveChanges();
+            EnforceSinglePrimaryInDbScope(product); // DB 層再保險一次
             _db.SaveChanges();
 
-            // ===== 最終保險：以 DB 現況強制每組僅一個主圖 =====
-            EnforceSinglePrimaryInDbScope(product);
-
-            _db.SaveChanges();
             tx.Commit();
             return product.FProductId;
         }
 
-        /// <summary>
-        /// 對傳入的 DTO 做群組正規化：以 (ProductVariantId??0) 為 scope，每組最多一個 IsPrimary==true。
-        /// </summary>
+
+
+
+
         private static void NormalizePrimaryPerScope(List<CProductAssetDTO> assets)
         {
+            assets ??= new List<CProductAssetDTO>();
             var groups = assets.Where(a => a.Deleted != true)
                                .GroupBy(a => a.ProductVariantId ?? 0);
+
             foreach (var g in groups)
             {
-                // 把 true 的候選排序（先 SortOrder、再 AssetId），保留第一個
-                var primaries = g.Where(x => x.IsPrimary == true)
+                var primaries = g.Where(x => x.IsPrimary == true) // bool? -> bool
                                  .OrderBy(x => x.SortOrder ?? int.MaxValue)
-                                 .ThenBy(x => x.AssetId ?? int.MaxValue)
+                                 .ThenBy(x => (int)(x.AssetId ?? int.MaxValue))
                                  .ToList();
-
                 if (primaries.Count <= 1) continue;
 
                 var keep = primaries.First();
-                foreach (var x in primaries.Skip(1))
-                    x.IsPrimary = false;
+                foreach (var x in primaries.Skip(1)) x.IsPrimary = false;
             }
         }
 
-        /// <summary>
-        /// 以目前 product 的 DB 實體為準，強制每個 scope 僅一個 FIsPrimary==true。
-        /// </summary>
+       
         private static void EnforceSinglePrimaryInDbScope(TProduct product)
         {
             var groups = (product.ProductAssets ?? Enumerable.Empty<TProductAsset>())
@@ -538,8 +576,7 @@ namespace GraduationProject.Services
             foreach (var g in groups)
             {
                 
-
-                var keep = g.Where(a => a.FIsPrimary == true)
+                var keep = g.Where(a => a.FIsPrimary == true) 
                             .OrderBy(a => a.FSortOrder ?? int.MaxValue)
                             .ThenBy(a => a.FAssetId)
                             .FirstOrDefault()
@@ -566,8 +603,80 @@ namespace GraduationProject.Services
             return q.Any(v => v.FSku == sku);
         }
 
+        private static string ExtractKeywordFromName(string? name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "GEN";
+            var n = name.Trim();
 
+            var m = Regex.Match(n, @"[A-Za-z0-9]{3,}");
+            if (m.Success) return m.Value.ToUpperInvariant();
 
+            m = Regex.Match(n, @"[A-Za-z]{1,}");
+            if (m.Success) return m.Value.ToUpperInvariant();
+
+            var cleaned = Regex.Replace(n, @"[^A-Za-z0-9]", "");
+            if (cleaned.Length == 0) return "GEN";
+            return cleaned[..Math.Min(4, cleaned.Length)].ToUpperInvariant();
+        }
+
+        private string GetCategoryCodeById(int? categoryId)
+        {
+            if (categoryId == null) return "GEN";
+            var cat = _db.TCategories.FirstOrDefault(c => c.FCategoryId == categoryId.Value);
+            if (cat == null) return "GEN";
+            var code = (cat.FCategoryCode ?? "").Trim().ToUpperInvariant();
+            return string.IsNullOrWhiteSpace(code) ? "GEN" : code;
+        }
+
+        private string GetColorCodeById(int? colorId)
+        {
+            if (colorId == null) return "NA";
+            var color = _db.TColors.FirstOrDefault(c => c.FColorId == colorId.Value);
+            if (color == null) return "NA";
+            var code = (color.FColorCode ?? "").Trim().ToUpperInvariant();
+            return string.IsNullOrWhiteSpace(code) ? "NA" : code;
+        }
+
+        private static string PadSerial(int serial, int digits)
+            => serial.ToString(new string('0', Math.Clamp(digits, 2, 4)));
+
+        private static string BuildSkuPrefix(string catCode, string keyword, string colorCode)
+            => $"{catCode}-{keyword}-{colorCode}";
+
+ 
+        private (string sku, int serial) GenerateSkuNoTable(
+            int? categoryId, string? productName, int? colorId,
+            int serialDigits = 3)
+        {
+            var cat = GetCategoryCodeById(categoryId);
+            var key = ExtractKeywordFromName(productName);
+            var col = GetColorCodeById(colorId);
+
+            var prefix = BuildSkuPrefix(cat, key, col); // 例如 SOFA-EAGO-#000000
+            var pattern = $"^{Regex.Escape(prefix)}-(\\d{{2,4}})$"; // 抓尾端 2~4 碼
+
+            int next;
+            lock (_skuLock) // 同一行程內避免兩支執行緒同時讀到一樣的最大值
+            {
+                // 從 DB 抓符合前綴的既有 SKU（LIKE 前綴）
+                var candidates = _db.TProductVariants
+                    .Where(v => v.FSku != null && v.FSku.StartsWith(prefix + "-"))
+                    .Select(v => v.FSku!)
+                    .ToList();
+
+                int maxSerial = 0;
+                foreach (var s in candidates)
+                {
+                    var m = Regex.Match(s, pattern, RegexOptions.IgnoreCase);
+                    if (m.Success && int.TryParse(m.Groups[1].Value, out var n))
+                        maxSerial = Math.Max(maxSerial, n);
+                }
+                next = maxSerial + 1;
+            }
+
+            var sku = $"{prefix}-{PadSerial(next, serialDigits)}";
+            return (sku, next);
+        }
 
 
         public bool Delete(int productId)
