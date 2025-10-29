@@ -1,53 +1,57 @@
+<!-- src/components/ChatWidget.vue -->
 <template>
-<div>
-<div class="floating-button" @click="toggleChat">💬</div>
+  <div>
+    <!-- 漂浮的開關按鈕 -->
+    <div class="floating-button" @click="toggleChat">
+      💬
+    </div>
 
-
-<div v-if="showChat" class="chat-popup">
-<div v-if="status === 'init'">
-<div class="welcome">歡迎使用客服，請問您是會員嗎？</div>
-<button @click="handleYes">是</button>
-<button @click="status = 'form'">否</button>
-</div>
-
-
-<ContactForm v-if="status === 'form'" @formCompleted="onFormDone" />
-<ChatRoom v-if="status === 'chat'" :chatRoomId="chatRoomId" />
-</div>
-</div>
+    <!-- 彈出聊天室 -->
+    <div v-if="showChat" class="chat-popup">
+      <ChatRoom />
+    </div>
+  </div>
 </template>
 
-
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
-import ChatRoom from './ChatRoom.vue'
-import ContactForm from './ContactForm.vue'
-import { useAuthStore } from '@/stores/auth'
-
+import ChatRoom from "@/components/Chat/ChatRoom.vue"
 
 const showChat = ref(false)
-const status = ref('init') // init | form | chat
-const chatRoomId = ref(null)
-const auth = useAuthStore()
-
-
 function toggleChat() {
-showChat.value = !showChat.value
-}
-
-
-function handleYes() {
-if (!auth.isLoggedIn) {
-window.location.href = '/signin'
-} else {
-// 若已登入，呼叫會員聊天室 API（Index）載入資料
-status.value = 'chat'
-}
-}
-
-
-function onFormDone(roomId) {
-chatRoomId.value = roomId
-status.value = 'chat'
+  showChat.value = !showChat.value
 }
 </script>
+
+<style scoped>
+.floating-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #0055ff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1000;
+}
+
+.chat-popup {
+  position: fixed;
+  bottom: 100px;
+  right: 24px;
+  width: 420px;
+  height: 600px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  z-index: 999;
+  overflow: hidden;
+}
+</style>

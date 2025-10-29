@@ -20,6 +20,7 @@ async function hydrateFromServer() {
     await auth.login({ user: me }) // 交給 auth 自己轉換 DTO
   } catch {
     auth.logout()
+
   }
 }
 
@@ -47,6 +48,7 @@ onMounted(() => {
 </script>
 
 <template>
+  
   <main>
     <!-- 自己加的聊天室浮動元件 -->
     <ChatWidget />

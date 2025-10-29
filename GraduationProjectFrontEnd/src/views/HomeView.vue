@@ -17,6 +17,7 @@ const goShop = () => router.push({ name: 'shop' })
 								<h1>Modern Interior <span clsas="d-block">Design Studio</span></h1>
 								<p class="mb-4">Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate velit imperdiet dolor tempor tristique.</p>
 								<p><RouterLink class="btn btn-secondary me-2" to="/shop">Shop Now</RouterLink><a href="#" class="btn btn-white-outline">Explore</a></p>
+								
 							</div>
 						</div>
 						<div class="col-lg-7">

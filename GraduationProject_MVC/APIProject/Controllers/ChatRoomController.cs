@@ -29,13 +29,15 @@ namespace ApiProject.Controllers
         [Authorize]
         [HttpPost("Index")]
         public async Task<IActionResult> Index(
-            CancellationToken ct,
-            [FromBody] ReqGetChartRoomDTO reqDto)
+            CancellationToken ct)
         {
             // 1) 取登入者（會員）
             var idCheck = await _memberAuth.ValidateAndGetMemberAsync(User, ct);
             if (idCheck?.Member == null) return Unauthorized();
 
+
+            //伏筆 使用者若有上萬人 每一個新聊天室就會佔用太多DB
+            //var memberId = 15858;
             var memberId = idCheck.Member.FMemberId;
 
             // 2) 以會員ID找專屬聊天室（前端不需送 chatRoomId）
@@ -56,44 +58,12 @@ namespace ApiProject.Controllers
                 await _context.SaveChangesAsync(ct);
             }
 
-            // 3) 會員端：只列出自己的聊天室（通常一間）
-            //    🔑 這裡的 last 子查詢一定要綁 c.FChatRoomId（每間各查自己的最後訊息）
-            var roomsQuery = await (
-                from c in _context.TChatRooms
-                where c.FMemberId == memberId
-                join m in _context.TMembers on c.FMemberId equals m.FMemberId into gm
-                from m in gm.DefaultIfEmpty()
-                let last = _context.TMessages
-                    .Where(x => x.FChatRoomId == c.FChatRoomId)                  // ✅ 關鍵：每個 c 自己的最後訊息
-                    .OrderByDescending(x => x.FCreatedAt)
-                    .Select(x => new { x.FCreatedAt, x.FContent })
-                    .FirstOrDefault()
-                select new ResChatRoomListDTO
-                {
-                    FChatRoomId = c.FChatRoomId,
-                    image = (m != null && !string.IsNullOrEmpty(m.FMemberImage))
-                        ? m.FMemberImage
-                        : "/MemberHeadImages/default.png",
-                    FName = (m != null && !string.IsNullOrEmpty(m.FName))
-                        ? m.FName
-                        : (c.FMemberId == null ? "訪客" : c.FMemberId.ToString()),
-                    FLastMessageTime = last != null ? (DateTime?)last.FCreatedAt : null,
-                    FLastMessage = last != null ? last.FContent : null
-                })
-                .OrderByDescending(x => x.FLastMessageTime)
-                .ToListAsync(ct);
+          
 
-            // 4)（可選）搜尋
-            if (!string.IsNullOrWhiteSpace(reqDto.q))
-            {
-                var qTrim = reqDto.q.Trim();
-                roomsQuery = roomsQuery
-                    .Where(r => r.FName.Contains(qTrim) || r.FChatRoomId.ToString() == qTrim)
-                    .ToList();
-            }
+
 
             // 5) 決定選中的聊天室：前端若沒送，就用會員自己的
-            int? selectedId = reqDto.chatRoomId ?? myRoom?.FChatRoomId;
+            int? selectedId =myRoom?.FChatRoomId;
 
             // 6) 撈該聊天室訊息
             var messages = new List<ResMessageDto>();
@@ -116,7 +86,7 @@ namespace ApiProject.Controllers
             // 7) 組回傳
             var vm = new ResChatRoomsPageDTO
             {
-                Rooms = roomsQuery.OrderByDescending(x => x.FLastMessageTime).ToList(),
+                Rooms = null,
                 SelectedId = selectedId,
                 Messages = messages
             };
@@ -145,8 +115,10 @@ namespace ApiProject.Controllers
                 .AsTracking()
                 .FirstOrDefaultAsync(r => r.FChatRoomId == reqDto.chatRoomId);
 
-            string senderId = null;
-            string? SenderType = null;
+            string senderId = idCheck.Member.FMemberId.ToString() ;
+            string? SenderType = "member";
+
+            
 
             var now = DateTime.Now;
             TMessage msg = new TMessage
@@ -177,6 +149,36 @@ namespace ApiProject.Controllers
             });
         }
 
+        [HttpPost("InitVisitor")]
+        public async Task<IActionResult> InitVisitor([FromBody] string visitorId)
+        {
+            if (string.IsNullOrWhiteSpace(visitorId))
+                return BadRequest("visitorId 不能為空");
+
+            // ✅ 檢查是否已存在聊天室
+            var exist = await _context.TChatRooms
+                .FirstOrDefaultAsync(c => c.FVisitorKey == visitorId);
+
+            if (exist != null)
+            {
+                return Ok(new { chatRoomId = exist.FChatRoomId });
+            }
+
+            // ✅ 建立新聊天室
+            var room = new TChatRoom
+            {
+                FVisitorKey = visitorId,
+                FCreatedAt = DateTime.Now,
+                FLastMessageAt = null
+            };
+
+            _context.TChatRooms.Add(room);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { chatRoomId = room.FChatRoomId });
+        }
+
+
 
         [HttpPost("SubmitForm")]
         public async Task<IActionResult> SubmitForm([FromBody] TContactForm form)
@@ -194,7 +196,7 @@ namespace ApiProject.Controllers
             _context.TContactForms.Add(form);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "表單提交成功"});
+            return Ok(new { message = "已儲存表單", chatRoomId = form.FChatRoomId });
         }
 
         //[HttpGet("Templates")]
