@@ -12,4 +12,8 @@ public partial class TColor
     public string FColorName { get; set; }
 
     public string FColorCode { get; set; }
+
+    public string FColorHex { get; set; }
+
+    public string FThumbnail { get; set; }
 }

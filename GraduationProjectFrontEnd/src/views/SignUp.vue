@@ -67,11 +67,11 @@ const canFinish = computed(() => {
 
 // --- API wrappers ---
 function sendEmailCodeAPI(payload) {
-  return http.post('/api/Member/send-email-code', payload)
+  return http.post('/Member/send-email-code', payload)
 }
 
 function verifyEmailCodeAPI(payload) {
-  return http.post('/api/Member/verify-email-code', payload)
+  return http.post('/Member/verify-email-code', payload)
 }
 
 // Step1 -> Step2
