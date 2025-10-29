@@ -117,9 +117,12 @@ namespace GraduationProject.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(int id, bool fromDeleted = false)
         {
+            if (id <= 0) return RedirectToAction("List");
+
             var vm = await _svc.GetEmployeeEditVmAsync(id);
             if (vm is null) return NotFound();
-            
+
+            vm.EmployeeId = id;
             vm.FromDeleted = fromDeleted;
             return View(vm);
         }
