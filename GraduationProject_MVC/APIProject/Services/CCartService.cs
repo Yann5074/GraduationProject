@@ -183,7 +183,7 @@ namespace ApiProject.Services
             //確認是否有購物車
             TCart query = await _context.TCarts
                 .Include(c => c.CartItem)
-                .FirstOrDefaultAsync(c => c.FMemberId == reqDto.MemberId && c.FIsDeleted == 0 && c.FIsCheckOut == 0);
+                .FirstOrDefaultAsync(c => c.FMemberId == idCheck.Member.FMemberId && c.FIsDeleted == 0 && c.FIsCheckOut == 0);
             if (query == null)
             {
                 query = new TCart
@@ -192,7 +192,7 @@ namespace ApiProject.Services
                     FIsCheckOut = 0,
                     FIsDeleted = 0,
                     FTotalPrice = 0,
-                    FMemberId = reqDto.MemberId,
+                    FMemberId = idCheck.Member.FMemberId,
                 };
                 _context.TCarts.Add(query);
                 await _context.SaveChangesAsync(); // 先進行儲存以產生CartId

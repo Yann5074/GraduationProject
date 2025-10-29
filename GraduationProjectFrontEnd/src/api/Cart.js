@@ -53,7 +53,15 @@ export const editCartItem = async (cartItemId, newQty) => {
     }
 }
 // 商品加入購物車 (有登入)
-
+export const memberAddToCart = async (reqDTO) =>{
+    try{
+        const result = await http.post(`/Cart/item`, reqDTO)
+        return handleApiResult(result.data)
+    }catch(err){
+        console.error('加入購物車失敗', err)
+        throw err
+    }
+}
 // 確認購物車是否正常
 export const checkCart = async () =>{
     try{

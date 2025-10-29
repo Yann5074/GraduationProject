@@ -275,6 +275,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ProductAPI } from '@/api/Product'
+import Furniture3DViewer from '@/components/Furniture3DViewer.vue'
+import { memberAddToCart } from '@/api/Cart'
 
 const route = useRoute()
 const router = useRouter()
@@ -530,26 +532,41 @@ function validateQuantity() {
   else if (quantity.value > maxQuantity.value) quantity.value = maxQuantity.value
 }
 
-// 加入購物車
+//加入購物車方法
 async function addToCart() {
   if (!canAddToCart.value) return
-  
-  try {
-    const variantInfo = selectedVariant.value 
-      ? `\n規格：${selectedVariant.value.colorName || selectedVariant.value.ColorName || selectedVariant.value.fSku}`
-      : ''
-    
-    alert(`已加入購物車！\n產品：${product.value.fName}${variantInfo}\n數量：${quantity.value}`)
-    quantity.value = 1
-  } catch (err) {
-    alert('加入購物車時發生錯誤')
+  try{
+    const productVariantId = selectedVariant.value?.fProductVariantId || selectedVariant.value?.FProductVariantId
+    const qty = quantity.value
+
+    if(!productVariantId){
+      alert('請先選擇商品規格')
+    }
+
+    const atc = {
+      productVariantId,
+      qty
+    }
+    const result = await memberAddToCart(atc)
+    if (result.ok){
+      alert(result.message)
+    }else{
+      alert(result.message)
+    }
+  }catch(err){
+    console.error('錯誤', err)
+    alert('加入購物車時發生問題，請重新確認')
   }
 }
 
-// 立即購買
-function buyNow() {
+async function buyNow() {
   if (!canAddToCart.value) return
-  addToCart().then(() => router.push('/cart'))
+  try{
+    await memberAddToCart()
+    router.push('/cart')
+  }catch(err){
+    console.error('立即購買發生錯誤', err)
+  }
 }
 
 // 前往產品

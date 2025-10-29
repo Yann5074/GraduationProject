@@ -25,7 +25,9 @@ http.interceptors.response.use(
         switch(status){
             case 401:
                 auth.clear();
-                router.push('/signin');
+                import('@/router').then(({default: router}) =>{
+                  router.push('/signin');
+                })
                 code = '401'
                 message = '登入逾時，請重新登入'
                 break;

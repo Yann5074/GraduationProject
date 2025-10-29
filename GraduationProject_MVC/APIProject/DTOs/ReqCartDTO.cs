@@ -2,7 +2,7 @@
 {
     public class ReqCartDTO
     {
-        public int MemberId { get; set; }
+        //public int MemberId { get; set; }
 
         public int ProductVariantId { get; set; }
 
