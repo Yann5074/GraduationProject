@@ -226,7 +226,6 @@ export const ProductAPI = {
                 }
             }
         }
-        return http.get(`/Product/search/${encodeURIComponent(keyword)}`)
     },
 
     /**
