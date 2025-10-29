@@ -29,7 +29,7 @@ async function handleLogout() {
   if (loggingOut.value) return // 確認是否正在登出
   loggingOut.value = true
   try {
-    await http.post('/api/Member/logout')
+    await http.post('/Member/logout')
   } catch (err) {
     console.warn('logout api error:', err?.response || err)
   } finally {
@@ -377,5 +377,5 @@ nav a:first-of-type {
   align-items: center;
   cursor: pointer;
   z-index: 99999;
-}
+}*/
 </style>

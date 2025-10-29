@@ -49,7 +49,6 @@ const { data } = await http.post('/ChatRoom/Index',
   withCredentials: true // ✅ 一定要加這個
 })
   messages.value = data.messages ?? []
-  console.log("123456")
 }
 
 async function send() {
