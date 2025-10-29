@@ -62,48 +62,70 @@ export const ProductAPI = {
                 }
             })
 
-            console.log('📡 呼叫 API:', '/Product/all', params)
+            console.log('📡 [Product.js] 呼叫 API:', '/Product/all', params)
 
-            const response = await apiClient.get('/Product/all', { params })
+            const response = await http.get('/Product/all', { params })
 
-            console.log('📥 後端回應:', response)
+            console.log('📥 [Product.js] 原始 response:', response)
+            console.log('📥 [Product.js] response.data:', response.data)
+            console.log('📥 [Product.js] response.ok:', response.ok)
+            console.log('📥 [Product.js] response.success:', response.success)
 
-            // 🔧 關鍵修正：正確解析包裝的回應
-            // 後端回應格式：{ success, message, data: { data: [], pagination: {} } }
+            // 🔧 方案1: 如果 axios 攔截器已經返回 response
+            // 檢查 response 的結構
+            let productData = []
+            let paginationData = {}
 
-            if (response && response.success) {
-                // 解包裝：response.data 是 ResultPagedDTO
-                const resultPagedDTO = response.data
-
-                console.log('📦 ResultPagedDTO:', resultPagedDTO)
-                console.log('✅ 產品陣列:', resultPagedDTO?.data)
-                console.log('📊 分頁資訊:', resultPagedDTO?.pagination)
-
-                return {
-                    success: true,
-                    data: resultPagedDTO?.data || [],
-                    pagination: resultPagedDTO?.pagination || {
-                        totalCount: 0,
-                        pageSize: params.pageSize,
-                        currentPage: params.pageNumber,
-                        totalPages: 0
-                    }
-                }
+            // 情況 A: response 本身就是資料
+            if (response.ok && response.data) {
+                console.log('✅ [路徑A] response.ok = true, 使用 response.data')
+                productData = response.data.data || response.data
+                paginationData = response.data.pagination || {}
+            }
+            // 情況 B: response.data 裡有 success
+            else if (response.data?.success) {
+                console.log('✅ [路徑B] response.data.success = true')
+                productData = response.data.data?.data || response.data.data || []
+                paginationData = response.data.data?.pagination || response.data.pagination || {}
+            }
+            // 情況 C: response 直接是陣列
+            else if (Array.isArray(response)) {
+                console.log('✅ [路徑C] response 是陣列')
+                productData = response
+            }
+            // 情況 D: response.data 是陣列
+            else if (Array.isArray(response.data)) {
+                console.log('✅ [路徑D] response.data 是陣列')
+                productData = response.data
+            }
+            // 情況 E: response.data.data 是陣列
+            else if (Array.isArray(response.data?.data)) {
+                console.log('✅ [路徑E] response.data.data 是陣列')
+                productData = response.data.data
+                paginationData = response.data.pagination || {}
             }
 
-            // 後備：如果沒有包裝
+            console.log('🎯 [Product.js] 最終 productData:', productData)
+            console.log('📊 [Product.js] 最終 paginationData:', paginationData)
+            console.log('🔢 [Product.js] 產品數量:', Array.isArray(productData) ? productData.length : 0)
+
             return {
                 success: true,
-                data: response?.data || [],
-                pagination: response?.pagination || {
-                    totalCount: 0,
-                    pageSize: params.pageSize,
-                    currentPage: params.pageNumber,
-                    totalPages: 0
+                data: productData,
+                pagination: {
+                    totalCount: paginationData.totalCount || productData.length || 0,
+                    pageSize: paginationData.pageSize || params.pageSize,
+                    currentPage: paginationData.currentPage || params.pageNumber,
+                    totalPages: paginationData.totalPages || Math.ceil((paginationData.totalCount || productData.length) / params.pageSize)
                 }
             }
         } catch (error) {
-            console.error('❌ 取得產品列表失敗:', error)
+            console.error('❌ [Product.js] 取得產品列表失敗:', error)
+            console.error('❌ [Product.js] 錯誤詳情:', {
+                message: error.message,
+                response: error.response,
+                status: error.response?.status
+            })
             return {
                 success: false,
                 message: error.message || '取得產品列表失敗',
@@ -132,7 +154,7 @@ export const ProductAPI = {
             }
 
             // 修正：後端路由是 /Product/search/{keyword}
-            const response = await apiClient.get(`/Product/search/${encodeURIComponent(keyword.trim())}`)
+            const response = await http.get(`/Product/search/${encodeURIComponent(keyword.trim())}`)
 
             console.log('🔍 搜尋回應:', response)
 
@@ -163,7 +185,7 @@ export const ProductAPI = {
      */
     async getFilterOptions() {
         try {
-            const response = await apiClient.get('/Product/filter-options')
+            const response = await http.get('/Product/filter-options')
 
             console.log('🎛️ 篩選選項回應:', response)
 
@@ -212,15 +234,15 @@ export const ProductAPI = {
      */
     async getProductById(productId) {
         try {
-            const response = await apiClient.get(`/Product/${productId}`)
+            const response = await http.get(`/Product/${productId}`)
 
             console.log('📦 產品詳情回應:', response)
 
             // 解析包裝的回應
-            if (response && response.success) {
+            if (response && response.data.success) {
                 const productData = response.data
-
-                if (!productData || !productData.fProductId) {
+                console.log('123', productData)
+                if (!productData || !productData.data.fProductId) {
                     return {
                         success: false,
                         message: '產品不存在',
@@ -230,7 +252,7 @@ export const ProductAPI = {
 
                 return {
                     success: true,
-                    data: productData
+                    data: productData.data
                 }
             }
 
@@ -257,11 +279,7 @@ export const ProductAPI = {
         }
     },
 
-    /**
-     * 取得產品變體
-     * @param {number} productId - 產品 ID
-     * @returns {Promise<Object>} 產品變體列表
-     */
+
     async getProductVariants(productId) {
         const response = await http.get(`/Product/${productId}/variants`)
         return response.data
@@ -272,7 +290,7 @@ export const ProductAPI = {
      */
     async getSimilarProducts(productId, count = 4) {
         try {
-            const response = await apiClient.get(`/Product/${productId}/similar`, {
+            const response = await http.get(`/Product/${productId}/similar`, {
                 params: { count }
             })
 
@@ -320,7 +338,7 @@ export const ProductAPI = {
                 }
             }
 
-            const response = await apiClient.post(`/Product/${productId}/price`, selectedOptions)
+            const response = await http.post(`/Product/${productId}/price`, selectedOptions)
 
             // 解析包裝的回應
             if (response && response.success) {
@@ -360,7 +378,7 @@ export const ProductAPI = {
                 }
             }
 
-            const response = await apiClient.post('/Product/check-stock', items)
+            const response = await http.post('/Product/check-stock', items)
 
             // 解析包裝的回應
             if (response && response.success) {
@@ -395,7 +413,7 @@ export const ProductAPI = {
      */
     async getCategories() {
         try {
-            const response = await apiClient.get('/Category')
+            const response = await http.get('/Category')
             return {
                 success: true,
                 data: Array.isArray(response) ? response : (response.data || [])

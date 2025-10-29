@@ -277,7 +277,7 @@
                       class="card-img-top"
                       :alt="product.fName"
                       loading="lazy"
-                      @error="handleImageError($event, product)"
+                     
                     />
                     <!-- 標籤 -->
                     <div class="position-absolute top-0 start-0 p-2">
