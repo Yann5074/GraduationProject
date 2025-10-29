@@ -65,9 +65,9 @@
               <span class="totalPrice">
                 {{ formatTotal }}
               </span>
-                <button class="btn btn-danger custom-checkout-btn ms-3 me-3">
+                <RouterLink :to="{path: '/checkout', query: {total: totalAmountNumber}}" class="btn btn-danger custom-checkout-btn ms-3 me-3">
                   結帳
-                </button>
+                </RouterLink>
             </h5>
           </div>
         </form>
@@ -78,9 +78,9 @@
   <div v-else class="text-center p-5 text-muted">
     <i class="bi bi-cart-x" style="font-size: 3rem;"></i>
     <h4 class="mt-3">購物車為空，請繼續購物!</h4>
-    <router-link to="/products" class="btn btn-outline-primary mt-3"> <!-- #TODO 加上商品頁正確跳轉-->
+    <RouterLink to="/products" class="btn btn-outline-primary mt-3"> <!-- #TODO 加上商品頁正確跳轉-->
       返回商品頁
-    </router-link>
+    </RouterLink>
   </div>
   <!-- <RouterView /> -->
   <ConfirmModal ref="confirmModalRef" title="清空購物車" message="是否確定要清空購物車 ?" @confirm="cleanCart" />
@@ -203,6 +203,12 @@ const formatTotal = computed(() =>{
   }).format(sum)
 })
 
+//轉回未格式化的總金額
+const totalAmountNumber = computed(()=>
+  cartItems.value.reduce(
+    (acc, item) => acc + item.subtotal, 0)
+)
+
 //初始化載入
 onMounted(async () => {
   try{
@@ -211,12 +217,12 @@ onMounted(async () => {
       alert(checkResult.message)
     }
     const result = await getAllCarts()
-    if(!Array.isArray(result)){
+    const firstCart = Array.isArray(result) && result.length > 0 ? result[0] : null
+    if(!firstCart){
       cartId.value = null
       cartItems.value = []
       return
     }
-    // console.log(result)
     cartId.value = result[0].cartId
     cartItems.value = result[0]?.cartItem || []
   }catch (err){

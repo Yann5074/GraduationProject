@@ -4,6 +4,10 @@
     {
         public int MemberId {  get; set; }
 
+        public string ContactName { get; set; }
+
+        public string ContactPhone { get; set; }
+
         public int? EmployeeId { get; set; }
 
         public string? TaxNo { get; set; }

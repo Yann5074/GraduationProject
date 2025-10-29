@@ -12,6 +12,7 @@
         public int? FColorId { get; set; }
         public string? ColorName { get; set; }
         public string? ColorCode { get; set; }
+        public string? ColorHex { get; set; }
         public decimal? FLength { get; set; }
         public decimal? FWidth { get; set; }
         public decimal? FHeight { get; set; }

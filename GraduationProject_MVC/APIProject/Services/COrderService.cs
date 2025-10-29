@@ -266,6 +266,8 @@ namespace ApiProject.Services
             {
                 FIsDeleted = 0,
                 FMemberId = idCheck.Member.FMemberId,
+                FContactName = reqDto.ContactName,
+                FContactPhone = reqDto.ContactPhone,
                 FEmployeeId = reqDto.EmployeeId, // 畫面給予可填入ID的欄位
                 FTotalPrice = cart.FTotalPrice,
                 FDiscount = memLv.FDiscount,
@@ -304,7 +306,7 @@ namespace ApiProject.Services
             };
 
             await _context.TOrderDetails.AddRangeAsync(orderDetail);
-            order.FTotalPrice = orderDetail.Sum(od => od.FQuantity * od.FUnitPrice);
+            order.FTotalPrice = Math.Round(orderDetail.Sum(od => od.FQuantity * od.FUnitPrice) * (decimal)memLv.FDiscount) + (decimal)reqDto.ShippingCost;
             cart.FIsCheckOut = 1;
 
             await _context.SaveChangesAsync();
@@ -313,7 +315,9 @@ namespace ApiProject.Services
             { 
                 Ok = true,
                 Code = StatusCodes.Status200OK,
-                Message = "訂單建立成功"
+                Message = "建立訂單成功",
+                Data = new { orderId = order.FOrderId }
+
             };
         }
 
