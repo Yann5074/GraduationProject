@@ -13,6 +13,10 @@ public partial class TOrder
 
     public int FMemberId { get; set; }
 
+    public string FContactName { get; set; }
+
+    public string FContactPhone { get; set; }
+
     public int? FEmployeeId { get; set; }
 
     public decimal FTotalPrice { get; set; }

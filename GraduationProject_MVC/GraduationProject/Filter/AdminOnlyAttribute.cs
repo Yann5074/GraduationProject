@@ -15,7 +15,7 @@ namespace GraduationProject.Filter
             var me = string.IsNullOrEmpty(json) ? null : JsonSerializer.Deserialize<SessionUser>(json);
 
             // RoleId==4(管理職) 而且在職 StatusId==1 才允許
-            if (me?.RoleId != 4 || me?.StatusId != 1)
+            if (me?.RoleId != 4 && me?.StatusId != 1)
             {
                 // 沒權限 → 403 
                 context.Result = new ForbidResult();

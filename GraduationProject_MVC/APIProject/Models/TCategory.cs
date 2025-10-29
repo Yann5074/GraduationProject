@@ -13,6 +13,8 @@ public partial class TCategory
 
     public int? FParentCategoryId { get; set; }
 
+    public string FCategoryCode { get; set; }
+
     public string FDescription { get; set; }
 
     public string FImageUrl { get; set; }

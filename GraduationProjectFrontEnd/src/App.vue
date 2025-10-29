@@ -16,7 +16,7 @@ const auth = useAuthStore()
 // ✅ 修正版：讓 Pinia 自動用 MemberDTO 處理 imageUrl
 async function hydrateFromServer() {
   try {
-    const { data: me } = await http.get('/api/Member/me')
+    const { data: me } = await http.get('/Member/me')
     await auth.login({ user: me }) // 交給 auth 自己轉換 DTO
   } catch {
     auth.logout()
