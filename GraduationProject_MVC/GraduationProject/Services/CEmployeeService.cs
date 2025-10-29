@@ -193,6 +193,7 @@ namespace GraduationProject.Services
                 .Where(e => e.FEmployeeId == id)
                 .Select(e => new CEmployeeEditViewModel
                 {
+                    EmployeeId = e.FEmployeeId,
                     FName = e.FName ?? string.Empty,
                     FPhone = e.FPhone ?? string.Empty,
                     FEmail = e.FEmail ?? string.Empty,
