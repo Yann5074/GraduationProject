@@ -37,6 +37,8 @@ const form = ref({
   email: ''
 })
 
+
+
 async function submitForm() {
   await axios.post('https://localhost:7131/api/ContactForm', {
     fContactName: form.value.name,

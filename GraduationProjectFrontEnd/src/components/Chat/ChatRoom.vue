@@ -26,6 +26,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import http from '@/api/axios'
 
 const api = axios.create({
   baseURL: 'https://localhost:7131/api/ChatRoom',
@@ -43,17 +44,17 @@ function getBubbleClass(type: string) {
 }
 
 async function loadMessages() {
-  const { data } = await api.get('/Index', {
-    params: { chatRoomId: selectedId.value }
-  })
+const { data } = await http.post('/ChatRoom/Index',
+ {
+  withCredentials: true // ✅ 一定要加這個
+})
   messages.value = data.messages ?? []
+  console.log("123456")
 }
 
 async function send() {
   if (!selectedId.value || !content.value.trim()) return
-  await api.post('/SendMessage', null, {
-    params: { chatRoomId: selectedId.value, content: content.value.trim() }
-  })
+  await http.post('/ChatRoom/SendMessage', { chatRoomId: selectedId.value, content: content.value.trim() })
   content.value = ''
   await loadMessages()
 }
