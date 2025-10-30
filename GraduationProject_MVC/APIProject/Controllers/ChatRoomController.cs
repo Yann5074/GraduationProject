@@ -133,9 +133,12 @@ namespace ApiProject.Controllers
             _context.TMessages.Add(msg);
             await _context.SaveChangesAsync();
             // 5) 更新聊天室最後訊息時間（若您表上有此欄位）
-
-            room.FLastMessageAt = now;
-            _context.TChatRooms.Update(room);
+            TChatRoom currentRoom = await _context.TChatRooms
+                .AsTracking()
+                //撈出聊天室
+                .FirstOrDefaultAsync(r => r.FChatRoomId == reqDto.chatRoomId);
+            currentRoom.FLastMessageAt = now;
+            _context.TChatRooms.Update(currentRoom);
             await _context.SaveChangesAsync();
 
             //// 6) 回到 Index，維持目前聊天室與搜尋字  RedirectToAction跳轉到指定的動作方法
