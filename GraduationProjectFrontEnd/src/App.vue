@@ -80,17 +80,20 @@ watch(
 
     <!-- 上方導覽列 -->
     <nav
-      class="custom-navbar navbar navbar navbar-expand-md navbar-dark bg-dark"
-      arial-label="Furni navigation bar"
+      class="navbar navbar-expand-md nav-neo" 
+      :class="{ 'nav-solid': $route.path !== '/home' }" 
+      aria-label="Main"
     >
       <div class="container">
         <!-- 左上 Logo icon -->
-        <RouterLink class="navbar-brand" to="/home"
-          ><img src="./assets/images/Viewrniture.png" class="logo" /> Viewrniture<span
-            >.</span
-          ></RouterLink
-        >
-        <div class="collapse navbar-collapse" id="navbarsFurni">
+        <RouterLink class="navbar-brand" to="/home"> Viewrniture<span>.</span></RouterLink>
+        <!-- <RouterLink class="navbar-brand" to="/home"><img src="./assets/images/Viewrniture.png" class="logo"/> Viewrniture<span>.</span></RouterLink> -->
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navMain">
           <!-- 上方導覽 -->
           <ul class="custom-navbar-nav navbar-nav ms-auto mb-2 mb-md-0">
             <li class="nav-item" :class="{ active: isActive('/home') }">
@@ -346,16 +349,25 @@ header {
   width: 75px;
   height: 75px;
 }
-.auth-link {
+/*.auth-link {
   color: #212529;
   text-decoration: none;
   font-weight: 500;
 }
 
 .auth-link:hover {
-  color: #198754; /* Bootstrap success 綠 */
+  color: #198754; /* Bootstrap success 綠 
   text-decoration: underline;
+}*/
+
+.nav-neo {
+  position: fixed; top:0; left:0; right:0; z-index: 1030;
+  background: transparent;
+  transition: background .3s ease, box-shadow .3s ease;
 }
+.nav-neo.nav-solid { background: rgba(15,17,19,.9); backdrop-filter: blur(8px); box-shadow: 0 1px 0 rgba(255,255,255,.06); }
+.nav-neo .nav-link { color: #fff; opacity:.9; }
+.nav-neo .nav-link.router-link-active { opacity:1 }
 /* nav {
   width: 100%;
   font-size: 12px;
