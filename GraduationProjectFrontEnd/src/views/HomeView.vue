@@ -1,33 +1,49 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-
-onMounted(() => { })
 const router = useRouter()
 const goShop = () => router.push({ name: 'shop' })
+
+onMounted(() => { 
+  // 若有影片，避免 iOS 自動全屏
+  const v = document.querySelector('.hero-video')
+  if (v) v.play().catch(()=>{})
+})
+
 </script>
 
 <template>
   <!-- Start Hero Section -->
-			<div class="hero">
-				<div class="container">
-					<div class="row justify-content-between">
-						<div class="col-lg-5">
-							<div class="intro-excerpt">
-								<h1>Modern Interior <span clsas="d-block">Design Studio</span></h1>
-								<p class="mb-4">Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate velit imperdiet dolor tempor tristique.</p>
-								<p><RouterLink class="btn btn-secondary me-2" to="/shop">Shop Now</RouterLink><a href="#" class="btn btn-white-outline">Explore</a></p>
-								
-							</div>
-						</div>
-						<div class="col-lg-7">
-							<div class="hero-img-wrap">
-								<img src="../assets/images/couch.png" class="img-fluid">
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+	<section class="hero-neo">
+ 		<!-- 用影片；若沒有影片就改成背景圖 -->
+    	<video class="hero-video" autoplay muted loop playsinline preload="auto" poster="/asset/images/hero-poster.jpg">
+      		<source src="/asset/videos/hero.mp4" type="video/mp4" />
+    	</video>
+
+    	<div class="hero-overlay"></div>
+
+    	<div class="container d-flex flex-column justify-content-center align-items-start h-100">
+      		<h1 class="display-3 fw-bold text-white lh-1 mb-3">Make Interiors <br><span class="grad">Feel Alive</span>
+      		</h1>
+      		<p class="lead text-white-50 mb-4">以即時渲染展示你的家居靈感。從靈感到成品，只差一次點擊。
+      		</p>
+      		<div class="d-flex gap-3">
+        	<button class="btn btn-neo btn-lg px-4" @click="goShop">開始選購</button>
+        	<RouterLink to="/design" class="btn btn-outline-light btn-lg px-4">看看靈感</RouterLink>
+      		</div>
+
+      		<!-- 信任徽章 -->
+      		<!-- <div class="trust mt-4">
+        		<img src="/asset/images/bolt.avif" alt="Trusted" />
+        		<span class="text-white-50 ms-2">超過 2,000 位設計師選用</span>
+      		</div> -->
+    	</div>
+
+    		<!-- 漂浮光暈 -->
+    		<div class="glow glow-a"></div>
+    		<div class="glow glow-b"></div>
+  </section>
+
 	<!-- End Hero Section -->
 
   <!-- Start Product Section -->
@@ -383,3 +399,61 @@ const goShop = () => router.push({ name: 'shop' })
 		</div>
 	<!-- End Blog Section -->
 </template>
+
+<style scoped>
+/* ======= HERO ======= */
+.hero-neo{
+  position: relative; height: 92vh; min-height: 560px; overflow: hidden;
+  background: #0f1113;
+}
+.hero-video{
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter: saturate(1.1) contrast(1.05);
+}
+.hero-overlay{
+  position:absolute; inset:0; background: radial-gradient(1200px 600px at 20% 20%, rgba(59,93,80,.50), rgba(15,17,19,.55) 50%, rgba(15,17,19,.85) 100%);
+}
+.hero-neo .container{ position:relative; z-index:2; }
+.grad{ background: linear-gradient(90deg,#8ef7c2,#74d6ff,#b7a6ff); -webkit-background-clip:text; background-clip:text; color:transparent; }
+
+/* 漂浮光暈 */
+.glow{ position:absolute; filter: blur(40px); opacity:.45; z-index:1; }
+.glow-a{ width:360px; height:360px; left: -80px; top: 10%; background: radial-gradient(circle,#7fe2c9,transparent 60%); }
+.glow-b{ width:420px; height:420px; right: -120px; bottom: -60px; background: radial-gradient(circle,#8aa3ff,transparent 60%); }
+
+/* ======= 按鈕 ======= */
+.btn-neo{
+  --c:#48d2a0;
+  background: linear-gradient(180deg, var(--c), #2ab785);
+  color:#0b0d0e; border: none; border-radius: .75rem;
+  box-shadow: 0 10px 24px rgba(72,210,160,.35);
+}
+.btn-neo:hover{ filter: brightness(1.05); transform: translateY(-1px); }
+.btn-outline-light{ border-radius: .75rem; }
+
+/* ======= 賣點卡 ======= */
+.feature-card{
+  background: rgba(255,255,255,.9);
+  border-radius: 1rem; padding: 1.25rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,.06);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.feature-card:hover{ transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.12); }
+.feature-card .icon-wrap{
+  width:44px; height:44px; border-radius: 10px;
+  display:grid; place-items:center; margin-bottom:.5rem;
+  background: #e9f7f1;
+}
+
+/* ======= 展示牆 ======= */
+.shot-main, .shot-side img{ box-shadow: 0 20px 50px rgba(0,0,0,.18); }
+
+/* ======= CTA ======= */
+.cta-neo{
+  position: relative; background: linear-gradient(180deg,#131619,#0f1113);
+  padding: 72px 0; overflow: hidden;
+}
+.glow-c{ position:absolute; left:50%; top:-60px; transform:translateX(-50%);
+  width:800px; height:260px; filter: blur(60px); opacity:.4;
+  background: radial-gradient(ellipse at center, #5be7b5, transparent 60%);
+}
+</style>
