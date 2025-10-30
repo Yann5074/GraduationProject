@@ -557,7 +557,11 @@ async function addToCart() {
           alert(result.message)
       }
       }else{
-        cart.addItem(productVariantId, qty)
+        const productVariantId = selectedVariant.value?.fProductVariantId || selectedVariant.value?.FProductVariantId
+        const productName = product.value?.fName
+        const imageUrl = selectedImage.value || product.value?.ImageUrl
+        const unitPrice = selectedVariant.value?.fPrice || product.value?.minPrice
+        cart.addItem(productVariantId, qty, productName, imageUrl, unitPrice)
         alert('已加入訪客購物車')
       }
   }catch(err){
@@ -584,7 +588,10 @@ async function buyNow() {
         await memberAddToCart(atc)
         router.push('/cart')
       }else{
-        cart.addItem(productVariantId, qty)
+        const productName = product.value?.fName
+        const imageUrl = selectedImage.value || product.value?.ImageUrl
+        const unitPrice = selectedVariant.value?.fPrice || product.value?.minPrice
+        cart.addItem(productVariantId, qty, productName, imageUrl, unitPrice)
         alert('尚未登入，商品以加入購物車')
         router.push('/cart')
       }

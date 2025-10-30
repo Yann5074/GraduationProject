@@ -400,7 +400,8 @@ namespace ApiProject.Services
             return new ResultDTO
             {
                 Ok = true,
-                Code = StatusCodes.Status204NoContent
+                Code = StatusCodes.Status200OK,
+                Message = "購物車同步成功"
             };
             
         }

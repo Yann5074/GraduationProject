@@ -48,6 +48,7 @@ onMounted(() => {
   document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((el) => new Dropdown(el))
   auth.hydrate()
   hydrateFromServer()
+  cart.hydrateCart()
 })
 
 // 登入後購物車同步
@@ -55,7 +56,7 @@ watch(() => auth.isLoggedIn, async (LoggedIn) =>{
   if (LoggedIn && cart.items.length > 0){
     try{
       const reqDTO ={
-        memberId: auth.user?.MemberId  || auth.user?.fMemberId,
+        memberId: auth.user?.memberId  || auth.user?.fMemberId,
         cartItem: cart.items.map(i =>({
           productVariantId: i.productVariantId,
           quantity: i.qty

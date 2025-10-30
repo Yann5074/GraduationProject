@@ -41,7 +41,7 @@
                     </div>
                   </td>
                   <td>
-                    $ {{ ci.formatunitPrice }}
+                    {{ formatPrice(ci.formatunitPrice, ci.unitPrice) }}
                   </td>
                   <td class="text-center align-middle">
                     <QtyControl v-model="ci.qty" :min="1" :max="99" @update:model-value="onQtyChange(ci, $event)"/>
@@ -50,7 +50,7 @@
                     $ {{ (ci.qty * ci.unitPrice).toLocaleString() }}
                   </td>
                   <td>
-                    <button type="button" class="btn btn-black btn-sm" @click="removeItem(ci.cartItemId)">
+                    <button type="button" class="btn btn-black btn-sm" @click="removeItem(ci.cartItemId || ci.productVariantId)">
                       <i class="bi bi-x-octagon"></i>
                     </button>
                   </td>
@@ -68,7 +68,7 @@
                 <RouterLink v-if="auth.isLoggedIn" :to="{path: '/checkout', query: {total: totalAmountNumber}}" class="btn btn-danger custom-checkout-btn ms-3 me-3">
                   結帳
                 </RouterLink>
-                <button v-else class="btn btn-danger custom-checkout-btn ms-3 me-3" @click="router.push('/signin?redirect=/cart')">登入後結帳</button>
+                <button v-else class="btn btn-danger custom-checkout-btn ms-3 me-3" @click="router.push('/signin')">登入後結帳</button>
             </h5>
           </div>
         </form>
@@ -79,7 +79,7 @@
   <div v-else class="text-center p-5 text-muted">
     <i class="bi bi-cart-x" style="font-size: 3rem;"></i>
     <h4 class="mt-3">購物車為空，請繼續購物!</h4>
-    <RouterLink to="/products" class="btn btn-outline-primary mt-3"> <!-- #TODO 加上商品頁正確跳轉-->
+    <RouterLink to="/products" class="btn btn-outline-primary mt-3">
       返回商品頁
     </RouterLink>
   </div>
@@ -141,14 +141,18 @@ import QtyControl from '@/components/QtyControl.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cartStore'
+import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 
+const router = useRouter()
 const auth = useAuthStore()
 const guestCart = useCartStore()
+const {items: guestItems} = storeToRefs(guestCart)
 
 // 儲存購物車資訊
 const cartId = ref(null);
 // 顯示購物車相關
-const cartItems = ref([])
+const memberItems = ref([])
 // 清空購物車相關
 const confirmModalRef = ref(null)
 let currentCart = null;
@@ -196,6 +200,21 @@ const onQtyChange = async (ci, newQty) =>{
   
 }
 
+// 切換購物車顯示來源
+const cartItems = computed({
+  get(){
+    return auth.isLoggedIn ? memberItems.value : guestItems.value
+  },
+  set(val){
+    if (auth.isLoggedIn){
+      memberItems.value = val
+    }else{
+      guestCart.items = val
+      guestCart.persistCart()
+    }
+  }
+})
+
 // 解析訊息中數量
 const parseMaxStockFromMessage = (msg) =>{
   const match = msg.match(/最大可選值為\s*(\d+)/)
@@ -230,15 +249,15 @@ onMounted(async () => {
       const firstCart = Array.isArray(result) && result.length > 0 ? result[0] : null
       if(!firstCart){
         cartId.value = null
-        cartItems.value = []
+        memberItems.value = []
       }
-      cartId.value = result[0].cartId
-      cartItems.value = result[0]?.cartItem || []
+      cartId.value = firstCart.cartId
+      memberItems.value = firstCart.cartItem || []
     }catch(err){
       console.error('載入購物車錯誤', err)
-      if (err.code !== '401')
-        alert(err.message)
-      cartItems.value = []
+      // if (err.code !== '401')
+      //   alert(err.message)
+      memberItems.value = []
     }
   }else{
     guestCart.hydrateCart()
@@ -254,17 +273,18 @@ onMounted(async () => {
 )
 
 // 移除商品
-const removeItem = async (cartItemId) =>{
+const removeItem = async (id) =>{
   try{
     if (auth.isLoggedIn){
-      const result = await deleteItem(cartItemId)
+      const result = await deleteItem(id)
       if (result.ok){
         const result = await getAllCarts()
-        cartItems.value = result[0]?.cartItem || []
+        memberItems.value = result[0]?.cartItem || []
       }
     }else{
-      guestCart.removeItem(cartItemId)
-      cartItems.value = guestCart.items
+      guestCart.removeItem(id)
+      guestCart.persistCart()
+      // cartItems.value = guestCart.items
     }
   }catch(err){
     console.log('刪除購物車商品失敗', err)
@@ -297,5 +317,20 @@ const cleanCart = async () =>{
     console.log('清空購物車失敗', err)
     alert(err.message)
   }
+}
+
+// 控制購物車顯示單價
+function formatPrice(formatStr, rawNum){
+  if (formatStr && typeof formatStr === 'string'){
+    return formatStr
+  }
+  if (typeof rawNum === 'number'){
+    return new Intl.NumberFormat('zh-TW', {
+      style: 'currency',
+      currency: 'TWD',
+      minimumFractionDigits: 0
+    }).format(rawNum)
+  }
+  return ''
 }
 </script>

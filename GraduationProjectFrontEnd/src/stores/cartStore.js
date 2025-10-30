@@ -32,9 +32,9 @@ export const useCartStore = defineStore('cart', {
     },
 
     hydrateCart() {
+      const raw = localStorage.getItem('guest_cart')
       try {
-        const raw = localStorage.getItem('guest_cart')
-        if (raw) this.items = JSON.parse(raw)
+        this.items = raw ? JSON.parse(raw) : []
       } catch {
         this.items = []
       }
