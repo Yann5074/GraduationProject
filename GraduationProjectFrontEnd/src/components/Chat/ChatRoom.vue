@@ -48,14 +48,17 @@ const { data } = await http.post('/ChatRoom/Index',
  {
   withCredentials: true // ✅ 一定要加這個
 })
+ selectedId.value = data.selectedId
   messages.value = data.messages ?? []
   console.log("123456")
 }
 
 async function send() {
   if (!selectedId.value || !content.value.trim()) return
-  await http.post('/ChatRoom/SendMessage', { chatRoomId: selectedId.value, content: content.value.trim() })
-  content.value = ''
+
+  await http.post('/ChatRoom/SendMessage', { chatRoomId: selectedId.value, content: content.value.trim() },
+  { withCredentials: true })
+  content.value
   await loadMessages()
 }
 

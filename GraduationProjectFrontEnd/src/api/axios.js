@@ -11,38 +11,38 @@ const http = axios.create({
 })
 
 http.interceptors.response.use(
-    response =>{
-      console.log(response)
-        return response
-    },
-    error => {
-        const auth = useAuthStore();
-        const status = error.response?.status;
-        const result = error.response?.data;
-        let message = result?.message;
-        let code = result?.code
+  response => {
+    console.log(response)
+    return response
+  },
+  error => {
+    const auth = useAuthStore();
+    const status = error.response?.status;
+    const result = error.response?.data;
+    let message = result?.message;
+    let code = result?.code
 
-        switch(status){
-            case 401:
-                auth.logout();
-                import('@/router').then(({default: router}) =>{
-                  router.push('/signin');
-                })
-                code = '401'
-                message = '登入逾時，請重新登入'
-                break;
-            case 500:
-                console.error('API錯誤: ', error);
-                code = '500'
-                message = '伺服器發生問題，請稍後再試'
-                break;
-        }
-        return Promise.reject({
-            ok: false,
-            code,
-            message,
-            data: result
-        });
-      })
+    switch (status) {
+      case 401:
+        auth.logout();
+        import('@/router').then(({ default: router }) => {
+          router.push('/signin');
+        })
+        code = '401'
+        message = '登入逾時，請重新登入'
+        break;
+      case 500:
+        console.error('API錯誤: ', error);
+        code = '500'
+        message = '伺服器發生問題，請稍後再試'
+        break;
+    }
+    return Promise.reject({
+      ok: false,
+      code,
+      message,
+      data: result
+    });
+  })
 
 export default http
