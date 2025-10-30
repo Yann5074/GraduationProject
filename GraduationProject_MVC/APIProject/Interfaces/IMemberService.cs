@@ -25,8 +25,17 @@ namespace ApiProject.Interfaces
         //前端輸入驗證碼
         public Task<ResultDTO> VerifyEmailCodeAsync(string email, string code);
 
-        //上傳大頭貼
-        //public Task<ResMemberUploadPhotoDTO> MemberUploadPhotoAsync(int memberId, IFormFile file, CancellationToken ct = default);
+        // 忘記密碼：寄驗證碼
+        public Task<ResultDTO> SendResetPasswordCodeAsync(string account, string email);
+        // 忘記密碼：帶驗證碼重設密碼
+        public Task<ResultDTO> ResetPasswordAsync(
+            string account,
+            string email,
+            string code,
+            string newPassword,
+            string? confirmNewPassword,
+            CancellationToken ct = default
+        );
 
 
     }

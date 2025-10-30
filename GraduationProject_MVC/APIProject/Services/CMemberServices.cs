@@ -468,80 +468,173 @@ namespace ApiProject.Services
             };
         }
 
-        //上傳大頭貼
-        //public async Task<ResMemberUploadPhotoDTO> MemberUploadPhotoAsync(int memberId, IFormFile file, CancellationToken ct = default)
-        //{
-        //    if (file == null || file.Length == 0)
-        //        throw new InvalidOperationException("未收到檔案");
+        //寄重設密碼驗證碼，檢查「帳號+Email 是否存在同一個會員」
+        public async Task<ResultDTO> SendResetPasswordCodeAsync(string account, string email)
+        {
+            // 正規化輸入
+            var acc = (account ?? "").Trim();
+            var mail = (email ?? "").Trim();
 
-        //    // 1) 基本限制（大小 2MB，可自行調整）
-        //    const long MAX_BYTES = 2 * 1024 * 1024;
-        //    if (file.Length > MAX_BYTES)
-        //        throw new InvalidOperationException("檔案過大，限制 2MB 以內");
+            if (string.IsNullOrWhiteSpace(acc) || string.IsNullOrWhiteSpace(mail))
+            {
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status400BadRequest,
+                    Message = "帳號與 Email 必填"
+                };
+            }
 
-        //    // 2) 副檔名/ContentType 檢查（僅允許常見圖片）
-        //    var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-        //    var okExts = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-        //    if (!okExts.Contains(ext))
-        //        throw new InvalidOperationException("僅支援 jpg、jpeg、png、webp 格式");
+            // 1. 確認這個帳號+Email 是同一個會員
+            var member = await _context.TMembers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.FAccount == acc && m.FEmail == mail);
 
-        //    var okContentTypes = new[] { "image/jpeg", "image/png", "image/webp" };
-        //    if (!okContentTypes.Contains(file.ContentType.ToLowerInvariant()))
-        //        throw new InvalidOperationException("檔案 Content-Type 不正確");
+            if (member == null)
+            {
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status400BadRequest,
+                    Message = "帳號或 Email 不正確"
+                };
+            }
 
-        //    // 3) 準備資料夾與檔名
-        //    var folder = Path.Combine(_env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"),
-        //                              "MemberHeadImages");
-        //    if (!Directory.Exists(folder))
-        //        Directory.CreateDirectory(folder);
+            // 2. 產生驗證碼
+            var code = GenerateCode();
 
-        //    // 唯一檔名：memberId_時間戳+隨機碼.ext
-        //    var fileName = $"{memberId}_{DateTime.UtcNow.Ticks}_{Guid.NewGuid():N}{ext}";
-        //    var fullPath = Path.Combine(folder, fileName);
+            // 3. 寫入驗證碼紀錄 (跟註冊驗證碼一樣邏輯, 5 分鐘有效)
+            var entity = new TEmailVerification
+            {
+                FEmail = mail,
+                FCode = code,
+                FExpireTime = DateTime.Now.AddMinutes(5),
+                FIsUsed = false,
+                FCreateTime = DateTime.Now
+                // 如果你未來想區分用途，可以在資料表加 FType="reset"
+            };
 
-        //    // 4) 寫檔
-        //    using (var stream = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None))
-        //    {
-        //        await file.CopyToAsync(stream, ct);
-        //    }
+            _context.TEmailVerifications.Add(entity);
+            await _context.SaveChangesAsync();
 
-        //    // 5) 更新 DB（追蹤狀態）
-        //    var member = await _context.TMembers.FirstOrDefaultAsync(m => m.FMemberId == memberId, ct);
-        //    if (member == null)
-        //    {
-        //        // 若找不到，刪掉剛剛寫入的檔案以免殘留
-        //        try { System.IO.File.Delete(fullPath); } catch { /* ignore */ }
-        //        throw new InvalidOperationException("找不到會員資料");
-        //    }
+            // 4. 寄信 (重用 SendEmailAsync)
+            await SendEmailAsync(mail, code);
 
-        //    // （可選）刪除舊頭貼檔案（若不是 default.png）
-        //    if (!string.IsNullOrWhiteSpace(member.FMemberImage) &&
-        //        !string.Equals(member.FMemberImage, "default.png", StringComparison.OrdinalIgnoreCase))
-        //    {
-        //        var oldPath = Path.Combine(folder, member.FMemberImage);
-        //        if (System.IO.File.Exists(oldPath))
-        //        {
-        //            try { System.IO.File.Delete(oldPath); } catch { /* ignore */ }
-        //        }
-        //    }
+            return new ResultDTO
+            {
+                Ok = true,
+                Code = StatusCodes.Status200OK,
+                Message = "重設密碼驗證碼已寄出，請至信箱查看。"
+            };
+        }
 
-        //    member.FMemberImage = fileName;
-        //    member.FUpdateTime = DateTime.Now;
-        //    await _context.SaveChangesAsync(ct);
+        //驗證碼 + 重設密碼
+        public async Task<ResultDTO> ResetPasswordAsync(
+            string account,
+            string email,
+            string code,
+            string newPassword,
+            string? confirmNewPassword,
+            CancellationToken ct = default)
+        {
+            var acc = (account ?? "").Trim();
+            var mail = (email ?? "").Trim().ToLower();
+            var c = (code ?? "").Trim();
 
-        //    // 6) 回完整網址
-        //    var req = _http.HttpContext?.Request;
-        //    var baseUrl = req == null
-        //        ? ""
-        //        : $"{req.Scheme}://{req.Host}";
-        //    var url = $"{baseUrl}/MemberHeadImages/{fileName}";
+            // 0. 基本檢查
+            if (string.IsNullOrWhiteSpace(acc) ||
+                string.IsNullOrWhiteSpace(mail) ||
+                string.IsNullOrWhiteSpace(c) ||
+                string.IsNullOrWhiteSpace(newPassword))
+            {
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status400BadRequest,
+                    Message = "資料不完整"
+                };
+            }
 
-        //    return new ResMemberUploadPhotoDTO
-        //    {
-        //        Url = url,
-        //        FileName = fileName
-        //    };
-        //}
+            if (!string.IsNullOrWhiteSpace(confirmNewPassword) &&
+                !string.Equals(newPassword, confirmNewPassword))
+            {
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status400BadRequest,
+                    Message = "兩次密碼不一致"
+                };
+            }
+
+            if (newPassword.Length < 6)
+            {
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status400BadRequest,
+                    Message = "新密碼至少需 6 碼"
+                };
+            }
+
+            // 1. 找會員 (要可追蹤，因為等一下要改密碼)
+            var member = await _context.TMembers
+                .FirstOrDefaultAsync(m => m.FAccount == acc && m.FEmail.ToLower() == mail, ct);
+
+            if (member == null)
+            {
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status400BadRequest,
+                    Message = "帳號或 Email 不正確"
+                };
+            }
+
+            // 2. 確認驗證碼 (找最新一筆, 未使用, 沒過期)
+            var record = await _context.TEmailVerifications
+                .Where(v =>
+                    v.FEmail.ToLower() == mail &&
+                    v.FCode == c &&
+                    v.FIsUsed == false)
+                .OrderByDescending(v => v.FCreateTime)
+                .FirstOrDefaultAsync(ct);
+
+            if (record == null)
+            {
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status400BadRequest,
+                    Message = "驗證碼錯誤"
+                };
+            }
+
+            if (DateTime.Now > record.FExpireTime)
+            {
+                return new ResultDTO
+                {
+                    Ok = false,
+                    Code = StatusCodes.Status401Unauthorized,
+                    Message = "驗證碼已過期"
+                };
+            }
+
+            // 3. 標記驗證碼已用
+            record.FIsUsed = true;
+
+            // 4. 更新會員密碼（雜湊後存進 FPasswords）
+            member.FPasswords = _hasher.HashPassword(member, newPassword);
+            member.FUpdateTime = DateTime.Now;
+
+            await _context.SaveChangesAsync(ct);
+
+            return new ResultDTO
+            {
+                Ok = true,
+                Code = StatusCodes.Status200OK,
+                Message = "密碼已更新，請使用新密碼登入"
+            };
+        }
 
     }
 }
