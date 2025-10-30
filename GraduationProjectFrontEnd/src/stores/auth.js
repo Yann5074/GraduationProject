@@ -95,9 +95,18 @@ export const useAuthStore = defineStore('auth', {
     // 拿 /api/Member/me 重新同步
     async refreshMe() {
       try {
-        const res = await getMeAPI() // 這應該是 axios.get('/api/Member/me')
+        const res = await getMeAPI() // axios.get('/api/Member/me')
         const me = res.data || res
+
+        // 先把資料存進去
         this.setUser(me)
+
+        // 再處理頭貼（跟 login() 的邏輯一樣）
+        const avatarCandidate = me.imageUrl || me.memberImage || me.MemberImage || me.avatar || ''
+
+        if (avatarCandidate) {
+          this.setAvatar(avatarCandidate)
+        }
       } catch {
         this.logout()
       }

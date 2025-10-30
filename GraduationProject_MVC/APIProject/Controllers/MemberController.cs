@@ -332,5 +332,57 @@ namespace ApiProject.Controllers
             return Ok(result);
         }
 
+        // 11) 忘記密碼：寄送驗證碼
+        // POST /api/Member/send-reset-code
+        [AllowAnonymous]
+        [HttpPost("send-reset-code")]
+        public async Task<ActionResult<ResultDTO>> SendResetCode([FromBody] ReqSendResetCodeDTO req)
+        {
+            if (string.IsNullOrWhiteSpace(req.Account) || string.IsNullOrWhiteSpace(req.Email))
+            {
+                return BadRequest(new ResultDTO
+                {
+                    Ok = false,
+                    Code = 400,
+                    Message = "帳號與 Email 必填"
+                });
+            }
+
+            var result = await _memberService.SendResetPasswordCodeAsync(req.Account, req.Email);
+
+            if (!result.Ok)
+            {
+                // 帳號不存在 / Email 不吻合 之類
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        // 12) 忘記密碼：驗證碼 + 重設密碼
+        //POST /api/Member/reset-password
+        [AllowAnonymous]
+        [HttpPost("reset-password")]
+        public async Task<ActionResult<ResultDTO>> ResetPassword([FromBody] ReqResetPasswordDTO req, CancellationToken ct)
+        {
+            var result = await _memberService.ResetPasswordAsync(
+                req.Account,
+                req.Email,
+                req.Code,
+                req.NewPassword,
+                req.ConfirmNewPassword,
+                ct
+            );
+
+            if (!result.Ok)
+            {
+                // 例如 驗證碼錯誤 / 過期 / 密碼太短 / 兩次不一致
+                // 我們用 BadRequest 回前端，前端可以直接顯示 result.Message
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
     }
 }

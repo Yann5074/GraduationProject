@@ -103,6 +103,11 @@ const router = createRouter({
       ],
       meta: { requiresAuth: true },
     },
+    {
+      path: '/forgot-password',
+      name: 'forgot-password',
+      component: () => import('@/views/ForgotPassword.vue'),
+    },
   ],
 
   scrollBehavior(to, from, savedPosition) {

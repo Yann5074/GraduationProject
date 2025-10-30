@@ -138,6 +138,11 @@ const onSubmit = async (e) => {
                 還沒有帳號？
                 <RouterLink class="text-success fw-bold" to="/signup">註冊</RouterLink>
               </small>
+              <div class="mt-2">
+                <RouterLink class="text-decoration-none link-danger small" to="/forgot-password">
+                  忘記密碼？
+                </RouterLink>
+              </div>
             </div>
           </div>
         </div>
