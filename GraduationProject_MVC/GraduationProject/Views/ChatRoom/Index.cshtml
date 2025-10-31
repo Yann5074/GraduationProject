@@ -280,10 +280,12 @@
             .build();
 
         // 2️⃣ 接收訊息
-        connection.on("ReceiveMessage", function (payload) {
+        connection.on("ReceiveMessage", function (content,senderType) {
+            console.log("政命缺點")
             const msg = document.createElement("div");
-            msg.textContent = `[${payload.senderType}] ${payload.content}`;
-            document.getElementById("messagesList").appendChild(msg);
+            msg.textContent = `[${senderType} ${content}]`;
+            console.log(`[${senderType} ${content}]`)
+            document.getElementById("messages").appendChild(msg);
         });
 
         // 3️⃣ 啟動連線後加入群組

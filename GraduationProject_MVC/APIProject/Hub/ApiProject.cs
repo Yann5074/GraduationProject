@@ -16,9 +16,9 @@ namespace ApiProject.Hubs
         }
 
         // 如果要從 Hub 直接發送也可以用這支
-        public async Task SendToRole(string chatRoomId, string targetRole, string content)
+        public async Task SendToRole(string chatRoomId, string senderType, string content)
         {
-            await Clients.Group($"room:{chatRoomId}").SendAsync("ReceiveMessage", content, targetRole);
+            await Clients.Group($"room:{chatRoomId}").SendAsync("ReceiveMessage", content, senderType);
         }
     }
 }
