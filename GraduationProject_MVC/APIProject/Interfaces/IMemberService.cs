@@ -37,6 +37,7 @@ namespace ApiProject.Interfaces
             CancellationToken ct = default
         );
 
-
+        //Google第三方登入
+        public Task<ResMemberDTO> GoogleOauthSignInAsync(string idToken, CancellationToken ct = default);
     }
 }

@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { loginAPI, getMeAPI } from '@/api/Member'
+import { loginAPI, getMeAPI, googleLoginAPI } from '@/api/Member'
 import { createMemberDTO } from '@/dtos/MemberDTO'
+import { loadGoogleSdk } from '@/utils/google'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -57,6 +58,55 @@ const onSubmit = async (e) => {
     loading.value = false
   }
 }
+// 顯示錯誤訊息用
+const gErr = ref('')
+
+// Google 登入初始化
+onMounted(async () => {
+  try {
+    await loadGoogleSdk()
+
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+    if (!clientId) {
+      gErr.value = '缺少 VITE_GOOGLE_CLIENT_ID 設定'
+      return
+    }
+
+    // 初始化 + 渲染按鈕
+    /* global google */
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      callback: async (res) => {
+        // res.credential 就是 Google 的 id_token
+        try {
+          const apiRes = await googleLoginAPI(res.credential)
+          await auth.login({ user: apiRes.data }) // 和帳密登入完全一致
+          router.push('/')
+        } catch (err) {
+          gErr.value = err?.message || err?.data?.message || 'Google 登入失敗'
+        }
+      },
+    })
+
+    // 渲染按鈕到指定容器
+    const btn = document.getElementById('googleSignInBtn')
+    if (btn) {
+      window.google.accounts.id.renderButton(btn, {
+        theme: 'outline',
+        size: 'large',
+        width: '100%',
+        shape: 'pill',
+        text: 'signin_with', // or "continue_with"
+        logo_alignment: 'left',
+      })
+    }
+
+    // 可選：顯示 one tap（不需要按按鈕也可以出現）
+    // window.google.accounts.id.prompt();
+  } catch (e) {
+    gErr.value = '無法載入 Google 登入元件'
+  }
+})
 </script>
 
 <template>
@@ -131,6 +181,18 @@ const onSubmit = async (e) => {
                   </button>
                 </div>
               </form>
+            </div>
+            <!-- 分隔線 -->
+            <div class="d-flex align-items-center my-3">
+              <hr class="flex-grow-1" />
+              <span class="px-2 text-muted small">或</span>
+              <hr class="flex-grow-1" />
+            </div>
+
+            <!-- Google 登入 -->
+            <div class="mb-2">
+              <div id="googleSignInBtn" class="w-100 d-flex justify-content-center"></div>
+              <div v-if="gErr" class="text-danger small mt-2">{{ gErr }}</div>
             </div>
 
             <div class="card-footer text-center bg-white py-3">

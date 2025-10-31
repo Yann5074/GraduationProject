@@ -42,4 +42,6 @@ public partial class TMember
     public string FEmail { get; set; }
 
     public bool? FEmailState { get; set; }
+
+    public virtual ICollection<TExternalLogin> TExternalLogins { get; set; } = new List<TExternalLogin>();
 }

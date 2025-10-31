@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
+using Google.Apis.Auth;
 
 namespace ApiProject.Services
 {
@@ -636,5 +637,107 @@ namespace ApiProject.Services
             };
         }
 
+        // === Google OAuth 登入主流程 ===
+        public async Task<ResMemberDTO> GoogleOauthSignInAsync(string idToken, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(idToken))
+                throw new InvalidOperationException("缺少 idToken");
+
+            // 1) 驗證 Google ID Token 是否合法，audience 必須是你的 ClientId
+            var payload = await GoogleJsonWebSignature.ValidateAsync(
+                idToken,
+                new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { _config["Google:ClientId"] }
+                });
+
+            var googleSub = payload.Subject;                 // Google 唯一使用者 ID
+            var email = payload.Email;
+            var name = payload.Name ?? payload.GivenName ?? email;
+            var picture = payload.Picture;                   // Google 大頭貼（可參考）
+
+            // 2) 查有沒有既有的外部綁定 (做法A：獨立表)
+            var bind = await _context.TExternalLogins
+                .Include(x => x.FMember)
+                .FirstOrDefaultAsync(x => x.FProvider == "google" && x.FProviderUserId == googleSub, ct);
+
+            TMember member;
+
+            if (bind != null)
+            {
+                member = bind.FMember;
+            }
+            else
+            {
+                // 3) 沒綁定：用 Email 找本地帳號，避免重複
+                member = await _context.TMembers.FirstOrDefaultAsync(m => m.FEmail == email, ct);
+
+                if (member == null)
+                {
+                    // 3-1) 沒有就建立一個本地會員（給一些預設值）
+                    member = new TMember
+                    {
+                        FName = name,
+                        FEmail = email,
+                        FAccount = "g_" + Guid.NewGuid().ToString("N")[..10],
+                        FMemberImage = "default.png",
+                        FPhoneState = false,
+                        FEmailState = true,  // Google 已驗過信
+                        FLeveId = 1,
+                        FMoneySum = 0,
+                        FStatus = 1,
+                        FCreatTime = DateTime.Now,
+                        FUpdateTime = DateTime.Now
+                    };
+                    _context.TMembers.Add(member);
+                    await _context.SaveChangesAsync(ct);
+                }
+
+                // 3-2) 新增外部綁定紀錄 (做法A)
+                var ext = new TExternalLogin
+                {
+                    FMemberId = member.FMemberId,
+                    FProvider = "google",
+                    FProviderUserId = googleSub,
+                    FEmail = email,
+                    FDisplayName = name,
+                    FAvatarUrl = picture,
+                    FCreateTime = DateTime.Now,
+                    FUpdateTime = DateTime.Now
+                };
+                _context.TExternalLogins.Add(ext);
+                await _context.SaveChangesAsync(ct);
+            }
+
+            // 4) 回傳給前端用的會員 DTO（沿用你系統現有格式）
+            return ToResMemberDTO(member);
+        }
+
+        // === 將 TMember 轉成 ResMemberDTO（沿用你 GetMemberMeAsync 的映射邏輯）===
+        private ResMemberDTO ToResMemberDTO(TMember member)
+        {
+            // 如果你想包含導航屬性名稱，可視需要 Include 再取；這裡用安全 Null-conditional。
+            return new ResMemberDTO
+            {
+                MemberId = member.FMemberId,
+                Account = member.FAccount,
+                DisplayName = member.FDisplayName,
+                Name = member.FName,
+                Gender = member.FGender,
+                GenderName = member.FGenderNavigation?.FGenderName,
+                BirthDate = member.FBirthDate,
+                Phone = member.FPhone,
+                Email = member.FEmail,
+                Address = member.FAddress,
+                MemberImage = member.FMemberImage, // 前端會用你的 toImageUrl() 組完整 URL
+                LevelId = member.FLeveId,
+                LevelName = member.FLeveIdNavigation?.FLevelName,
+                MoneySum = member.FMoneySum,
+                Status = member.FStatus,
+                StatusName = member.FStatusNavigation?.FStatusName,
+                CreateTime = member.FCreatTime,
+                UpdateTime = member.FUpdateTime
+            };
+        }
     }
 }
