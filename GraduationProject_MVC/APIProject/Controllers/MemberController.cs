@@ -384,5 +384,42 @@ namespace ApiProject.Controllers
             return Ok(result);
         }
 
+        // 13) Google 第三方登入
+        // POST /api/Member/oauth/google
+        [AllowAnonymous]
+        [HttpPost("oauth/google")]
+        public async Task<ActionResult<ResMemberDTO>> GoogleOauthSignIn([FromBody] ReqGoogleOauthDTO req, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(req.IdToken))
+                return BadRequest(new { ok = false, message = "缺少 Google IdToken" });
+
+            try
+            {
+                // 1) 驗證 Google token + 取得/建立會員（你已在 Service 完成）
+                var me = await _memberService.GoogleOauthSignInAsync(req.IdToken, ct);
+
+                // 2) 取實體會員為了寫 Session（與帳密登入一致）
+                var member = await _db.TMembers
+                    .FirstOrDefaultAsync(m => m.FMemberId == me.MemberId, ct);
+
+                if (member == null)
+                    return NotFound(new { ok = false, message = "找不到會員資料" });
+
+                // 3) 寫入 Session（沿用你 Login 的做法）
+                HttpContext.Session.Clear(); // 防固定化攻擊
+                HttpContext.Session.SetString(Dictionary.CMemberDictionary.SK_LOGIN_ID, member.FMemberId.ToString());
+                HttpContext.Session.SetString(Dictionary.CMemberDictionary.SK_LOGIN_ACCOUNT, member.FAccount ?? string.Empty);
+                HttpContext.Session.SetString(Dictionary.CMemberDictionary.SK_LOGIN_NAME, me.DisplayName ?? member.FName ?? string.Empty);
+                HttpContext.Session.SetObject(Dictionary.CMemberDictionary.SK_LOGIN_OBJECT, me);
+
+                // 4) 回傳會員 DTO 給前端
+                return Ok(me);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { ok = false, message = ex.Message });
+            }
+        }
+
     }
 }

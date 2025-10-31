@@ -84,6 +84,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[tExternalLogin]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[tGender]",
          "ObjectType": 0
       },

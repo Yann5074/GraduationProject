@@ -39,3 +39,8 @@ export function uploadPhotoAPI(file) {
   form.append('file', file)
   return http.post('/Member/me/uploadphoto', form)
 }
+
+// Google 登入
+export function googleLoginAPI(idToken) {
+  return http.post('/Member/oauth/google', { idToken })
+}
