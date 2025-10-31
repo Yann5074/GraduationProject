@@ -29,7 +29,7 @@ builder.Services.AddCors(option =>
 {
     option.AddPolicy("VueClient", policy =>
     {
-        policy.WithOrigins("http://localhost:5175", "https://localhost:7093") // 你的前端埠號
+        policy.WithOrigins("http://localhost:5174", "https://localhost:7093") // 你的前端埠號
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); // ✅ 必須，才能帶 .AspNetCore.Session

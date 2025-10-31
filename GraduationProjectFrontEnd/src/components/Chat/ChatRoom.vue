@@ -40,6 +40,7 @@ const connection  = new singalR.HubConnectionBuilder()
 onMounted(async () => {
   // 2) 監聽後端推播  singalR的傳遞為  '方法名稱', (參數) => {}
   connection.on('ReceiveMessage', (payload) => {
+    console.log("Received message via SignalR:", payload)
     // payload = { chatRoomId, content, senderType, senderId, createdAt }
     if (payload.chatRoomId === selectedId.value) {
       messages.value.push(payload)
@@ -81,8 +82,8 @@ const { data } = await http.post('/ChatRoom/Index',
 async function send() {
   if (!selectedId.value || !content.value.trim()) return
 
-  await http.post('/ChatRoom/SendMessage', { chatRoomId: selectedId.value, content: content.value.trim() },
-  { withCredentials: true })
+  await http.post('/ChatRoom/SendMessage', { chatRoomId: selectedId.value, content: content.value.trim() },{ withCredentials: true });
+  await connection.invoke("SendToRole", selectedId.value.toString(), "employee", content.value.trim());
   content.value = ''
   await loadMessages()
 }
