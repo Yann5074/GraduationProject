@@ -1,9 +1,11 @@
 ﻿using ApiProject.DTOs;
+using ApiProject.Hubs;
 using ApiProject.Interfaces;
 using ApiProject.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using NuGet.DependencyResolver;
 using System.Security.Claims;
@@ -18,11 +20,13 @@ namespace ApiProject.Controllers
     public class ChatRoomController : ControllerBase
     {
         dbFurniMartContext _context;
+        IHubContext<ChatHub> _hub;
         IHelpToolService _memberAuth;
-        public ChatRoomController(dbFurniMartContext context, IHelpToolService memberAuth)
+        public ChatRoomController(dbFurniMartContext context, IHelpToolService memberAuth,IHubContext<ChatHub> hub)
         {
             _context = context;
             _memberAuth = memberAuth;
+            _hub = hub;
         }
 
         // Controller Action
@@ -141,6 +145,17 @@ namespace ApiProject.Controllers
             _context.TChatRooms.Update(currentRoom);
             await _context.SaveChangesAsync();
 
+            await _hub.Clients
+             .Group($"room:{reqDto.chatRoomId}:member")
+             .SendAsync("ReceiveMessage", new
+             {
+                 chatRoomId = reqDto.chatRoomId,
+                 content = reqDto.content,
+                 senderType = SenderType,
+                 senderId = senderId,
+                 createdAt = now
+             }, ct);
+
             //// 6) 回到 Index，維持目前聊天室與搜尋字  RedirectToAction跳轉到指定的動作方法
             //return RedirectToAction(nameof(Index), new { chatRoomId });
             return Ok(new
@@ -177,6 +192,8 @@ namespace ApiProject.Controllers
 
             _context.TChatRooms.Add(room);
             await _context.SaveChangesAsync();
+
+
 
             return Ok(new { chatRoomId = room.FChatRoomId });
         }

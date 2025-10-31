@@ -15,9 +15,23 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import axios from 'axios'
 import ChatRoom from "@/components/Chat/ChatRoom.vue"
 
 const showChat = ref(false)
+const API_BASE = 'https://localhost:7131'
+const LOGIN_URL = '/account/login'  // 組員做好的登入頁路徑
+
+const api = axios.create({
+  baseURL: API_BASE,
+  withCredentials: true, // 跨域請求時攜帶 Cookie
+})
+
+
+
+
+
+
 function toggleChat() {
   showChat.value = !showChat.value
 }

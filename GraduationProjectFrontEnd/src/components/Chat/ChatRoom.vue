@@ -25,17 +25,38 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
 import http from '@/api/axios'
+import * as singalR from '@microsoft/signalr'
 
-const api = axios.create({
-  baseURL: 'https://localhost:7131/api/ChatRoom',
-  withCredentials: false,
-})
 
 const content = ref('')
 const selectedId =  ref<number | null>(1) 
 const messages = ref<any[]>([])
+const connection  = new singalR.HubConnectionBuilder()
+  .withUrl("https://localhost:7131/chathub")
+  .withAutomaticReconnect()
+  .build();
+
+onMounted(async () => {
+  // 2) 監聽後端推播  singalR的傳遞為  '方法名稱', (參數) => {}
+  connection.on('ReceiveMessage', (payload) => {
+    // payload = { chatRoomId, content, senderType, senderId, createdAt }
+    if (payload.chatRoomId === selectedId.value) {
+      messages.value.push(payload)
+    }
+  })
+
+  await connection.start()
+  console.log('SignalR Connected ✅')
+
+  await loadMessages()
+
+  // 3) 進入房間後記得加入群組（這台客戶端的角色是什麼就帶什麼）
+  // 範例：這頁是「member」後台在看某一個房
+  await connection.invoke('JoinRoom', selectedId.value.toString())
+  console.log(`Joined Room ${selectedId.value} ✅`)
+})
+  
 
 function getBubbleClass(type: string) {
   return type === 'visitor' || type === 'member'
@@ -44,6 +65,10 @@ function getBubbleClass(type: string) {
 }
 
 async function loadMessages() {
+connection.start().then(() => {
+    console.log("SignalR Connected.");
+  }).catch((err) => console.log("Error while establishing connection :(" + err));
+
 const { data } = await http.post('/ChatRoom/Index',
  {
   withCredentials: true // ✅ 一定要加這個
@@ -58,7 +83,7 @@ async function send() {
 
   await http.post('/ChatRoom/SendMessage', { chatRoomId: selectedId.value, content: content.value.trim() },
   { withCredentials: true })
-  content.value
+  content.value = ''
   await loadMessages()
 }
 
@@ -72,9 +97,7 @@ function formatTime(ts?: string | null) {
   }
 }
 
-onMounted(() => {
-  loadMessages()
-})
+
 </script>
 
 <style scoped>
