@@ -1,3 +1,4 @@
+using ApiProject.Hubs;
 using ApiProject.Infrastructure; // ✅ SessionAuthHandler 的命名空間
 using ApiProject.Interfaces;
 using ApiProject.Models;
@@ -9,6 +10,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+builder.Services.AddSignalR();
+
+
+
 
 // MVC/Controllers
 builder.Services.AddControllers();
@@ -22,12 +29,13 @@ builder.Services.AddCors(option =>
 {
     option.AddPolicy("VueClient", policy =>
     {
-        policy.WithOrigins("http://localhost:5173") // 你的前端埠號
+        policy.WithOrigins("http://localhost:5175", "https://localhost:7093") // 你的前端埠號
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); // ✅ 必須，才能帶 .AspNetCore.Session
     });
 });
+
 
 // DbContext（只保留一次）
 builder.Services.AddDbContext<dbFurniMartContext>(options =>
@@ -82,6 +90,11 @@ app.UseStaticFiles(new StaticFileOptions
     ServeUnknownFileTypes = true
 });
 
+//singlR即時通訊
+app.UseCors();
+app.MapHub<ChatHub>("/chatHub");
+app.MapControllers();
+
 // Swagger（開發用）
 if (app.Environment.IsDevelopment())
 {
@@ -115,17 +128,17 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/ProductImages",
     ContentTypeProvider = provider,   // ← 用你上面那個 provider，讓 .glb/.gltf/.ktx2/.hdr MIME 正確
 
-     OnPrepareResponse = ctx =>
-     {
-         var origin = ctx.Context.Request.Headers["Origin"].ToString();
-         if (!string.IsNullOrEmpty(origin) && allowedOrigins.Contains(origin))
-         {
-             ctx.Context.Response.Headers["Access-Control-Allow-Origin"] = origin;
-             ctx.Context.Response.Headers["Vary"] = "Origin"; // 讓快取分開
-                                                              // 如果你真的需要帶 cookie 再開這行；一般抓模型不需要：
-                                                              // ctx.Context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
-         }
-     }
+    OnPrepareResponse = ctx =>
+    {
+        var origin = ctx.Context.Request.Headers["Origin"].ToString();
+        if (!string.IsNullOrEmpty(origin) && allowedOrigins.Contains(origin))
+        {
+            ctx.Context.Response.Headers["Access-Control-Allow-Origin"] = origin;
+            ctx.Context.Response.Headers["Vary"] = "Origin"; // 讓快取分開
+                                                             // 如果你真的需要帶 cookie 再開這行；一般抓模型不需要：
+                                                             // ctx.Context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
+        }
+    }
 
 });
 
