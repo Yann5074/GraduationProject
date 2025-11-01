@@ -1,6 +1,7 @@
 ﻿using ApiProject.DTOs;
 using ApiProject.Interfaces;
 using ApiProject.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using System.ComponentModel;
@@ -331,19 +332,6 @@ namespace ApiProject.Services
                 Message = "訂單建立成功"
             };
         }
-
-        // 將購物車 (不論來源) 轉成訂單 (內部邏輯) #TODO
-        private async Task CreateOrder(CartToOrderDTO dto)
-        {
-            var order = new TOrder
-            {
-
-            };
-
-            var orderItem = new TOrderDetail
-            {
-
-            };
-        }
+        
     }
 }

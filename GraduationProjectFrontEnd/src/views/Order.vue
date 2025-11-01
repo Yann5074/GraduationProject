@@ -354,7 +354,7 @@ const handleDeleteConfirm = async () =>{
     try{
         const res = await deleteOrder(currentOrder.orderId)
         if (res.message == null)
-            alert('訂單刪除成功')
+            alert('訂單已取消')
         if (res.ok){
             const result = await getAllOrders()
             orders.value = result.map(order =>{

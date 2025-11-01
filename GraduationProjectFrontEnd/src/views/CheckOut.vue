@@ -136,16 +136,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, onBeforeUnmount } from 'vue'
 import http from '@/api/axios'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter, useRoute } from 'vue-router'
 import { memberCheckOut } from '@/api/Order'
+import Swal from 'sweetalert2'
 
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 const totalAmount = ref(0)
+const selectPayment = ref(1)//預設使用現金付款
 
 //最終運費計算
 const finalAmount = computed(()=>{
@@ -179,6 +181,12 @@ onMounted(() =>{
 		form.value.contactName = auth.user.name
     form.value.contactPhone = auth.user.phone
 	}
+
+  window.addEventListener('message', handleECPayMessage)
+})
+
+onBeforeUnmount(() =>{
+  window.removeEventListener('message', handleECPayMessage)
 })
 
 const invoiceType = ref('個人發票')
@@ -232,8 +240,11 @@ watch(
 const paymentOptions = [
   { label: '現金支付', value: 1 },
   { label: '信用卡支付', value: 2 },
-  { label: '行動支付', value: 3 },
-  { label: '第三方支付', value: 4}
+  { label: '網路ATM', value: 3 },
+  { label: 'ATM 虛擬帳號', value: 4},
+  { label: '超商代碼繳費', value: 5},
+  { label: '條碼繳費', value: 6}
+
 ]
 
 // 會員等級折扣表
@@ -278,60 +289,46 @@ async function submitOrder(){
     //呼叫API
     const result = await memberCheckOut(payload)
     const orderId = result?.data?.orderId
-    if(!orderId){
-      throw new Error('訂單建立失敗，未取得訂單編號')
+    // 組裝 ECPay 所需DTO
+    const ecpay = {
+      merchantTradeNo: String(orderId),
+      totalAmount: Number(totalAmount.value),
+      paymentMethodId: Number(form.value.paymentMethod)
     }
-    switch (payload.paymentMethod){
-      case 1: //現金支付
+    
+      if(!orderId){
+        throw new Error('訂單建立失敗，未取得訂單編號')
+      }
+  
+      if (payload.paymentMethod === 1){
+        console.log('我的ECPay', ecpay)
         alert('訂單建立成功，請依付款方式完成支付')
-        router.push(`/Order`)
-        break
-      case 2: //信用卡支付
-        await handleCredictCard(orderId)
-        break
-      case 3: //行動支付
-        await handleLinepay(orderId)
-        break
-      case 4: //第三方支付 - 綠界
-        await handleECpay(orderId)
-        break
-      default:
-        alert('未知的付款方式，請重新選擇')
-        break
-    }
+        router.push('/Order')
+        return
+      }
+  
+      if ([2, 3, 4, 5, 6, 7].includes(payload.paymentMethod)){
+        await handleECpay(ecpay)
+        return
+      }
+      alert('未知付款方式，請重新選擇')
   }catch (err){
     console.error('建立訂單失敗', err)
     alert(err.message)
   }
 }
 
-// 信用卡
-async function handleCredictCard(orderId){
-  const {data} = await http.post(`/Payment/CreditCard`, {orderId})
-  if (data?.paymentUrl){
-    window.location.href = data.paymentUrl
-  }else{
-    alert('信用卡付款頁面載入失敗')
-  }
-}
-
-// LinePay
-async function handleLinepay(orderId){
-    const {data} = await http.post(`/Payment/LinePay`, {orderId})
-  if (data?.paymentUrl){
-    window.location.href = data.paymentUrl
-  }else{
-    alert('LinePay付款頁面載入失敗')
-  }
-}
-
 // ECpay
-async function handleECpay(orderId){
-      const {data} = await http.post(`/Payment/ECPay`, {orderId})
-  if (data?.paymentUrl){
-    window.location.href = data.paymentUrl
-  }else{
-    alert('ECpay付款頁面載入失敗')
+async function handleECpay(ecpay){
+  try{
+    const {data} = await http.post(`/ECPay/checkout`, ecpay, {responseType: 'text'})
+    const newWindow = window.open('', '_blank')
+    newWindow.document.open()
+    newWindow.document.write(data)
+    newWindow.document.close()
+  }catch (err){
+    console.log('ECPay 啟動失敗', err)
+    alert('ECPay付款頁面載入失敗，請稍後再試')
   }
 }
 
@@ -385,6 +382,26 @@ watch(form, () => {
     if (form.value[key]) errors.value[key] = ''
   })
 }, { deep: true })
+
+//付款監聽
+function handleECPayMessage(event){
+  if (event.data?.type !== 'ecpayPayment') return
+  if (event.data.status === 'success'){
+    Swal.fire({
+      title: '付款成功',
+      icon: 'success',
+      confirmButtonText: '關閉'
+    }).then(() =>{
+      router.push('/Order')
+    })
+  }else{
+    Swal.fire({
+      title: '付款失敗，請重新操作',
+      icon: 'error',
+      confirmButtonText: '關閉'
+    })
+  }
+}
 
 </script>
 
