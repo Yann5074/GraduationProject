@@ -19,7 +19,5 @@ namespace ApiProject.Interfaces
 
         public Task<ResultDTO> CreateOrderFromGuestAsync(ReqGuestOrderDTO reqDto);
 
-
-
     }
 }

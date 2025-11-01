@@ -119,6 +119,7 @@ namespace ApiProject.Controllers
                     var orderId = tradeNo.Replace("VN", "").Split('l')[0];
                     var order = await _context.TOrders.FindAsync(int.Parse(orderId));
                     order.FPaymentStatus = 4;
+                    order.FOrderStatus = 3;
                     await _context.SaveChangesAsync();
                 }
                 else

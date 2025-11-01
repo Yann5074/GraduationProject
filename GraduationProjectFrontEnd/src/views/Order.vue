@@ -23,7 +23,7 @@
                         <th>銷售員</th>
                         <th>訂單狀態</th>
                         <th>付款方式</th>
-                        <th>配送狀態</th>
+                        <th>付款狀態</th>
                         <th>總金額</th>
                     </tr>
                 </thead>
@@ -45,7 +45,7 @@
                             {{ od.paymentMethod }}
                         </td>
                         <td>
-                            {{ od.deliveryStatus }}
+                            {{ od.paymentStatus }}
                         </td>
                         <td class="text-end">
                             $ {{ od.formatTotalPrice }}
@@ -56,7 +56,10 @@
                         <th colspan="2">
                             統一編號
                         </th>
-                        <th colspan="5">
+                        <th colspan="1">
+                            配送狀態
+                        </th>
+                        <th colspan="4">
                             配送地址
                         </th>
                     </tr>
@@ -69,8 +72,10 @@
                                 </button>
                             </div>
                         </td>
-
-                        <td colspan="5" class="delivery-address-cell">
+                        <td colspan="1">
+                            {{ od.deliveryStatus }}
+                        </td>
+                        <td colspan="4" class="delivery-address-cell">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span> {{ od.deliveryAddress }}</span>
                                 <button class="btn btn-sm btn-outline-primary" @click="openModal('address', od)">
@@ -86,7 +91,7 @@
             <div class="progress-container my-3">
                 <!-- 進度線 -->
                 <div class="progress-line-bg"></div>
-                <div class="progress-line-active" :style="{width: od.progressPercent + '%'}"></div>
+                <div class="progress-line-active" :style="{'--progress-width': od.progressPercent + '%'}"></div>
                 <!-- 節點 -->
                 <div class="progress-steps">
                     <div v-for="(step, index) in od.statusSteps" :key="index" class="progress-step" :class="{active: step.active}" :style="{left: step.leftPercent + '%'}">
@@ -196,6 +201,7 @@
     background-color: #007bff;
     border-radius: 2px;
     z-index: 1;
+    width: calc(var(--progress-width, 0%) - 16px);
 }
 .progress-steps{
     position: absolute;

@@ -18,6 +18,7 @@ export class OrderDTO {
         orderStatusId = 0,
         orderStatus = null,
         paymentMethod = null,
+        paymentStatus = '',
         taxNo = '',
         deliveryAddress = '',
         deliveryStatus = null,
@@ -30,6 +31,7 @@ export class OrderDTO {
         this.orderStatusId = orderStatusId
         this.orderStatus = orderStatus
         this.paymentMethod = paymentMethod
+        this.paymentStatus = paymentStatus
         this.taxNo = taxNo
         this.deliveryAddress = deliveryAddress
         this.deliveryStatus = deliveryStatus
