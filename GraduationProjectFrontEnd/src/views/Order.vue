@@ -201,7 +201,10 @@
     background-color: #007bff;
     border-radius: 2px;
     z-index: 1;
-    width: calc(var(--progress-width, 0%) - 16px);
+    /* 修改寬度計算：比例式匹配背景線寬度，避免固定減法導致的空隙或溢出 */
+    width: calc( (var(--progress-width, 0%) / 100%) * calc(100% - 40px) );
+    /* 選用：如果仍有輕微溢出，可添加 transition 讓變化平滑 */
+    transition: width 0.3s ease;
 }
 .progress-steps{
     position: absolute;
