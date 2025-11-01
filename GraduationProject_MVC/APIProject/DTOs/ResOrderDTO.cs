@@ -14,6 +14,7 @@ namespace ApiProject.DTOs
         public decimal TotalPrice { get; set; }
         public string TaxNo { get; set; }
         public string PaymentMethod { get; set; }
+        public string PaymentStatus { get; set; }
         public string DeliveryAddress { get; set; }
         public string DeliveryStatus { get; set; }
 
