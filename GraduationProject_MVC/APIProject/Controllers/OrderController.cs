@@ -120,10 +120,6 @@ namespace ApiProject.Controllers
             return Ok(result);
         }
 
-        // 訪客新增訂單
-        // Post:api/Order/GuestCheckOut
-
-
 
     }
 }
