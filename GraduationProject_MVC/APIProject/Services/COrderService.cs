@@ -276,7 +276,7 @@ namespace ApiProject.Services
                 FDiscount = memLv.FDiscount,
                 FTaxNo = reqDto.TaxNo,
                 FOrderTime = DateTime.Now,
-                FOrderStatus = 2,
+                FOrderStatus = 2, 
                 FPaymentMethod = reqDto.PaymentMethod,
                 FPaymentStatus = 1,
                 FPickupMethod = reqDto.PickupMethod,

@@ -59,17 +59,22 @@
             </table>
           </div>
           <!-- 合計欄位 -->
-          <div class="text-end mt-4">
-            <h5>
-              結帳金額:
-              <span class="totalPrice">
-                {{ formatTotal }}
-              </span>
-                <RouterLink v-if="auth.isLoggedIn" :to="{path: '/checkout', query: {total: totalAmountNumber}}" class="btn btn-danger custom-checkout-btn ms-3 me-3">
-                  結帳
-                </RouterLink>
-                <button v-else class="btn btn-danger custom-checkout-btn ms-3 me-3" @click="router.push('/signin')">登入後結帳</button>
-            </h5>
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 gap-3">
+            <div v-if="auth.isLoggedIn" class="text-muted">
+              {{ nextTierMessage }}
+            </div>
+            <div class="d-flex align-items-center">
+              <h5 class="mb-0 me-3">
+                結帳金額:
+                <span class="totalPrice">
+                  {{ formatTotal }}
+                </span>
+              </h5>
+              <RouterLink v-if="auth.isLoggedIn" :to="{path: '/checkout', query: {total: totalAmountNumber}}" class="btn btn-danger custom-checkout-btn ms-2">
+                結帳
+              </RouterLink>
+              <button v-else class="btn btn-danger custom-checkout-btn ms-2" @click="router.push('/signin')">登入後結帳</button>
+            </div>
           </div>
         </form>
       </div>
@@ -215,6 +220,40 @@ const cartItems = computed({
   }
 })
 
+// 計算距離下一個會員等級差異
+const tiers = [
+  {name: '銅級', threshold: 0},
+  {name: '銀級', threshold: 50000},
+  {name: '金級', threshold: 100000},
+  {name: '白金級', threshold: 250000},
+]
+
+const nextTierInfo = computed(() =>{
+  const sum = Number(auth.user.moneySum)
+  const sorted = [...tiers].sort((a, b) => a.threshold - b.threshold)
+
+  //尋找下一等級
+  const next = sorted.find(t => t.threshold > sum)
+
+  //當前等級
+  const current = [...sorted].reverse().find(t => t.threshold <= sum) ?? sorted[0]
+
+  if (!next){
+    return { atMax: true, nextTier: null, amountNeeded: 0}
+  }
+  return {atMax: false, nextTier: next.name, amountNeeded: Math.max(0, next.threshold - sum),}
+})
+
+// 差額顯示文字
+const nextTierMessage = computed(() =>{
+  const msg = nextTierInfo.value
+  if (msg.atMax){
+    return "您已達最高會員等級 - 白金級"
+  }
+  return `距離 ${msg.nextTier} 會員，還差 NT$ ${msg.amountNeeded.toLocaleString()}`
+})
+
+
 // 解析訊息中數量
 const parseMaxStockFromMessage = (msg) =>{
   const match = msg.match(/最大可選值為\s*(\d+)/)
@@ -262,6 +301,7 @@ onMounted(async () => {
   }else{
     guestCart.hydrateCart()
     cartItems.value = guestCart.items.map(i =>({
+      productVariantId: i.productVariantId,
       productName: i.productName,
       imageUrl: i.imageUrl,
       qty: i.qty,

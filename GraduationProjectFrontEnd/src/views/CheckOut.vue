@@ -43,7 +43,7 @@
         <section v-if="form && form.pickupMethod === 2" class="mb-4 card p-3">
           <h5 class="mb-3">物流方式</h5>
           <select v-model="form.logisticsProvider" class="form-select">
-            <option disabled value="">請選擇物流方式</option>
+            <option disabled :value="null">請選擇物流方式</option>
             <option v-for="opt in logisticsOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
             </option>
@@ -100,7 +100,7 @@
           <h5 class="fw-bold mb-3">結帳明細</h5>
 
           <div class="d-flex justify-content-between mb-2">
-            <span>商品原價總金額</span>
+            <span>商品總金額</span>
             <span class="fw-semibold">{{ totalAmount.toLocaleString() }}</span>
           </div>
 
@@ -113,11 +113,11 @@
 
           <div class="d-flex justify-content-between mb-2">
             <span>折扣</span>
-            <span class="fw-semibold">會員等級折扣: {{ discountText }}</span>
+            <span class="fw-semibold"> {{ levelName }}會員: {{ discountText }}</span>
           </div>
 
           <div class="d-flex justify-content-between border-top pt-2 mb-3">
-            <span class="fw-bold">結帳金額</span>
+            <span class="fw-bold">合計</span>
             <span class="fw-bold text-danger">{{ finalAmount.toLocaleString() }}</span>
           </div>
 
@@ -147,7 +147,8 @@ const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 const totalAmount = ref(0)
-const selectPayment = ref(1)//預設使用現金付款
+
+const levelName = auth.user.levelName
 
 //最終運費計算
 const finalAmount = computed(()=>{
@@ -169,7 +170,7 @@ const form = ref({
   pickupMethod: '',
   deliveryAddress: '',
   shippingCost: 0,
-  logisticsProvider: '',
+  logisticsProvider: null,
   note: '',
 })
 
@@ -206,10 +207,10 @@ const logisticsOptions = [
 
 // 運費表
 const shippingCostMap = {
-  1:100,
-  2:150,
-  3:150,
-  4:150
+  1:550,
+  2:600,
+  3:600,
+  4:600
 }
 
 // 自動顯示運費
@@ -258,7 +259,7 @@ const discountMap = {
 // 折扣率
 const discountRate = computed(() =>{
   const level = auth.user?.levelId
-  const discount = discountMap[level] ?? 0
+  return discountMap[level] ?? 0
 })
 
 //顯示會員折扣

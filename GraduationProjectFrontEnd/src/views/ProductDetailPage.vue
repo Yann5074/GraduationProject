@@ -717,6 +717,7 @@ async function addToCart() {
         const imageUrl = selectedImage.value || product.value?.ImageUrl
         const unitPrice = selectedVariant.value?.fPrice || product.value?.minPrice
         cart.addItem(productVariantId, qty, productName, imageUrl, unitPrice)
+        // console.log('訪客購物車', cart.items)
         alert('已加入訪客購物車')
       }
   }catch(err){
