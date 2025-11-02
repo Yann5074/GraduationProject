@@ -1,586 +1,349 @@
-<!-- 3D 家具展示組件 - 支援 PBR 材質 -->
+<!-- src/components/Furniture3DViewer_PBR.vue (fixed) -->
 <template>
-  <div class="viewer-3d-container" ref="containerRef">
-    <!-- 載入中 -->
-    <div v-if="loading" class="loading-overlay">
-      <div class="spinner-border text-light" role="status"></div>
-      <p class="text-light mt-3">載入 3D 模型中...</p>
-      <div class="progress" style="width: 200px">
-        <div 
-          class="progress-bar progress-bar-striped progress-bar-animated" 
-          :style="{ width: loadingProgress + '%' }"
-        ></div>
-      </div>
-      <small class="text-light">{{ loadingProgress }}%</small>
-    </div>
+  <div class="three-wrap">
+    <div ref="canvasHost" class="three-canvas"></div>
 
-    <!-- 錯誤訊息 -->
-    <div v-if="error" class="error-overlay">
-      <div class="alert alert-danger">
-        <i class="bi bi-exclamation-triangle me-2"></i>
-        {{ error }}
-      </div>
-    </div>
-
-    <!-- Canvas -->
-    <canvas ref="canvasRef" class="viewer-canvas"></canvas>
-
-    <!-- 控制面板 -->
-    <div class="controls-panel">
-      <!-- 視角控制 -->
-      <div class="btn-group mb-2" role="group">
-        <button 
-          class="btn btn-sm btn-light" 
-          title="正面視角"
-          @click="setView('front')"
-        >
-          <i class="bi bi-box-arrow-up-right"></i>
-        </button>
-        <button 
-          class="btn btn-sm btn-light" 
-          title="側面視角"
-          @click="setView('side')"
-        >
-          <i class="bi bi-box-arrow-right"></i>
-        </button>
-        <button 
-          class="btn btn-sm btn-light" 
-          title="上方視角"
-          @click="setView('top')"
-        >
-          <i class="bi bi-box-arrow-up"></i>
-        </button>
-        <button 
-          class="btn btn-sm btn-light" 
-          title="重置視角"
-          @click="resetView"
-        >
-          <i class="bi bi-arrow-counterclockwise"></i>
-        </button>
-      </div>
-
-      <!-- 環境光調整 -->
-      <div class="mb-2">
-        <label class="form-label small">環境光強度</label>
-        <input 
-          v-model.number="ambientIntensity" 
-          type="range" 
-          class="form-range form-range-sm" 
-          min="0" 
-          max="3" 
-          step="0.1"
-          @input="updateLighting"
-        />
-      </div>
-
-      <!-- 自動旋轉 -->
-      <div class="form-check form-switch mb-2">
-        <input 
-          v-model="autoRotate" 
-          class="form-check-input" 
-          type="checkbox" 
-          id="autoRotateSwitch"
-          @change="toggleAutoRotate"
-        />
-        <label class="form-check-label small" for="autoRotateSwitch">
-          自動旋轉
-        </label>
-      </div>
-
-      <!-- 顯示網格 -->
-      <div class="form-check form-switch">
-        <input 
-          v-model="showGrid" 
-          class="form-check-input" 
-          type="checkbox" 
-          id="gridSwitch"
-          @change="toggleGrid"
-        />
-        <label class="form-check-label small" for="gridSwitch">
-          顯示網格
-        </label>
-      </div>
-    </div>
-
-    <!-- 操作提示 -->
-    <div class="hint-panel">
-      <small class="text-muted">
-        <i class="bi bi-mouse me-1"></i>左鍵旋轉 | 
-        <i class="bi bi-mouse2 me-1"></i>右鍵平移 | 
-        <i class="bi bi-mouse3 me-1"></i>滾輪縮放
-      </small>
-    </div>
+    <!-- 簡單的 loading/錯誤提示 -->
+    <div v-if="loading" class="overlay">Loading 3D…</div>
+    <div v-else-if="error" class="overlay error">{{ error }}</div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
 
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import ProductAPI from '@/api/Product' // default export OK
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+
+
+
+// -------------------- Props --------------------
 const props = defineProps({
-  // 模型 URL
-  f3dModelPath: {
-    type: String,
-    required: true
-  },
-  // PBR 貼圖
-  textures: {
-    type: Object,
-    default: () => ({
-      baseColor: null,    // 基礎顏色
-      normal: null,       // 法線貼圖
-      roughness: null,    // 粗糙度
-      metalness: null,    // 金屬度
-      ao: null           // 環境光遮蔽
-    })
-  },
-  // HDR 環境貼圖
-  envMapUrl: {
-    type: String,
-    default: null
-  },
-  // 自動旋轉速度
-  autoRotateSpeed: {
-    type: Number,
-    default: 2.0
-  }
+  productId: { type: Number, required: true },
+  variantId: { type: Number, default: null },   // 切色時改這個
+  autoRotate: { type: Boolean, default: false },
+  exposure: { type: Number, default: 1.0 },
+  rotateSpeed: { type: Number, default: 0.6 },
+  modelScale: { type: Number, default: 1.0 },   // 視模型調整
 })
 
-const emit = defineEmits(['loaded', 'error'])
+//-------------------------------------------------------
 
-// Refs
-const containerRef = ref(null)
-const canvasRef = ref(null)
 
-// Three.js 對象
-let scene, camera, renderer, controls
-let model = null
-let grid = null
-let ambientLight, directionalLight, hemisphereLight
+// -------------------- Refs & state --------------------
+const canvasHost = ref(null)
+const loading = ref(false)
+const error = ref('')
 
-// 狀態
-const loading = ref(true)
-const loadingProgress = ref(0)
-const error = ref(null)
-const ambientIntensity = ref(1.5)
-const autoRotate = ref(false)
-const showGrid = ref(true)
+let renderer, scene, camera, controls
+let currentModel = null
+let pmremGen = null
 
-// 初始化 Three.js 場景
-function initScene() {
-  if (!containerRef.value || !canvasRef.value) return
+// 建立一次 GLTFLoader，避免重複宣告／重覆載入
+const gltfLoader = new GLTFLoader()
+gltfLoader.setCrossOrigin('anonymous')
 
-  // 場景
-  scene = new THREE.Scene()
-  scene.background = new THREE.Color(0xf0f0f0)
-  scene.fog = new THREE.Fog(0xf0f0f0, 10, 50)
+// 用於重用的貼圖快取，避免重複下載
+const texCache = new Map()
 
-  // 相機
-  const width = containerRef.value.clientWidth
-  const height = containerRef.value.clientHeight
-  camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000)
-  camera.position.set(4, 2, 4)
+function getTexture(url, isSRGB) {
+  if (!url) return null
+  if (texCache.has(url)) return texCache.get(url)
 
-  // 渲染器
-  renderer = new THREE.WebGLRenderer({
-    canvas: canvasRef.value,
-    antialias: true,
-    alpha: true
+  const loader = new THREE.TextureLoader()
+  loader.setCrossOrigin('anonymous')   // ✅ 讓圖片也能跨域載入
+
+  const tex = loader.load(url)
+  tex.flipY = false
+  tex.colorSpace = isSRGB ? THREE.SRGBColorSpace : THREE.LinearSRGBColorSpace
+  tex.anisotropy = 8
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+
+  texCache.set(url, tex)
+  return tex
+}
+
+
+async function getPBRDto() {
+  const res = await ProductAPI.getPBR(props.productId, props.variantId)
+  console.log('🎨 Viewer 收到 PBR 資料:', res)
+
+  if (!res || !res.success) throw new Error('PBR API 回傳失敗')
+  if (!res.data || !Array.isArray(res.data) || res.data.length === 0) throw new Error('沒有 PBR 資料')
+
+  const dto = res.data[0]
+  console.log('✅ Viewer 使用的 PBR 資料:', dto)
+  return dto
+}
+
+async function setupEnvMap(envUrl) {
+  // 先清掉舊的環境
+  if (scene.environment && scene.environment.isTexture) {
+    scene.environment.dispose?.()
+  }
+  if (!envUrl) {
+    scene.environment = null
+    return
+  }
+  const hdr = await new Promise((resolve, reject) => {
+    new RGBELoader().load(envUrl, resolve, undefined, reject)
   })
-  renderer.setSize(width, height)
-  renderer.setPixelRatio(window.devicePixelRatio)
-  renderer.shadowMap.enabled = true
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap
-  renderer.outputEncoding = THREE.sRGBEncoding
-  renderer.toneMapping = THREE.ACESFilmicToneMapping
-  renderer.toneMappingExposure = 1.0
-
-  // 控制器
-  controls = new OrbitControls(camera, renderer.domElement)
-  controls.enableDamping = true
-  controls.dampingFactor = 0.05
-  controls.minDistance = 2
-  controls.maxDistance = 10
-  controls.maxPolarAngle = Math.PI / 2
-  controls.autoRotate = autoRotate.value
-  controls.autoRotateSpeed = props.autoRotateSpeed
-
-  // 燈光
-  setupLights()
-
-  // 網格
-  setupGrid()
-
-  // 動畫循環
-  animate()
+  const envMap = pmremGen.fromEquirectangular(hdr).texture
+  hdr.dispose()
+  scene.environment = envMap
+  scene.background = null // 如果你想要 HDR 當背景可以設 envMap
 }
 
-// 設定燈光
-function setupLights() {
-  // 環境光
-  ambientLight = new THREE.AmbientLight(0xffffff, ambientIntensity.value)
-  scene.add(ambientLight)
+function applyPBRToMesh(mesh, dto) {
+  let mat = mesh.material
+  if (!(mat && (mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial))) {
+    mat = new THREE.MeshStandardMaterial({ color: 0xffffff })
+  }
 
-  // 半球光（模擬天空和地面反射）
-  hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6)
-  hemisphereLight.position.set(0, 20, 0)
-  scene.add(hemisphereLight)
+  const hasEnv  = !!scene.environment
+  const base    = dto.baseColorUrl ? getTexture(dto.baseColorUrl, true)  : null
+  const met     = dto.metallicUrl  ? getTexture(dto.metallicUrl,  false) : null
+  const rough   = dto.roughnessUrl ? getTexture(dto.roughnessUrl, false) : null
+  const normal  = dto.normalUrl    ? getTexture(dto.normalUrl,    false) : null
+  const ao      = dto.aoUrl        ? getTexture(dto.aoUrl,        false) : null
+  const emi     = dto.emissiveUrl  ? getTexture(dto.emissiveUrl,  false) : null
 
-  // 主光源
-  directionalLight = new THREE.DirectionalLight(0xffffff, 1.0)
-  directionalLight.position.set(5, 10, 7.5)
-  directionalLight.castShadow = true
-  directionalLight.shadow.camera.left = -10
-  directionalLight.shadow.camera.right = 10
-  directionalLight.shadow.camera.top = 10
-  directionalLight.shadow.camera.bottom = -10
-  directionalLight.shadow.mapSize.width = 2048
-  directionalLight.shadow.mapSize.height = 2048
-  scene.add(directionalLight)
+  // ✅ 沒有 HDR 時，不要硬設金屬 = 1
+  mat.metalness = met && hasEnv ? 1.0 : 0.05
+  mat.roughness = rough ? 1.0 : 0.6
+  mat.envMapIntensity = hasEnv ? 1.0 : 0.0
 
-  // 補光
-  const fillLight = new THREE.DirectionalLight(0xffffff, 0.3)
-  fillLight.position.set(-5, 5, -5)
-  scene.add(fillLight)
+  mat.map           = base
+  mat.metalnessMap  = met  || null
+  mat.roughnessMap  = rough|| null
+  mat.normalMap     = normal||null
+  mat.aoMap         = ao   || null
+
+  if (emi) {
+    mat.emissiveMap = emi
+    mat.emissiveIntensity = 0.6
+  } else {
+    mat.emissiveMap = null
+    mat.emissiveIntensity = 0.0
+  }
+
+  // ✅ 很多模型沒有 uv2，aoMap 會沒效果；補一份 uv 給 uv2（可見度更穩）
+  if (ao && mesh.geometry && !mesh.geometry.getAttribute('uv2') && mesh.geometry.getAttribute('uv')) {
+    mesh.geometry.setAttribute('uv2', mesh.geometry.getAttribute('uv'))
+  }
+
+  mat.needsUpdate = true
+  mesh.material = mat
+  mesh.castShadow = true
+  mesh.receiveShadow = true
 }
 
-// 設定網格
-function setupGrid() {
-  grid = new THREE.GridHelper(10, 10, 0x888888, 0xcccccc)
-  grid.visible = showGrid.value
-  scene.add(grid)
-}
 
-// 載入 HDR 環境貼圖
-async function loadEnvironmentMap() {
-  if (!props.envMapUrl) return
-
-  try {
-    const rgbeLoader = new RGBELoader()
-    const texture = await rgbeLoader.loadAsync(props.envMapUrl)
-    texture.mapping = THREE.EquirectangularReflectionMapping
-    scene.environment = texture
-    scene.background = texture
-  } catch (err) {
-    console.warn('⚠️ 載入 HDR 環境貼圖失敗:', err)
-  }
-}
-
-// 載入 3D 模型
-async function loadModel() {
-  loading.value = true
-  loadingProgress.value = 0
-  error.value = null
-
-  try {
-    // 載入環境貼圖
-    await loadEnvironmentMap()
-
-    // 載入模型
-    const loader = new GLTFLoader()
-    
-    const gltf = await new Promise((resolve, reject) => {
-      loader.load(
-        props.f3dModelPath,
-        (gltf) => resolve(gltf),
-        (xhr) => {
-          loadingProgress.value = Math.round((xhr.loaded / xhr.total) * 100)
-        },
-        (err) => reject(err)
-      )
-    })
-
-    model = gltf.scene
-
-    // 應用 PBR 材質
-    if (props.textures && Object.keys(props.textures).length > 0) {
-      await applyPBRTextures(model)
-    }
-
-    // 啟用陰影
-    model.traverse((child) => {
-      if (child.isMesh) {
-        child.castShadow = true
-        child.receiveShadow = true
-      }
-    })
-
-    // 居中模型
-    const box = new THREE.Box3().setFromObject(model)
-    const center = box.getCenter(new THREE.Vector3())
-    model.position.sub(center)
-
-    // 調整模型大小
-    const size = box.getSize(new THREE.Vector3())
-    const maxDim = Math.max(size.x, size.y, size.z)
-    const scale = 2 / maxDim
-    model.scale.multiplyScalar(scale)
-
-    scene.add(model)
-
-    loading.value = false
-    emit('loaded', model)
-
-  } catch (err) {
-    console.error('❌ 載入模型失敗:', err)
-    error.value = '無法載入 3D 模型，請稍後再試'
-    loading.value = false
-    emit('error', err)
-  }
-}
-
-// 應用 PBR 貼圖
-async function applyPBRTextures(model) {
-  const textureLoader = new THREE.TextureLoader()
-  const textures = {}
-
-  // 載入所有貼圖
-  const loadPromises = []
-  
-  if (props.textures.baseColor) {
-    loadPromises.push(
-      textureLoader.loadAsync(props.textures.baseColor)
-        .then(tex => { textures.map = tex })
-    )
-  }
-  
-  if (props.textures.normal) {
-    loadPromises.push(
-      textureLoader.loadAsync(props.textures.normal)
-        .then(tex => { textures.normalMap = tex })
-    )
-  }
-  
-  if (props.textures.roughness) {
-    loadPromises.push(
-      textureLoader.loadAsync(props.textures.roughness)
-        .then(tex => { textures.roughnessMap = tex })
-    )
-  }
-  
-  if (props.textures.metalness) {
-    loadPromises.push(
-      textureLoader.loadAsync(props.textures.metalness)
-        .then(tex => { textures.metalnessMap = tex })
-    )
-  }
-  
-  if (props.textures.ao) {
-    loadPromises.push(
-      textureLoader.loadAsync(props.textures.ao)
-        .then(tex => { textures.aoMap = tex })
-    )
-  }
-
-  await Promise.all(loadPromises)
-
-  // 應用到所有材質
-  model.traverse((child) => {
-    if (child.isMesh) {
-      const material = new THREE.MeshStandardMaterial({
-        map: textures.map || null,
-        normalMap: textures.normalMap || null,
-        roughnessMap: textures.roughnessMap || null,
-        metalnessMap: textures.metalnessMap || null,
-        aoMap: textures.aoMap || null,
-        roughness: 0.7,
-        metalness: 0.3,
-        envMapIntensity: 1.0
-      })
-
-      // 如果有 UV2，用於 AO 貼圖
-      if (textures.aoMap && child.geometry.attributes.uv2) {
-        material.aoMapIntensity = 1.0
-      }
-
-      child.material = material
-    }
+function traverseMeshes(root, fn) {
+  root.traverse((obj) => {
+    if (obj.isMesh) fn(obj)
   })
 }
 
-// 動畫循環
-function animate() {
-  requestAnimationFrame(animate)
-  controls.update()
-  renderer.render(scene, camera)
+async function loadModel(dto) {
+  if (currentModel) {
+    scene.remove(currentModel)
+    currentModel.traverse((o) => {
+      if (o.isMesh) {
+        o.geometry?.dispose?.()
+        if (o.material?.map) o.material.map.dispose?.()
+        if (o.material) o.material.dispose?.()
+      }
+    })
+    currentModel = null
+  }
+
+  const gltf = await new Promise((resolve, reject) => {
+    gltfLoader.load(dto.modelUrl, resolve, undefined, reject)
+  })
+  currentModel = gltf.scene
+  currentModel.scale.setScalar(props.modelScale)
+
+  // 套用 PBR
+  traverseMeshes(currentModel, (mesh) => applyPBRToMesh(mesh, dto))
+  scene.add(currentModel)
+
+  // 自動調整鏡頭框選
+  fitCameraToObject(currentModel)
 }
 
-// 設定視角
-function setView(view) {
-  if (!model) return
+function fitCameraToObject(object3D) {
+  const box = new THREE.Box3().setFromObject(object3D)
+  const size = new THREE.Vector3()
+  const center = new THREE.Vector3()
+  box.getSize(size)
+  box.getCenter(center)
 
-  const box = new THREE.Box3().setFromObject(model)
-  const center = box.getCenter(new THREE.Vector3())
-  const size = box.getSize(new THREE.Vector3())
   const maxDim = Math.max(size.x, size.y, size.z)
-  const distance = maxDim * 2
+  const fov = camera.fov * (Math.PI / 180)
 
-  switch (view) {
-    case 'front':
-      camera.position.set(center.x, center.y, center.z + distance)
-      break
-    case 'side':
-      camera.position.set(center.x + distance, center.y, center.z)
-      break
-    case 'top':
-      camera.position.set(center.x, center.y + distance, center.z)
-      break
-  }
+  // ✅ 用 tan，而不是 sin
+  let cameraZ = (maxDim * 0.5) / Math.tan(fov / 2)
+  cameraZ *= 1.6 // 留安全邊界
 
+  camera.position.set(center.x + cameraZ, center.y + cameraZ * 0.35, center.z + cameraZ)
+  camera.near = Math.max(0.01, cameraZ / 100)
+  camera.far = cameraZ * 200
+  camera.updateProjectionMatrix()
   controls.target.copy(center)
   controls.update()
 }
 
-// 重置視角
-function resetView() {
-  camera.position.set(4, 2, 4)
-  controls.target.set(0, 0, 0)
-  controls.update()
-}
 
-// 更新燈光
-function updateLighting() {
-  if (ambientLight) {
-    ambientLight.intensity = ambientIntensity.value
+async function boot() {
+  loading.value = true
+  error.value = ''
+  try {
+    // Renderer
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    renderer.outputColorSpace = THREE.SRGBColorSpace
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
+    renderer.toneMappingExposure = Math.max(1.0, props.exposure) // ✅ 至少 1.0
+    renderer.shadowMap.enabled = true 
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.5))
+    renderer.setSize(canvasHost.value.clientWidth, canvasHost.value.clientHeight)
+    canvasHost.value.appendChild(renderer.domElement)
+
+     if ('physicallyCorrectLights' in renderer) renderer.physicallyCorrectLights = true
+     renderer.shadowMap.enabled = true
+     renderer.shadowMap.type = THREE.PCFSoftShadowMap
+
+    // Scene/Camera
+    scene = new THREE.Scene()
+    camera = new THREE.PerspectiveCamera(50, canvasHost.value.clientWidth / canvasHost.value.clientHeight, 0.01, 2000)
+    camera.position.set(0, 1, 3)
+
+    // Controls
+    controls = new OrbitControls(camera, renderer.domElement)
+    controls.enableDamping = false
+    controls.autoRotate = false  
+    controls.autoRotateSpeed = props.rotateSpeed
+
+     // ✅ Light（可搭配 envMap）
+    renderer.shadowMap.enabled = true
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x404040, 0.9) // 提高強度
+    scene.add(hemi)
+
+    const amb = new THREE.AmbientLight(0xffffff, 1.0)               // 提高強度
+    scene.add(amb)
+
+    const key = new THREE.DirectionalLight(0xffffff, 3.0)           // 提高強度
+    key.position.set(5, 10, 7)
+    key.castShadow = true
+    scene.add(key)
+
+    // （可選）地面陰影
+    const plane = new THREE.Mesh(
+      new THREE.PlaneGeometry(20, 20),
+      new THREE.ShadowMaterial({ opacity: 0.25 })
+    )
+    plane.rotation.x = -Math.PI / 2
+    plane.receiveShadow = true
+    scene.add(plane)
+
+    // PMREM
+    pmremGen = new THREE.PMREMGenerator(renderer)
+    pmremGen.compileEquirectangularShader()
+
+    // 拉後端資料
+    const dto = await getPBRDto()
+    if (!dto?.modelUrl) throw new Error('找不到 3D 模型 URL')
+    await setupEnvMap(dto.envMap || null)
+    await loadModel(dto)
+
+    // 監聽尺寸
+    window.addEventListener('resize', onResize)
+
+    // 進入渲染
+    tick()
+  } catch (e) {
+    console.error(e)
+    error.value = e?.message || '3D 載入失敗'
+  } finally {
+    loading.value = false
   }
 }
 
-// 切換自動旋轉
-function toggleAutoRotate() {
-  if (controls) {
-    controls.autoRotate = autoRotate.value
-  }
-}
 
-// 切換網格
-function toggleGrid() {
-  if (grid) {
-    grid.visible = showGrid.value
-  }
-}
 
-// 處理視窗大小變化
-function handleResize() {
-  if (!containerRef.value || !camera || !renderer) return
-
-  const width = containerRef.value.clientWidth
-  const height = containerRef.value.clientHeight
-
-  camera.aspect = width / height
+function onResize() {
+  if (!renderer || !camera || !canvasHost.value) return
+  const w = canvasHost.value.clientWidth
+  const h = canvasHost.value.clientHeight
+  renderer.setSize(w, h)
+  camera.aspect = w / h
   camera.updateProjectionMatrix()
-  renderer.setSize(width, height)
 }
 
-// 清理
-function dispose() {
-  if (renderer) {
-    renderer.dispose()
-  }
-  if (controls) {
-    controls.dispose()
-  }
-  if (model) {
-    scene.remove(model)
-  }
+function tick() {
+  requestAnimationFrame(tick)
+  controls?.update?.()
+  renderer?.render?.(scene, camera)
 }
 
-// Watch 模型 URL 變化
-watch(() => props.modelUrl, () => {
-  if (model) {
-    scene.remove(model)
-    model = null
+// 切換 variant 只更新 baseColor，避免重載模型
+watch(() => props.variantId, async () => {
+  if (!currentModel) return
+  try {
+    const dto = await getPBRDto()
+    traverseMeshes(currentModel, (mesh) => {
+      const mat = mesh.material
+      mat.map = getTexture(dto.baseColorUrl, true) // ← 以 *Url 結尾
+      mat.needsUpdate = true
+    })
+  } catch (e) {
+    console.error(e)
+    error.value = e?.message || '切換顏色失敗'
   }
-  loadModel()
 })
 
-// 生命週期
-onMounted(() => {
-  initScene()
-  loadModel()
-  window.addEventListener('resize', handleResize)
-})
+onMounted(boot)
 
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
-  dispose()
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', onResize)
+  controls?.dispose?.()
+  pmremGen?.dispose?.()
+  if (scene) {
+    scene.traverse((o) => {
+      if (o.isMesh) {
+        o.geometry?.dispose?.()
+        if (o.material?.map) o.material.map.dispose?.()
+        if (o.material) o.material.dispose?.()
+      }
+    })
+  }
+  renderer?.dispose?.()
+  texCache.forEach((t) => t.dispose?.())
+  texCache.clear()
 })
 </script>
 
 <style scoped>
-.viewer-3d-container {
+.three-wrap {
   position: relative;
   width: 100%;
-  height: 100%;
-  min-height: 500px;
-  background: linear-gradient(180deg, #e8e8e8 0%, #f5f5f5 100%);
-  border-radius: 8px;
+  height: 520px; /* 可依頁面調整 */
+  border-radius: 12px;
   overflow: hidden;
+  background: #0a0a0a10;
 }
-
-.viewer-canvas {
-  display: block;
+.three-canvas {
   width: 100%;
   height: 100%;
 }
-
-.loading-overlay,
-.error-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.7);
-  z-index: 10;
+.overlay {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-weight: 600;
+  backdrop-filter: blur(2px);
 }
-
-.controls-panel {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 200px;
-}
-
-.controls-panel .btn-group {
-  width: 100%;
-}
-
-.controls-panel .btn {
-  flex: 1;
-}
-
-.hint-panel {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.95);
-  padding: 8px 16px;
-  border-radius: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-@media (max-width: 768px) {
-  .controls-panel {
-    top: 10px;
-    right: 10px;
-    padding: 10px;
-    min-width: 150px;
-  }
-
-  .hint-panel {
-    display: none;
-  }
-}
+.overlay.error { color: #b00020; }
 </style>

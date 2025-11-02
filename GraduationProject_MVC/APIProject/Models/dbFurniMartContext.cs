@@ -89,6 +89,8 @@ public partial class dbFurniMartContext : DbContext
 
     public virtual DbSet<TProductPart> TProductParts { get; set; }
 
+    public virtual DbSet<TProductPbrtexture> TProductPbrtextures { get; set; }
+
     public virtual DbSet<TProductReview> TProductReviews { get; set; }
 
     public virtual DbSet<TProductVariant> TProductVariants { get; set; }
@@ -1021,6 +1023,27 @@ public partial class dbFurniMartContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("fPartName");
             entity.Property(e => e.FProductId).HasColumnName("fProductId");
+        });
+
+        modelBuilder.Entity<TProductPbrtexture>(entity =>
+        {
+            entity.HasKey(e => e.FProductPbrid).HasName("PK__tProduct__B26ABF273AF325A3");
+
+            entity.ToTable("tProductPBRTexture");
+
+            entity.Property(e => e.FProductPbrid).HasColumnName("fProductPBRId");
+            entity.Property(e => e.FCreateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("fCreateTime");
+            entity.Property(e => e.FProductId).HasColumnName("fProductId");
+            entity.Property(e => e.FProductVariantId).HasColumnName("fProductVariantId");
+            entity.Property(e => e.FTextureType)
+                .HasMaxLength(30)
+                .HasColumnName("fTextureType");
+            entity.Property(e => e.FTextureUrl)
+                .HasMaxLength(500)
+                .HasColumnName("fTextureUrl");
         });
 
         modelBuilder.Entity<TProductReview>(entity =>

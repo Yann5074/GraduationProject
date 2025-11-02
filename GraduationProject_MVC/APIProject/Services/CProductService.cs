@@ -11,14 +11,16 @@ namespace ApiProject.Services
     public class CProductService : IProductService
     {
         private readonly dbFurniMartContext _db;
+        private readonly IWebHostEnvironment _env;
 
         // SKU 格式常數
         private const int PRODUCT_CODE_LENGTH = 4;  // 產品代碼長度
         private const int PART_CODE_LENGTH = 3;     // 部位代碼長度
         private const int OPTION_ID_LENGTH = 2;     // 選項 ID 長度
-        public CProductService(dbFurniMartContext db)
+        public CProductService(dbFurniMartContext db, IWebHostEnvironment env)
         {
             _db = db;
+            _env = env;
         }
 
         // Services/CProductService.cs
@@ -31,6 +33,8 @@ namespace ApiProject.Services
                 .Include(p => p.PStatus)
                 .Include(p => p.ProductAssets)
                 .Include(p => p.ProductVariants)
+                    .ThenInclude(v => v.Color)
+                .Where(p => p.FPstatus == 1)
                 .AsQueryable();
 
             // 篩選
@@ -66,7 +70,15 @@ namespace ApiProject.Services
                     TotalStock = p.ProductVariants.Sum(v => v.FStock ?? 0),
                     IsAvailable = p.FPstatus == 1 && p.ProductVariants.Sum(v => v.FStock ?? 0) > 0,
                     MinPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Min(v => v.FPrice),
-                    MaxPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Max(v => v.FPrice)
+                    MaxPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Max(v => v.FPrice),
+                    AvailableColorCount = p.ProductVariants
+                        .Where(v => v.FColorId.HasValue && v.FPstatus == 1)
+                        .Select(v => v.FColorId)
+                        .Distinct()
+                        .Count(),
+
+                    FCreateTime = p.FCreateTime,
+                    FUpdateTime = p.FUpdateTime
                 })
                 .ToListAsync();
 
@@ -199,7 +211,7 @@ namespace ApiProject.Services
             var product = await _db.TProducts
                 .Include(p => p.Category)
                 .Include(p => p.ProductAssets)
-                .Include(p => p.ProductVariants)
+                .Include(p => p.ProductVariants.Where(v => v.FPstatus == 1))
                     .ThenInclude(v => v.Color)
                 .FirstOrDefaultAsync(p => p.FProductId == id);
 
@@ -216,11 +228,11 @@ namespace ApiProject.Services
 
             // 取得 3D 模型
             var modelAsset = product.ProductAssets
-                .FirstOrDefault(a => a.FAssetType == "3D" || a.FAssetType == "Model");
+                .FirstOrDefault(a => a.FAssetType == "3d_model");
 
-            // 取得環境貼圖
+            // 取得環境貼圖（可選）
             var envMapAsset = product.ProductAssets
-                .FirstOrDefault(a => a.FAssetType == "EnvMap");
+                .FirstOrDefault(a => a.FAssetType == "env_map");
 
             var result = new ResProductDetailDTO
             {
@@ -263,6 +275,17 @@ namespace ApiProject.Services
                         FIsPrimary = a.FIsPrimary ?? false,
                         FSortOrder = a.FSortOrder ?? 0
                     }).ToList(),
+                Images = product.ProductAssets
+                    .Where(a => a.FAssetType == "image")
+                    .OrderBy(a => a.FSortOrder)
+                    .Select(a => new ResProductImageDTO
+                    {
+                        FAssetId = a.FAssetId,
+                        FUrl = a.FUrl,
+                        FIsPrimary = a.FIsPrimary ?? false,
+                        FSortOrder = a.FSortOrder ?? 0
+                    })
+                    .ToList(),
 
                 // 變體列表（只顯示上架中的）
                 Variants = product.ProductVariants
@@ -279,6 +302,23 @@ namespace ApiProject.Services
                         ColorHex = v.Color?.FColorHex ?? v.Color?.FColorCode,
                         FSizeLabel = v.FSizeLabel
                     }).ToList(),
+
+                AvailableColors = product.ProductVariants
+                    .Where(v => v.Color != null && v.FStock > 0)
+                    .Select(v => new ResColorVariantDTO
+                    {
+                        VariantId = v.FProductVariantId,
+                        ColorId = v.FColorId.Value,
+                        ColorName = v.Color.FColorName,
+                        ColorCode = v.Color.FColorCode,
+                        ColorHex = v.Color.FColorHex,
+                        Thumbnail = v.Color.FThumbnail,
+                        Price = v.FPrice ?? 0,
+                        Stock = v.FStock ?? 0,
+                        SKU = v.FSku,
+                        SizeLabel = v.FSizeLabel
+                    })
+                    .ToList(),
 
                 // 庫存總計（只計算上架中的變體）
                 TotalStock = product.ProductVariants
@@ -393,6 +433,192 @@ namespace ApiProject.Services
 
             return similarProducts;
         }
+
+
+
+        //取得產品的 PBR 貼圖資訊
+
+        public async Task<List<ResPBRMaterialDTO>> GetPBRMaterialsAsync(int productId, HttpContext http)
+        {
+            // 1) 產品模型（tProductAsset.fAssetType: 'model' / 'glb' / 'gltf'）
+            var modelUrl = await _db.TProductAssets
+                .Where(a => a.FProductId == productId &&
+                            (a.FAssetType == "model" || a.FAssetType == "glb" || a.FAssetType == "gltf"))
+                .OrderByDescending(a => a.FIsPrimary).ThenBy(a => a.FSortOrder)
+                .Select(a => a.FUrl)
+                .FirstOrDefaultAsync();
+
+            if (string.IsNullOrWhiteSpace(modelUrl))
+            {
+                // 允許 fallback：/ProductImages/3D/Models/{productId}.glb
+                var p = Path.Combine(_env.WebRootPath, "ProductImages", "3D", "Models", $"{productId}.glb");
+                if (File.Exists(p))
+                    modelUrl = $"/ProductImages/3D/Models/{productId}.glb";
+            }
+            if (string.IsNullOrWhiteSpace(modelUrl))
+                return new List<ResPBRMaterialDTO>(); // 沒模型不回資料
+
+            var modelPublicUrl = ToPublicUrl(http, modelUrl);
+
+            // 2) 產品層共用 PBR（非 basecolor）
+            //    fAssetType: 'pbr-metallic','pbr-roughness','pbr-normal','pbr-ao','pbr-emissive'
+            var commons = await _db.TProductAssets
+                .Where(a => a.FProductId == productId &&
+                            (a.FAssetType == "pbr-metallic" ||
+                             a.FAssetType == "pbr-roughness" ||
+                             a.FAssetType == "pbr-normal" ||
+                             a.FAssetType == "pbr-ao" ||
+                             a.FAssetType == "pbr-emissive"))
+                .ToListAsync();
+
+            string? mrUrl = commons.FirstOrDefault(x => x.FAssetType == "pbr-metallic")?.FUrl;
+            string? roughUrl = commons.FirstOrDefault(x => x.FAssetType == "pbr-roughness")?.FUrl; // 若你用合併 MR，可只存 metallic 或另外標 'pbr-metallicroughness'
+            string? normalUrl = commons.FirstOrDefault(x => x.FAssetType == "pbr-normal")?.FUrl;
+            string? aoUrl = commons.FirstOrDefault(x => x.FAssetType == "pbr-ao")?.FUrl;
+            string? emissiveUrl = commons.FirstOrDefault(x => x.FAssetType == "pbr-emissive")?.FUrl;
+
+            // 允許缺漏：若 DB 沒資料，從磁碟慣例找
+            mrUrl ??= TryDiskTex(productId, "mr.png");
+            normalUrl ??= TryDiskTex(productId, "normal.png");
+            aoUrl ??= TryDiskTex(productId, "ao.png");
+            emissiveUrl ??= TryDiskTex(productId, "emissive.png");
+
+            var mrPub = mrUrl is null ? null : ToPublicUrl(http, mrUrl);
+            var roughPub = roughUrl is null ? null : ToPublicUrl(http, roughUrl);
+            var normalPub = normalUrl is null ? null : ToPublicUrl(http, normalUrl);
+            var aoPub = aoUrl is null ? null : ToPublicUrl(http, aoUrl);
+            var emissivePub = emissiveUrl is null ? null : ToPublicUrl(http, emissiveUrl);
+
+            // 3) 找變體的 BaseColor（優先 DB）
+            //    你可以把 basecolor 存在 tProductAsset（fAssetType = 'pbr-basecolor' 並掛在 fProductVariantId）
+            var baseByVariant = await _db.TProductAssets
+                .Where(a => a.FProductId == productId &&
+                            a.FProductVariantId != null &&
+                            a.FAssetType == "pbr-basecolor")
+                .Select(a => new {
+                    VariantId = a.FProductVariantId!.Value,
+                    a.FUrl
+                })
+                .ToListAsync();
+
+            // 變體基本資料（為了拿 colorId）
+            var variants = await _db.TProductVariants
+                .Include(v => v.Color) // 若沒有導航屬性，改成 join
+                .Where(v => v.FProductId == productId)
+                .Select(v => new {
+                    v.FProductVariantId,
+                    v.FColorId,
+                    ColorName = v.Color != null ? v.Color.FColorName : null,
+                    ColorHex = v.Color != null ? v.Color.FColorHex : null
+                })
+                .ToListAsync();
+
+            // 4) 組裝每色 DTO
+            var result = new List<ResPBRMaterialDTO>();
+
+            foreach (var v in variants)
+            {
+                // 尋找這個變體的 basecolor（DB）
+                var bcUrl = baseByVariant.FirstOrDefault(x => x.VariantId == v.FProductVariantId)?.FUrl;
+
+                // 若 DB 沒有，從磁碟慣例找：{productId}_basecolor_{colorId}.png 或 {variantId}_basecolor.png
+                bcUrl ??= TryDiskTex(productId, $"basecolor_{v.FColorId}.png")
+                      ?? TryDiskTex(productId, $"variant_{v.FProductVariantId}_basecolor.png")
+                      ?? TryDiskTex(productId, "basecolor_default.png");
+
+                if (string.IsNullOrWhiteSpace(bcUrl))
+                    continue; // 沒 basecolor 就略過；也可改成給一筆 default
+
+                result.Add(new ResPBRMaterialDTO
+                {
+                    ProductId = productId,
+                    ColorId = v.FColorId,
+                    ProductVariantId = v.FProductVariantId,
+                    ModelUrl = modelPublicUrl,
+                    BaseColorUrl = ToPublicUrl(http, bcUrl),
+                    MetallicRoughnessUrl = mrPub ?? roughPub,  // 若你用 packed-MR，這裡給單一張；或同時給兩張由前端處理
+                    NormalUrl = normalPub,
+                    AoUrl = aoPub,
+                    EmissiveUrl = emissivePub,
+                    ModelScale = 1.0m
+                });
+            }
+
+            // 若沒有任何變體或都缺 basecolor，給一筆 default
+            if (result.Count == 0)
+            {
+                var defaultBase = TryDiskTex(productId, "basecolor_default.png");
+                if (!string.IsNullOrWhiteSpace(defaultBase))
+                {
+                    result.Add(new ResPBRMaterialDTO
+                    {
+                        ProductId = productId,
+                        ColorId = null,
+                        ProductVariantId = null,
+                        ModelUrl = modelPublicUrl,
+                        BaseColorUrl = ToPublicUrl(http, defaultBase),
+                        MetallicRoughnessUrl = mrPub ?? roughPub,
+                        NormalUrl = normalPub,
+                        AoUrl = aoPub,
+                        EmissiveUrl = emissivePub,
+                        ModelScale = 1.0m
+                    });
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<ResPBRMaterialDTO?> GetDefaultPBRAsync(int productId, HttpContext http)
+        {
+            var list = await GetPBRMaterialsAsync(productId, http);
+            return list.FirstOrDefault(x => x.ColorId == null) ?? list.FirstOrDefault();
+        }
+
+        public async Task<List<ResVariantDTO>> GetVariantsAsync(int productId)
+        {
+            return await _db.TProductVariants
+                .Include(v => v.Color) // 如果沒有導航屬性，改 join
+                .Where(v => v.FProductId == productId)
+                .Select(v => new ResVariantDTO
+                {
+                    FProductVariantId = v.FProductVariantId,
+                    FSku = v.FSku,
+                    FPrice = v.FPrice,
+                    FStock = v.FStock,
+                    ColorId = v.FColorId,
+                    ColorName = v.Color != null ? v.Color.FColorName : null,
+                    ColorHex = v.Color != null ? v.Color.FColorHex : null
+                })
+                .ToListAsync();
+        }
+
+        // ===== util =====
+
+        private string? TryDiskTex(int productId, string fileName)
+        {
+            // wwwroot/ProductImages/3D/Textures/{fileName}
+            var p = Path.Combine(_env.WebRootPath, "ProductImages", "3D", "Textures", fileName);
+            if (File.Exists(p)) return $"/ProductImages/3D/Textures/{fileName}";
+
+            // 也可允許 {productId}_{fileName}
+            var p2 = Path.Combine(_env.WebRootPath, "ProductImages", "3D", "Textures", $"{productId}_{fileName}");
+            if (File.Exists(p2)) return $"/ProductImages/3D/Textures/{productId}_{fileName}";
+
+            return null;
+        }
+
+        private static string ToPublicUrl(HttpContext http, string pathOrUrl)
+        {
+            if (string.IsNullOrWhiteSpace(pathOrUrl)) return "";
+            if (pathOrUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)) return pathOrUrl;
+            var req = http.Request;
+            var baseUrl = $"{req.Scheme}://{req.Host}";
+            return $"{baseUrl}{pathOrUrl}";
+        }
+
+
+
 
         // 批次取得購物車商品資訊
         public async Task<List<ResCartProductDTO>> GetCartProductsAsync(List<int> productVariantIds)

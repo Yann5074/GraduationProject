@@ -100,6 +100,50 @@ namespace ApiProject.Controllers
             }
         }
 
+        //列出此產品所有 PBR 材質（每色/每變體一筆）
+        [HttpGet("{id:int}/pbr-materials")]
+        public async Task<IActionResult> GetPbrMaterials(int id)
+        {
+            var list = await _ProductService.GetPBRMaterialsAsync(id, HttpContext);
+            if (list == null || list.Count == 0)
+                return NotFound(new { success = false, message = "No PBR materials." });
+
+            return Ok(new { success = true, data = list });
+        }
+
+
+        //相容端點（你前端現在打 /pbr）
+        [HttpGet("{id:int}/pbr")]
+        public async Task<IActionResult> GetPbrCompat(int id)
+        {
+            var list = await _ProductService.GetPBRMaterialsAsync(id, HttpContext);
+            if (list == null || list.Count == 0)
+                return NotFound(new { success = false, message = "No PBR materials." });
+
+            return Ok(new { success = true, data = list });
+        }
+
+
+        //預設 PBR（沒有指定顏色時）
+        [HttpGet("{id:int}/pbr-material")]
+        public async Task<IActionResult> GetDefaultPbr(int id)
+        {
+            var dto = await _ProductService.GetDefaultPBRAsync(id, HttpContext);
+            if (dto == null)
+                return NotFound(new { success = false, message = "No default PBR." });
+
+            return Ok(new { success = true, data = dto });
+        }
+
+
+        //（可選）變體列表，避免前端打 /variants 404
+        [HttpGet("{id:int}/variants")]
+        public async Task<IActionResult> GetVariants(int id)
+        {
+            var variants = await _ProductService.GetVariantsAsync(id);
+            return Ok(new { success = true, data = variants });
+        }
+
         //GET:api/product/search/茶几
         [HttpGet("search/{keyword}")]
         public async Task<IActionResult> SearchProductsByKeyword(string keyword)
