@@ -1,10 +1,4 @@
-<!-- 版本 2：智能跳轉（修正版） -->
-<!-- 
-  跳轉邏輯：
-  1. 從列表進入詳情頁 → 直接跳轉到頂部
-  2. 在詳情頁內點擊相關產品切換 → 直接跳轉到頂部
-  3. 從詳情頁返回列表頁 → 列表頁保持原本位置（由 ProductListPage 處理）
--->
+
 <template>
   <div class="product-detail-page">
     <!-- 麵包屑導航 -->
@@ -30,39 +24,88 @@
       <button class="btn btn-primary" @click="loadProductDetail">重新載入</button>
     </div>
 
+    
+
     <!-- 產品詳情 -->
     <div v-else-if="product" class="container py-4">
       <div class="row g-4">
+
+
+
         <!-- 左側：圖片區 -->
-        <div class="col-lg-6">
-          <!-- 主圖 -->
-          <div class="product-images">
-            <div class="main-image-container mb-3">
-              <img 
-                :src="selectedImage" 
-                :alt="product.fName" 
-                class="img-fluid rounded main-image" 
-                @error="handleImageError" 
-              />
-              <div v-if="product.fDiscount > 0" class="position-absolute top-0 start-0 p-3">
-                <span class="badge bg-danger fs-6">{{ Math.round(product.fDiscount * 100) }}% OFF</span>
-              </div>
-            </div>
-            
-            <!-- 縮圖 -->
-            <div v-if="productImages.length > 1" class="d-flex gap-2 overflow-auto">
-              <img 
-                v-for="(image, index) in productImages" 
-                :key="`thumb-${index}-${image}`"
-                :src="image" 
-                class="thumbnail" 
-                :class="{ active: selectedImage === image }" 
-                @click="selectedImage = image" 
-                @error="handleImageError" 
-              />
-            </div>
-          </div>
-        </div>
+  <!-- 左側：照片 / 3D 切換（請把舊的影像區塊刪掉，改用這一組） -->
+  <div class="col-lg-6">
+    <!-- 切換按鈕 -->
+    <div class="d-flex gap-2 mb-3">
+      <button
+        class="btn"
+        :class="!show3D ? 'btn-primary' : 'btn-outline-primary'"
+        @click="show3D = false"
+      >
+        照片
+      </button>
+      <button
+        class="btn"
+        :class="show3D ? 'btn-primary' : 'btn-outline-primary'"
+        @click="toggle3D()"
+      >
+        3D 檢視
+      </button>
+    </div>
+
+    <!-- 照片區（務必讓 v-else 緊貼 v-if，兩者間不要有註解/空白節點） -->
+    <div v-if="!show3D" class="media-box">
+      <div class="media-main">
+        <img
+          v-if="selectedImage"
+          :src="selectedImage"
+          :alt="product?.fName"
+          class="img-fluid rounded shadow-sm w-100 h-100 object-fit-cover"
+          @error="handleImageError"
+        />
+        <div v-else class="placeholder">無主圖</div>
+      </div>
+      <!-- 縮圖（只有 2 張以上才顯示） -->
+<div v-if="thumbs.length > 1" class="media-thumbs">
+  <button
+    v-for="t in thumbs"
+    :key="t.key"
+    class="thumb-btn"
+    :class="{ active: t.url === selectedImage }"
+    type="button"
+    @click="onThumbClick(t)"
+    @keyup.enter.space="onThumbClick(t)"
+    :aria-label="t.alt"
+  >
+    <img
+      :src="t.url"
+      :alt="t.alt"
+      class="thumb-img"
+      loading="lazy"
+      decoding="async"
+      referrerpolicy="no-referrer"
+      @error="onThumbError(t)"
+    />
+  </button>
+</div>
+    </div>
+    <div v-else class="media-box">
+      <Suspense>
+        <template #default>
+          <Furniture3DViewer
+            :key="viewerKey"  
+            :product-id="productId"
+            :variant-id="currentVariantId"
+            :auto-rotate="true"
+            :model-scale="1.0"
+          />
+        </template>
+        <template #fallback>
+          <div class="placeholder">3D 載入中…</div>
+        </template>
+      </Suspense>
+    </div>
+  </div>
 
         <!-- 右側：產品資訊 -->
         <div class="col-lg-6">
@@ -272,13 +315,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch,defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ProductAPI } from '@/api/Product'
-import Furniture3DViewer from '@/components/Furniture3DViewer.vue'
+
 import { memberAddToCart } from '@/api/Cart'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/auth'
+
+
+const Furniture3DViewer = defineAsyncComponent(() => import('@/components/Furniture3DViewer.vue'))
 
 const route = useRoute()
 const router = useRouter()
@@ -289,16 +335,28 @@ const loading = ref(false)
 const error = ref(null)
 const product = ref(null)
 const variants = ref([])
+const currentVariantId = computed(() =>
+  selectedVariant.value?.fProductVariantId ?? selectedVariant.value?.FProductVariantId ?? null
+)
 const selectedVariant = ref(null)
 const quantity = ref(1)
 const selectedImage = ref('')
 const productImages = ref([])
 const relatedProducts = ref([])
 
+
+const viewerKey = computed(() => `${productId.value}-${currentVariantId.value ?? 'none'}`)
+// 3D 切換
+const show3D = ref(false)
+
+
+// 3D 元件要用到的 productId（你在模板裡有 :product-id）
+const productId = computed(() => Number(route.params.id))
+
 //  圖片錯誤追蹤（防止閃爍）
 const imageErrors = ref(new Set())
 
-// ⭐ 計算顏色變體（有 colorName 或 colorHex 的變體）
+// 計算顏色變體（有 colorName 或 colorHex 的變體）
 const colorVariants = computed(() => {
   return variants.value.filter(v => 
     (v.colorName || v.ColorName) || (v.colorHex || v.ColorHex)
@@ -326,10 +384,49 @@ const canAddToCart = computed(() => {
   return quantity.value >= 1 && quantity.value <= maxQuantity.value
 })
 
+
+// 將 productImages 轉成縮圖用資料結構（附帶 key / alt）
+const thumbs = computed(() => {
+  const name = product.value?.fName || '產品圖片'
+  return (productImages.value || []).map((url, i) => ({
+    key: `thumb-${i}-${simpleHash(url)}`,
+    url,
+    alt: `${name} - 圖片 ${i + 1}`,
+  }))
+})
+
+function onThumbClick(t) {
+  if (!t?.url) return
+  selectedImage.value = t.url
+}
+
+// 單張縮圖 404 時處理：
+function onThumbError(t) {
+  if (!t?.url) return
+  const old = t.url
+  const fallback = '/ProductImages/default.png'
+  imageErrors.value.add(old)
+  t.url = fallback
+  if (selectedImage.value === old) {
+    selectedImage.value = fallback
+  }
+}
+
+ 
+// 超輕量雜湊（避免 v-for key 因相同 URL 重複）
+function simpleHash(str) {
+  let h = 0
+  for (let i = 0; i < str.length; i++) {
+    h = (h << 5) - h + str.charCodeAt(i)
+    h |= 0
+  }
+  return Math.abs(h)
+}
+
 // 載入產品詳情
 async function loadProductDetail() {
-  const productId = route.params.id
-  if (!productId) {
+  const pid  = route.params.id
+  if (!pid ) {
     error.value = '產品 ID 不正確'
     return
   }
@@ -337,10 +434,10 @@ async function loadProductDetail() {
   loading.value = true
   error.value = null
 
-  console.log(' 載入產品詳情:', productId)
+  console.log(' 載入產品詳情:', pid )
 
   try {
-    const response = await ProductAPI.getProductById(productId)
+    const response = await ProductAPI.getProductById(pid )
     console.log('API 回應:', response)
     
     if (response.success && response.data) {
@@ -359,7 +456,7 @@ async function loadProductDetail() {
         rawData.mainImageUrl = mainImg
       }
       
-      rawData.mainImageUrl = rawData.mainImageUrl || '/images/default-product.jpg'
+      rawData.mainImageUrl = rawData.mainImageUrl || '/ProductImages/default.png'
       
       if (!rawData.assets && assetsList) {
         rawData.assets = assetsList
@@ -375,7 +472,7 @@ async function loadProductDetail() {
       console.log('✅ 產品資料:', product.value)
       
       setupProductImages()
-      await loadVariants(productId)
+      await loadVariants(pid )
       await loadRelatedProducts(product.value.fCategoryId)
     } else {
       console.error('❌ 載入失敗:', response)
@@ -389,52 +486,110 @@ async function loadProductDetail() {
   }
 }
 
-// 正：設定產品圖片（避免重複）
+// 只允許圖片副檔名，並排除 3D 資源資料夾
+function isImageUrl(url) {
+  if (!url) return false
+  // 排除 3D 模型/貼圖所在路徑
+  if (/\/3D\//i.test(url)) return false
+  // 只收常見圖片副檔名
+  return /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(url)
+}
+
+// 正：設定產品圖片（避免重複、排除 3D）
 function setupProductImages() {
   console.log('🖼️ 設定產品圖片')
-  
+
+  const imageSet = new Set()
   const newImages = []
-  const imageSet = new Set() // 用 Set 追蹤已加入的圖片
-  
-  // 輔助函數：加入圖片（避免重複）
-  function addImage(url) {
+
+  // 輔助：加入圖片（防重複、只收圖片）
+  const addImage = (url) => {
     if (!url || url === 'null' || url === '') return
-    
+    if (!isImageUrl(url)) return
     const stableUrl = getStableImageUrl(url)
-    if (!imageSet.has(stableUrl)) {
-      imageSet.add(stableUrl)
-      newImages.push(stableUrl)
-      console.log('  ✅ 加入圖片:', stableUrl)
-    } else {
-      console.log('  ⏭️  跳過重複圖片:', stableUrl)
+    if (!stableUrl || imageSet.has(stableUrl)) return
+    imageSet.add(stableUrl)
+    newImages.push(stableUrl)
+    console.log('  ✅ 加入圖片:', stableUrl)
+  }
+
+  // 1) 主圖優先
+  const main = (product.value && (product.value.mainImageUrl || product.value.MainImageUrl)) || null
+  addImage(main)
+
+  // 2) Assets 只加圖片（自動排除 /3D/ 與非圖片副檔名）
+  const assetsList = (product.value && (product.value.assets || product.value.Assets)) || []
+  for (let i = 0; i < assetsList.length; i++) {
+    const a = assetsList[i]
+    const url = a.fUrl || a.FUrl || a.fAssetUrl || a.FAssetUrl
+    addImage(url)
+  }
+
+  // 3) 變體縮圖（顏色縮圖等）
+  const vs = (product.value && product.value.variants) || []
+  for (let i = 0; i < vs.length; i++) {
+    addImage(vs[i].colorThumbnail || vs[i].ColorThumbnail)
+  }
+
+  // 4) 若仍沒有任何可用圖片，採用預設圖
+  if (newImages.length === 0) {
+    // 請確認專案內真的存在這張圖
+    addImage('/ProductImages/default.png')
+    if (newImages.length === 0) {
+      addImage('/images/default-product.jpg')
+    }
+  }
+
+  // 5) 主圖置頂（若已加入且被其它圖片擠到後面）
+  if (main) {
+    const mainUrl = getStableImageUrl(main)
+    const idx = newImages.findIndex(function (x) { return x === mainUrl })
+    if (idx > 0) {
+      // 把主圖移到陣列最前
+      newImages.unshift(newImages.splice(idx, 1)[0])
+    }
+  }
+
+  productImages.value = newImages
+  selectedImage.value = newImages[0]
+  console.log('✅ 圖片設定完成，共 ' + newImages.length + ' 張（無 3D/貼圖，且無重複）')
+}
+
+async function toggle3D() {
+  if (!show3D.value) {
+    try {
+      const res = await ProductAPI.getPBR(productId.value)
+      
+      console.log('🔍 PBR API 回應:', res)
+      
+      if (!res || !res.success) {
+        alert('無法載入 3D 資料')
+        return
+      }
+      
+      if (!res.data || !Array.isArray(res.data) || res.data.length === 0) {
+        alert('此商品尚未配置 3D 模型，請稍後再試')
+        return
+      }
+      
+      const firstItem = res.data[0]
+      if (!firstItem.modelUrl) {
+        alert('此商品尚未配置 3D 模型檔案')
+        return
+      }
+      
+      console.log('✅ 3D 模型 URL:', firstItem.modelUrl)
+      
+    } catch (e) {
+      console.error('❌ 查詢 PBR 失敗', e)
+      alert('無法載入 3D 模型：' + (e.message || '未知錯誤'))
+      return
     }
   }
   
-  // 1. 加入主圖
-  if (product.value.mainImageUrl) {
-    addImage(product.value.mainImageUrl)
-  }
-  
-  // 2. 加入 Assets 中的圖片
-  const assetsList = product.value.assets || product.value.Assets
-  if (assetsList && Array.isArray(assetsList)) {
-    assetsList.forEach((asset, index) => {
-      const url = asset.fUrl || asset.FUrl || asset.fAssetUrl || asset.FAssetUrl
-      addImage(url)
-    })
-  }
-  
-  // 3. 如果沒有任何圖片，使用預設圖
-  if (newImages.length === 0) {
-    console.warn('  ⚠️ 沒有圖片，使用預設圖')
-    addImage('/images/default-product.jpg')
-  }
-  
-  productImages.value = newImages
-  selectedImage.value = newImages[0]
-  
-  console.log(`✅ 圖片設定完成，共 ${newImages.length} 張（無重複）`)
+  show3D.value = !show3D.value
 }
+
 
 // 載入變體
 async function loadVariants(productId) {
@@ -619,7 +774,7 @@ function formatPrice(price) {
 }
 
 // 穩定的圖片 URL 函數（防止閃爍）
-function getStableImageUrl(url, fallback = '/images/default-product.jpg') {
+function getStableImageUrl(url, fallback = '/ProductImages/default.png') {
   if (imageErrors.value.has(url)) {
     return fallback
   }
@@ -647,7 +802,7 @@ function handleImageError(event) {
   if (!imageErrors.value.has(failedUrl)) {
     imageErrors.value.add(failedUrl)
     console.warn('圖片載入失敗:', failedUrl)
-    event.target.src = '/images/default-product.jpg'
+    event.target.src = '/ProductImages/default.png'
   }
 }
 
@@ -669,6 +824,24 @@ watch(() => route.params.id, (newId, oldId) => {
     console.log('📜 切換產品，直接跳轉到頂部')
   }
 })
+
+onMounted(async () => {
+  // 拉你的 variants 列表（假設已有 API）
+  try {
+    const v = await ProductAPI.getProductVariants(productId.value)
+    // 兼容：若回傳包裝層不同可以視情況調整
+    variants.value = Array.isArray(v?.data) ? v.data : (Array.isArray(v) ? v : [])
+    // 預設選第一個
+    const firstAvailable = variants.value.find(x => (x.fStock ?? x.FStock ?? 0) > 0) ?? variants.value[0]
+    if (firstAvailable) selectedVariant.value = firstAvailable 
+  } catch {
+    variants.value = []
+   
+  }
+})
+
+
+
 </script>
 
 <style scoped>
@@ -720,6 +893,46 @@ watch(() => route.params.id, (newId, oldId) => {
   border-color: #0d6efd;
   box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
 }
+
+
+.media-thumbs {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.thumb-btn {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 10px;
+  outline: none;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.thumb-img {
+  width: 76px;            /* 同一寬度 */
+  aspect-ratio: 1 / 1;    /* 保持正方形 */
+  object-fit: cover;      /* 不變形 */
+  border-radius: 10px;
+  border: 2px solid transparent;
+  display: block;
+  background: #f4f5f7;
+}
+
+.thumb-btn.active .thumb-img {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 2px rgba(13,110,253,.18);
+}
+
+@media (max-width: 576px) {
+  .thumb-img { width: 64px; }
+}
+
 
 .product-title {
   font-size: 2rem;
@@ -773,7 +986,7 @@ watch(() => route.params.id, (newId, oldId) => {
 
 .color-option-btn.active .color-circle {
   border-width: 4px;
-  border-color: #0d6efd;
+  border-color: #fd0d0d;
   box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
 }
 
@@ -794,7 +1007,7 @@ watch(() => route.params.id, (newId, oldId) => {
   position: absolute;
   width: 24px;
   height: 24px;
-  background-color: #0d6efd;
+  background-color: #fd0d0d;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -830,13 +1043,13 @@ watch(() => route.params.id, (newId, oldId) => {
 }
 
 .variant-button:hover:not(.disabled) {
-  border-color: #0d6efd;
+  border-color: #ffe3be;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .variant-button.active {
-  border-color: #0d6efd;
+  border-color: #ffedd1;
   background-color: #e7f1ff;
 }
 

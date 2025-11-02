@@ -172,6 +172,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[tProductPBRTexture]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[tProductReview]",
          "ObjectType": 0
       },

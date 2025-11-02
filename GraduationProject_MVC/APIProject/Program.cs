@@ -4,6 +4,7 @@ using ApiProject.Models;
 using ApiProject.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 
@@ -68,6 +69,19 @@ builder.Services.AddScoped<IProductService, CProductService>();
 
 var app = builder.Build();
 
+var provider = new FileExtensionContentTypeProvider();
+provider.Mappings[".glb"] = "model/gltf-binary";
+provider.Mappings[".gltf"] = "model/gltf+json";
+provider.Mappings[".bin"] = "application/octet-stream";
+provider.Mappings[".hdr"] = "application/octet-stream";
+provider.Mappings[".ktx2"] = "image/ktx2";
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = provider,
+    ServeUnknownFileTypes = true
+});
+
 // Swagger（開發用）
 if (app.Environment.IsDevelopment())
 {
@@ -84,30 +98,36 @@ var graduationProjectImagesPath = Path.Combine(
     "ProductImages"                            // ProductImages 資料夾
 );
 
-Console.WriteLine($"當前目錄: {Directory.GetCurrentDirectory()}");
-Console.WriteLine($"計算路徑: {graduationProjectImagesPath}");
-Console.WriteLine($"路徑存在: {Directory.Exists(graduationProjectImagesPath)}");
+var allowedOrigins = new[] {
+    "http://localhost:5173",
+    "https://localhost:5173",
+    "http://localhost:5174",
+    "https://localhost:5174"
+};
 
-if (Directory.Exists(graduationProjectImagesPath))
+var productImagesPath = Path.GetFullPath(
+    Path.Combine(builder.Environment.ContentRootPath, "..", "GraduationProject", "wwwroot", "ProductImages")
+);
+Directory.CreateDirectory(productImagesPath);
+app.UseStaticFiles(new StaticFileOptions
 {
-    app.UseStaticFiles(new StaticFileOptions
-    {
-        FileProvider = new PhysicalFileProvider(graduationProjectImagesPath),
-        RequestPath = "/ProductImages"
-    });
-    Console.WriteLine($"產品圖片路徑: {graduationProjectImagesPath}");
+    FileProvider = new PhysicalFileProvider(productImagesPath),
+    RequestPath = "/ProductImages",
+    ContentTypeProvider = provider,   // ← 用你上面那個 provider，讓 .glb/.gltf/.ktx2/.hdr MIME 正確
 
-    // 顯示前幾個檔案
-    var files = Directory.GetFiles(graduationProjectImagesPath).Take(3);
-    foreach (var file in files)
-    {
-        Console.WriteLine($"   - {Path.GetFileName(file)}");
-    }
-}
-else
-{
-    Console.WriteLine($"找不到圖片資料夾: {graduationProjectImagesPath}");
-}
+     OnPrepareResponse = ctx =>
+     {
+         var origin = ctx.Context.Request.Headers["Origin"].ToString();
+         if (!string.IsNullOrEmpty(origin) && allowedOrigins.Contains(origin))
+         {
+             ctx.Context.Response.Headers["Access-Control-Allow-Origin"] = origin;
+             ctx.Context.Response.Headers["Vary"] = "Origin"; // 讓快取分開
+                                                              // 如果你真的需要帶 cookie 再開這行；一般抓模型不需要：
+                                                              // ctx.Context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
+         }
+     }
+
+});
 
 // CORS（在 Auth 之前即可）
 app.UseCors("VueClient");
@@ -121,7 +141,8 @@ Directory.CreateDirectory(apiSharedImagesPath);
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(apiSharedImagesPath),
-    RequestPath = "/MemberHeadImages"
+    RequestPath = "/MemberHeadImages",
+
 });
 
 // 靜態檔案（wwwroot）
@@ -135,13 +156,5 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-Console.WriteLine("==========================================");
-Console.WriteLine($"🌐 前台 API 運行於: {app.Urls.FirstOrDefault()}");
-Console.WriteLine($"📂 產品圖片: /ProductImages/");
-Console.WriteLine($"📂 會員頭像: /MemberHeadImages/");
-Console.WriteLine($"🔗 測試範例:");
-Console.WriteLine($"   {app.Urls.FirstOrDefault()}/ProductImages/a.webp");
-Console.WriteLine($"   {app.Urls.FirstOrDefault()}/MemberHeadImages/user1.jpg");
-Console.WriteLine("==========================================");
 
 app.Run();

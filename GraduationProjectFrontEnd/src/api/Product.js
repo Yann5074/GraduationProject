@@ -317,49 +317,8 @@ export const ProductAPI = {
         }
     },
 
-    /**
-     * 批次取得購物車產品資訊
-     */
-    getCartProducts(variantIds) {
-        return http.post('/Product/cart-items', variantIds)
-    },
 
-    /**
-     * 根據客製化選項取得價格
-     */
-    async getPriceByCustomization(productId, selectedOptions) {
-        try {
-            if (!selectedOptions || Object.keys(selectedOptions).length === 0) {
-                return {
-                    success: false,
-                    message: '請提供客製化選項',
-                    data: null
-                }
-            }
 
-            const response = await http.post(`/Product/${productId}/price`, selectedOptions)
-
-            // 解析包裝的回應
-            if (response && response.success) {
-                return {
-                    success: true,
-                    data: response.data
-                }
-            }
-
-            return {
-                success: true,
-                data: response
-            }
-        } catch (error) {
-            console.error('❌ 取得客製化價格失敗:', error)
-            return {
-                success: false,
-                message: error.message || '取得客製化價格失敗',
-                data: null
-            }
-        }
-    },
 
     /**
      * 批次檢查庫存
@@ -425,6 +384,16 @@ export const ProductAPI = {
                 data: []
             }
         }
+    },
+
+    async getPBR(productId, variantId = null) {
+        const params = {}
+        if (variantId) params.variantId = variantId
+        const res = await http.get(`/Product/${productId}/pbr`, { params })
+
+        const dto = res?.data || res
+        return dto
+
     }
 }
 

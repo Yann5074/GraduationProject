@@ -15,6 +15,10 @@
         public string F3dModelPath { get; set; }        // 3D 模型檔案路徑
         public string EnvMapUrl { get; set; }
 
+
+        //可用顏色選項（來自 tProductVariant + tColor）
+        public List<ResColorVariantDTO> AvailableColors { get; set; } = new();
+
         // ===== 素材 =====
         public List<ResProductAssetDTO> Assets { get; set; }
 
@@ -31,10 +35,7 @@
         /// </summary>
         public bool IsCustomizable { get; set; }
 
-        /// <summary>
-        /// 自訂部位（僅當 includeCustomization = true 時載入）
-        /// </summary>
-        public List<ResPartDTO>? CustomizationParts { get; set; }
+        public List<ResProductImageDTO> Images { get; set; } = new();
 
         // ===== 時間 =====
         public DateTime? FCreateTime { get; set; }
