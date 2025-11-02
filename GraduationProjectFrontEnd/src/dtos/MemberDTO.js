@@ -72,7 +72,7 @@ export function createMemberDTO(raw) {
   const address = src.Address ?? src.address ?? ''
   const gender = src.Gender ?? src.gender ?? null
   const levelId = src.LevelId ?? src.levelId ?? null
-  const levelName = src.LevelName ?? src.levelName ?? ''
+  const levelName = src.LevelName ?? src.levelName ?? null
   const moneySum = src.MoneySum ?? src.moneySum ?? 0
 
   // 依序撈常見的影像欄位（同時支援大小寫 / 不同命名）
