@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using System.ComponentModel;
 using System.Security.Claims;
+using Common.Notifications;
+using Common.Notifications.Interfaces;
 
 namespace ApiProject.Services
 {
@@ -13,10 +15,14 @@ namespace ApiProject.Services
     {
         private readonly dbFurniMartContext _context;
         private readonly IHelpToolService _memberAuth;
-        public COrderService(dbFurniMartContext context, IHelpToolService memberAuth)
+        private readonly IOrderNotificationService _notify;
+        private readonly ILogger<COrderService>? _logger;
+        public COrderService(dbFurniMartContext context, IHelpToolService memberAuth, IOrderNotificationService notify, ILogger<COrderService>? logger = null)
         {
             _context = context;
             _memberAuth = memberAuth;
+            _notify = notify;
+            _logger = logger;
         }
 
         //列出訂單 -o
@@ -272,14 +278,15 @@ namespace ApiProject.Services
                 FContactName = reqDto.ContactName,
                 FContactPhone = reqDto.ContactPhone,
                 FEmployeeId = reqDto.EmployeeId, // 畫面給予可填入ID的欄位
-                FTotalPrice = cart.FTotalPrice,
+                FTotalPrice = Math.Round(cart.FTotalPrice * (decimal)memLv.FDiscount, 0, MidpointRounding.AwayFromZero) + (decimal)reqDto.ShippingCost,
                 FDiscount = memLv.FDiscount,
                 FTaxNo = reqDto.TaxNo,
                 FOrderTime = DateTime.Now,
                 FOrderStatus = 2, 
                 FPaymentMethod = reqDto.PaymentMethod,
                 FPaymentStatus = 1,
-                FPickupMethod = reqDto.PickupMethod,
+                //FPickupMethod = reqDto.PickupMethod,
+                FPickupMethod = 2, //先寫死宅配，有機會再改成能改動的版本
                 FDeliveryStatus = 1,
                 FDeliveryAddress = reqDto.DeliveryAddress,
                 FShippingCost = reqDto.ShippingCost,
@@ -313,6 +320,27 @@ namespace ApiProject.Services
             cart.FIsCheckOut = 1;
 
             await _context.SaveChangesAsync();
+
+            // 建立信件需要的訂單明細資料 #TODO
+
+            // 訂單建立完成，嘗試寄信
+            try
+            {
+                var toEmail = idCheck.Member.FEmail;
+                var customerName = idCheck.Member.FName;
+                var total = order.FTotalPrice;
+
+                await _notify.SendOrderCreatedAsync(
+                    toEmail,
+                    order.FOrderId,
+                    customerName,
+                    total,
+                    ct
+                    );
+            }catch(Exception ex)
+            {
+                _logger?.LogError(ex, "SendOrderCreated mail failed. OrderId = {OrderId}", order.FOrderId);
+            }
 
             return new ResultDTO
             { 

@@ -34,7 +34,19 @@ namespace Common.Notifications.Services
             var subject = $"訂單 #{orderId} {newStatus}";
             var html = $"""
                 <p> {customerName} 您好: </p>
-                <p> 您的訂單狀態 已於 {DateTime.Now.ToString()} 更新為 <b>{newStatus}</b> </p>
+                <p> 您的訂單 {orderId} 已於 {DateTime.Now.ToString()} 更新為</p>
+                <p> <b>{newStatus}</b> </p>
+                """;
+            return _emailSender.SendHtmlAsync(toEmail, subject, html, ct: ct);
+        }
+
+        public Task SendOrderDeliveryChangedAsync(string toEmail, int orderId, string customerName, string newDelivery, CancellationToken ct = default)
+        {
+            var subject = $"訂單 #{orderId} {newDelivery}";
+            var html = $"""
+                <p> {customerName} 您好: </p>
+                <p> 您的訂單運輸狀態 已於 {DateTime.Now.ToString()} 更新為</p>
+                <p>  <b>{newDelivery}</b> </p>
                 """;
             return _emailSender.SendHtmlAsync(toEmail, subject, html, ct: ct);
         }

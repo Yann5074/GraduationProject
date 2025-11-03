@@ -282,7 +282,7 @@ async function submitOrder(){
       taxNo: form.value.taxNo,
       paymentMethod: form.value.paymentMethod,
       deliveryAddress: form.value.deliveryAddress,
-      shippingCost: form.value.shippingCost,
+      shippingCost: Number(shippingCost.value),
       logisticsProvider: form.value.logisticsProvider,
       note: form.value.note
     }
@@ -293,7 +293,7 @@ async function submitOrder(){
     // 組裝 ECPay 所需DTO
     const ecpay = {
       merchantTradeNo: String(orderId),
-      totalAmount: Number(totalAmount.value),
+      totalAmount: Number(finalAmount.value),
       paymentMethodId: Number(form.value.paymentMethod)
     }
     
