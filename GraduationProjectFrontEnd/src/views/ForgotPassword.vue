@@ -45,7 +45,7 @@ const confirmMismatch = computed(() => {
 const canReset = computed(() => {
   return (
     code.value &&
-    code.value.length >= 4 &&
+    code.value.length >= 6 &&
     newPassword.value.length >= 6 &&
     confirmNewPassword.value.length >= 6 &&
     newPassword.value === confirmNewPassword.value &&
@@ -243,7 +243,7 @@ async function handleResend() {
             <!-- 回登入 -->
             <div class="text-center mt-4 small text-muted">
               想起密碼了？
-              <router-link to="/signin" class="link-success text-decoration-none">
+              <router-link to="/signin" class="link-success text-decoration-none auth-link">
                 回登入
               </router-link>
             </div>
@@ -328,18 +328,16 @@ async function handleResend() {
 
             <button
               type="button"
-              class="btn btn-link w-100 mt-2"
+              class="btn btn-link w-100 mt-2 auth-link"
               :disabled="loading"
               @click="handleResend"
             >
-              沒收到？重新寄驗證碼
+              重新寄驗證碼
             </button>
 
-            <hr class="my-4 divider-line" />
-
-            <div class="text-center mt-4 small text-muted">
+            <div class="text-center mt-3 small text-muted">
               已經重設成功了？
-              <router-link to="/signin" class="link-success text-decoration-none">
+              <router-link to="/signin" class="link-success text-decoration-none auth-link">
                 立即登入
               </router-link>
             </div>
@@ -429,5 +427,20 @@ async function handleResend() {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
   opacity: 0.75;
+}
+/* ===== 通用：連結 hover/聚焦 效果 ===== */
+.auth-link {
+  text-decoration: none;
+  font-weight: 400;
+  transition:
+    color 0.15s ease,
+    text-decoration-color 0.15s ease,
+    font-weight 0.15s ease;
+}
+
+.auth-link:hover,
+.auth-link:focus-visible {
+  text-decoration: underline !important; /* 蓋掉 text-decoration-none */
+  font-weight: 600;
 }
 </style>

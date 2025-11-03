@@ -119,7 +119,7 @@ onMounted(async () => {
               <h4 class="mb-0">登入</h4>
             </div>
 
-            <div class="card-body p-4">
+            <div class="card-body p-4 pb-0">
               <div v-if="errorMsg" class="alert alert-danger py-2" role="alert">{{ errorMsg }}</div>
 
               <form @submit="onSubmit" novalidate>
@@ -175,7 +175,11 @@ onMounted(async () => {
                 </div>
 
                 <div class="d-grid">
-                  <button type="submit" class="btn btn-success btn-lg" :disabled="!canSubmit">
+                  <button
+                    type="submit"
+                    class="btn btn-success btn-lg login-btn"
+                    :disabled="!canSubmit || loading"
+                  >
                     <span v-if="loading" class="spinner-border spinner-border-sm me-2" />
                     {{ loading ? '登入中...' : '登入' }}
                   </button>
@@ -183,25 +187,30 @@ onMounted(async () => {
               </form>
             </div>
             <!-- 分隔線 -->
-            <div class="d-flex align-items-center my-3">
+            <div class="d-flex align-items-center mt-3 mb-1">
               <hr class="flex-grow-1" />
               <span class="px-2 text-muted small">或</span>
               <hr class="flex-grow-1" />
             </div>
 
             <!-- Google 登入 -->
-            <div class="mb-2">
+            <div>
               <div id="googleSignInBtn" class="w-100 d-flex justify-content-center"></div>
               <div v-if="gErr" class="text-danger small mt-2">{{ gErr }}</div>
             </div>
 
-            <div class="card-footer text-center bg-white py-3">
+            <div
+              class="card-footer text-center bg-white pt-3 pb-4 d-flex justify-content-evenly align-items-center"
+            >
               <small class="text-muted">
                 還沒有帳號？
-                <RouterLink class="text-success fw-bold" to="/signup">註冊</RouterLink>
+                <RouterLink class="auth-link text-success" to="/signup">註冊</RouterLink>
               </small>
-              <div class="mt-2">
-                <RouterLink class="text-decoration-none link-danger small" to="/forgot-password">
+              <div>
+                <RouterLink
+                  class="auth-link text-decoration-none link-danger small"
+                  to="/forgot-password"
+                >
                   忘記密碼？
                 </RouterLink>
               </div>
@@ -217,6 +226,9 @@ onMounted(async () => {
 .card {
   border-radius: 1rem;
 }
+.card-footer {
+  border-top: none !important;
+}
 .btn-eye {
   color: #6c757d;
   border-color: #ced4da;
@@ -230,5 +242,68 @@ onMounted(async () => {
   color: #198754;
   border-color: #198754;
   background: #eaf6ef;
+}
+.card-footer small,
+.card-footer a {
+  font-size: 0.9rem;
+}
+/* 讓兩個連結的預設樣式一致 */
+.auth-link {
+  text-decoration: none; /* 預設沒有底線 */
+  font-weight: 400; /* 預設不加粗 */
+  transition:
+    color 0.15s ease,
+    text-decoration-color 0.15s ease,
+    font-weight 0.15s ease; /* 平滑過渡 */
+}
+
+/* 滑鼠移入 & 鍵盤可見焦點 時才加粗 + 底線（無障礙友善） */
+.auth-link:hover,
+.auth-link:focus-visible {
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+/* （可選）整行左右排版用的容器微調 */
+.auth-inline {
+  gap: 0.75rem;
+}
+/* 登入按鈕的互動效果 */
+/* ✅ 用變數覆寫 Bootstrap 按鈕配色（scoped 可用）*/
+/* 登入按鈕效果 */
+.login-btn {
+  background-color: #198754; /* 正常綠色 */
+  border-color: #198754;
+  color: #fff;
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.2s ease;
+}
+
+/* 滑鼠移入（可點擊狀態才有效） */
+.login-btn:hover:not(:disabled) {
+  background-color: #28a96b; /* 稍亮一點 */
+  border-color: #28a96b;
+}
+
+/* 按下狀態 */
+.login-btn:active:not(:disabled) {
+  background-color: #157347; /* 稍深一點 */
+  border-color: #157347;
+}
+
+/* 聚焦狀態（鍵盤導覽時） */
+.login-btn:focus-visible {
+  box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+}
+
+/* ✅ 禁用狀態（未輸入帳密或登入中） */
+.login-btn:disabled {
+  background-color: #cde5d6; /* 更淺的綠色 */
+  border-color: #cde5d6;
+  color: #ffffff;
+  cursor: not-allowed; /* 🚫 禁止游標 */
+  opacity: 1; /* 不要太透明，清楚顯示變淡 */
 }
 </style>

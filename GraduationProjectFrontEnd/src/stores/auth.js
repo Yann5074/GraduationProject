@@ -1,6 +1,7 @@
 // src/stores/auth.js
 import { defineStore } from 'pinia'
 import { getMeAPI } from '@/api/Member'
+import { createMemberDTO } from '@/dtos/MemberDTO'
 
 const FALLBACK_AVATAR = '/asset/images/user.svg'
 const LS_KEY = 'auth_user'
@@ -61,6 +62,7 @@ export const useAuthStore = defineStore('auth', {
     // 登入 / 取得 me 後呼叫
     setUser(rawUser) {
       this.user = rawUser || null
+      this.user = rawUser ? createMemberDTO(rawUser) : null // ✅ 正規化後再存
       localStorage.setItem(LS_KEY, JSON.stringify(this.user))
     },
 
@@ -69,8 +71,8 @@ export const useAuthStore = defineStore('auth', {
       this.setUser(user)
 
       // 2. 幫頭貼也同步進來，確保 navbar 立刻有圖
-      const avatarCandidate =
-        user.imageUrl || user.memberImage || user.MemberImage || user.avatar || ''
+      const u = this.user || {}
+      const avatarCandidate = u.imageUrl || u.memberImage || u.MemberImage || u.avatar || ''
 
       if (avatarCandidate) {
         this.setAvatar(avatarCandidate)
@@ -102,7 +104,8 @@ export const useAuthStore = defineStore('auth', {
         this.setUser(me)
 
         // 再處理頭貼（跟 login() 的邏輯一樣）
-        const avatarCandidate = me.imageUrl || me.memberImage || me.MemberImage || me.avatar || ''
+        const u = this.user || {}
+        const avatarCandidate = u.imageUrl || u.memberImage || u.MemberImage || u.avatar || ''
 
         if (avatarCandidate) {
           this.setAvatar(avatarCandidate)
