@@ -208,7 +208,7 @@ function fitCameraToObject(object3D) {
   const maxDim = Math.max(size.x, size.y, size.z)
   const fov = camera.fov * (Math.PI / 180)
   let cameraZ = (maxDim * 0.5) / Math.tan(fov / 2)
-  cameraZ *= 1.6
+  cameraZ *= 1
 
   camera.position.set(center.x + cameraZ, center.y + cameraZ * 0.35, center.z + cameraZ)
   camera.near = Math.max(0.01, cameraZ / 100)

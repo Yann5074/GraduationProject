@@ -172,7 +172,7 @@ namespace ApiProject.Services
                     Name = c.FName,
                     ProductCount = c.TProducts.Count(p => p.FPstatus == 1)
                 })
-                .OrderBy(c => c.Name)
+                .OrderBy(c => c.CategoryId)
                 .ToListAsync();
 
             // 價格範圍

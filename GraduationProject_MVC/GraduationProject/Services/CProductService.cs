@@ -50,9 +50,11 @@ namespace GraduationProject.Services
                     EF.Functions.Like(o.FCategory.FName, $"%{keyword}%") ||
                     EF.Functions.Like(o.FPstatusNavigation.FPstatusName, $"%{keyword}%") ||
                     o.ProductVariants.Any(v => v.Color != null &&
-                        EF.Functions.Like(v.Color.FColorName, $"%{keyword}%")));
+                        EF.Functions.Like(v.Color.FColorName, $"%{keyword}%"))
+                );
             }
 
+            // 只保留「圖片型」資產，並排除 glb/gltf 與 pbr-* 類型
             var result = query.Select(o => new CProductDTO
             {
                 ProductId = o.FProductId,
@@ -61,15 +63,76 @@ namespace GraduationProject.Services
                 CategoryId = o.FCategoryId,
                 CategoryName = o.FCategory.FName,
                 FPStatusName = o.FPstatusNavigation.FPstatusName,
-                ColorName = string.Join(", ", o.ProductVariants.Where(v => v.Color != null)
-                                     .Select(v => v.Color.FColorName).Distinct()),
-                Price = o.ProductVariants.Any() ? o.ProductVariants.Min(v => v.FPrice) : null,
-                Cost = o.ProductVariants.Any() ? o.ProductVariants.Min(v => v.FCost) : null,
-                PrimaryImageUrl = o.ProductAssets.Where(a => a.FIsPrimary == true).Select(a => a.FUrl)
-                                     .FirstOrDefault() ?? "/ProductImages/default.png",
-                ImageUrls = o.ProductAssets.Any()
-                    ? o.ProductAssets.OrderBy(a => a.FSortOrder).Select(a => a.FUrl).ToList()
+
+                ColorName = string.Join(", ",
+                    o.ProductVariants
+                        .Where(v => v.Color != null)
+                        .Select(v => v.Color.FColorName)
+                        .Distinct()
+                ),
+
+                Price = o.ProductVariants.Any()
+                    ? o.ProductVariants.Min(v => v.FPrice)
+                    : (decimal?)null,
+
+                Cost = o.ProductVariants.Any()
+                    ? o.ProductVariants.Min(v => v.FCost)
+                    : (decimal?)null,
+
+                // 主圖只從「圖片型資產」挑；若沒有則給預設圖
+                PrimaryImageUrl =
+                    o.ProductAssets
+                     .Where(a =>
+                            // 僅圖片
+                            (a.FAssetType == "image") ||
+                            ((a.FMimeType ?? "").StartsWith("image/"))
+                          )
+                     .Where(a =>
+                            // 排除 glb / gltf 與 pbr-*
+                            !((a.FAssetType ?? "").StartsWith("pbr-")) &&
+                            !((a.FAssetType ?? "") == "glb") &&
+                            !((a.FMimeType ?? "").StartsWith("model/gltf"))
+                          )
+                     .OrderByDescending(a => a.FIsPrimary) // true 先
+                     .ThenBy(a => a.FSortOrder ?? int.MaxValue)
+                     .ThenBy(a => a.FAssetId)
+                     .Select(a => a.FUrl)
+                     .FirstOrDefault()
+                     ?? "/ProductImages/default.png",
+
+                // 圖片清單：同樣只取圖片；若沒有則回傳一張預設圖
+                ImageUrls =
+                    (o.ProductAssets
+                        .Where(a =>
+                                (a.FAssetType == "image") ||
+                                ((a.FMimeType ?? "").StartsWith("image/"))
+                             )
+                        .Where(a =>
+                                !((a.FAssetType ?? "").StartsWith("pbr-")) &&
+                                !((a.FAssetType ?? "") == "glb") &&
+                                !((a.FMimeType ?? "").StartsWith("model/gltf"))
+                             )
+                        .OrderBy(a => a.FSortOrder ?? int.MaxValue)
+                        .ThenBy(a => a.FAssetId)
+                        .Select(a => a.FUrl)
+                        .ToList()
+                    .Count > 0)
+                    ? o.ProductAssets
+                        .Where(a =>
+                                (a.FAssetType == "image") ||
+                                ((a.FMimeType ?? "").StartsWith("image/"))
+                             )
+                        .Where(a =>
+                                !((a.FAssetType ?? "").StartsWith("pbr-")) &&
+                                !((a.FAssetType ?? "") == "glb") &&
+                                !((a.FMimeType ?? "").StartsWith("model/gltf"))
+                             )
+                        .OrderBy(a => a.FSortOrder ?? int.MaxValue)
+                        .ThenBy(a => a.FAssetId)
+                        .Select(a => a.FUrl)
+                        .ToList()
                     : new List<string> { "/ProductImages/default.png" },
+
                 Variants = o.ProductVariants.Select(v => new CProductVariantDTO
                 {
                     VariantId = v.FProductVariantId,
@@ -85,13 +148,17 @@ namespace GraduationProject.Services
                     Height = v.FHeight,
                     Weight = v.FWeight,
                     PStatus = v.FPstatus,
-                    PStatusName = _db.TPstatuses.Where(s => s.FPstatus == (v.FPstatus ?? -1))
-                                      .Select(s => s.FPstatusName).FirstOrDefault() ?? "未知"
+                    // 若有需要可改成直接讀 v.FPstatus 對照表做 join；目前保持你原本寫法
+                    PStatusName = _db.TPstatuses
+                                     .Where(s => s.FPstatus == (v.FPstatus ?? -1))
+                                     .Select(s => s.FPstatusName)
+                                     .FirstOrDefault() ?? "未知",
                 }).ToList()
             }).ToList();
 
             return result;
         }
+
 
         public CProductDetailDTO? GetDetail(int productId)
         {
