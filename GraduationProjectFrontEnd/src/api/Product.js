@@ -50,10 +50,17 @@ export const ProductAPI = {
                 colorIds: filter.colorIds,
                 textureIds: filter.textureIds,
                 searchKeyword: filter.keyword || filter.searchKeyword,
-                sortBy: filter.sortBy || 'newest',
+                sortBy: filter.sortBy || 'created_desc',
                 pageNumber: filter.pageNumber || 1,
                 pageSize: filter.pageSize || 12
             }
+
+            if (filter.categoryId !== undefined && filter.categoryId !== null) {
+                params.categoryId = filter.categoryId
+            }
+
+
+
 
             // 移除空值
             Object.keys(params).forEach(key => {
@@ -62,52 +69,46 @@ export const ProductAPI = {
                 }
             })
 
-            console.log('📡 [Product.js] 呼叫 API:', '/Product/all', params)
+            console.log('[Product.js] 呼叫 API:', '/Product/all', params)
 
             const response = await http.get('/Product/all', { params })
 
-            console.log('📥 [Product.js] 原始 response:', response)
-            console.log('📥 [Product.js] response.data:', response.data)
-            console.log('📥 [Product.js] response.ok:', response.ok)
-            console.log('📥 [Product.js] response.success:', response.success)
 
-            // 🔧 方案1: 如果 axios 攔截器已經返回 response
+
+            // 方案1: 如果 axios 攔截器已經返回 response
             // 檢查 response 的結構
             let productData = []
             let paginationData = {}
 
             // 情況 A: response 本身就是資料
             if (response.ok && response.data) {
-                console.log('✅ [路徑A] response.ok = true, 使用 response.data')
+                console.log('[路徑A] response.ok = true, 使用 response.data')
                 productData = response.data.data || response.data
                 paginationData = response.data.pagination || {}
             }
             // 情況 B: response.data 裡有 success
             else if (response.data?.success) {
-                console.log('✅ [路徑B] response.data.success = true')
+                console.log('[路徑B] response.data.success = true')
                 productData = response.data.data?.data || response.data.data || []
                 paginationData = response.data.data?.pagination || response.data.pagination || {}
             }
             // 情況 C: response 直接是陣列
             else if (Array.isArray(response)) {
-                console.log('✅ [路徑C] response 是陣列')
+                console.log('[路徑C] response 是陣列')
                 productData = response
             }
             // 情況 D: response.data 是陣列
             else if (Array.isArray(response.data)) {
-                console.log('✅ [路徑D] response.data 是陣列')
+                console.log('[路徑D] response.data 是陣列')
                 productData = response.data
             }
             // 情況 E: response.data.data 是陣列
             else if (Array.isArray(response.data?.data)) {
-                console.log('✅ [路徑E] response.data.data 是陣列')
+                console.log('[路徑E] response.data.data 是陣列')
                 productData = response.data.data
                 paginationData = response.data.pagination || {}
             }
 
-            console.log('🎯 [Product.js] 最終 productData:', productData)
-            console.log('📊 [Product.js] 最終 paginationData:', paginationData)
-            console.log('🔢 [Product.js] 產品數量:', Array.isArray(productData) ? productData.length : 0)
 
             return {
                 success: true,
@@ -120,8 +121,8 @@ export const ProductAPI = {
                 }
             }
         } catch (error) {
-            console.error('❌ [Product.js] 取得產品列表失敗:', error)
-            console.error('❌ [Product.js] 錯誤詳情:', {
+            console.error('[Product.js] 取得產品列表失敗:', error)
+            console.error('[Product.js] 錯誤詳情:', {
                 message: error.message,
                 response: error.response,
                 status: error.response?.status
@@ -156,7 +157,7 @@ export const ProductAPI = {
             // 修正：後端路由是 /Product/search/{keyword}
             const response = await http.get(`/Product/search/${encodeURIComponent(keyword.trim())}`)
 
-            console.log('🔍 搜尋回應:', response)
+            console.log('搜尋回應:', response)
 
             // 解析包裝的回應
             if (response && response.success) {
@@ -171,7 +172,7 @@ export const ProductAPI = {
                 data: Array.isArray(response) ? response : []
             }
         } catch (error) {
-            console.error('❌ 搜尋產品失敗:', error)
+            console.error('搜尋產品失敗:', error)
             return {
                 success: false,
                 message: error.message || '搜尋產品失敗',
@@ -183,38 +184,72 @@ export const ProductAPI = {
     /**
      * 取得篩選選項
      */
+
     async getFilterOptions() {
         try {
             const response = await http.get('/Product/filter-options')
 
-            console.log('🎛️ 篩選選項回應:', response)
+            console.log('[Product.js] 篩選選項原始回應:', response)
+            console.log('[Product.js] response.data:', response.data)
+            console.log('[Product.js] response.data.data:', response.data?.data)
+            console.log('Product.js] response.success:', response.success)
 
-            // 解析包裝的回應
-            if (response && response.success) {
-                const data = response.data
-                return {
-                    success: true,
-                    data: {
-                        categories: data?.categories || [],
-                        colors: data?.colors || [],
-                        textures: data?.textures || [],
-                        priceRange: data?.priceRange || { minPrice: 0, maxPrice: 100000 }
-                    }
-                }
+
+            let data = null
+
+            // 情況 A: response.data.success 結構
+            if (response.data?.success) {
+                console.log('[路徑A] response.data.success = true')
+                data = response.data.data
+                console.log('[路徑A] data:', data)
+            }
+            // 情況 B: response.success 結構
+            else if (response.success) {
+                console.log('[路徑B] response.success = true')
+                data = response.data
+                console.log('[路徑B] data:', data)
+            }
+            // 情況 C: 直接是資料
+            else if (response.data) {
+                console.log('[路徑C] 使用 response.data')
+                data = response.data
+                console.log('[路徑C] data:', data)
+            }
+            // 情況 D: response 本身就是資料
+            else {
+                console.log('[路徑D] 使用 response')
+                data = response
+                console.log('[路徑D] data:', data)
             }
 
-            // 後備
+
+
+
+            const categories = data?.categories || data?.Categories || []
+            const colors = data?.colors || data?.Colors || []
+            const textures = data?.textures || data?.Textures || []
+            const priceRange = data?.priceRange || data?.PriceRange || { minPrice: 0, maxPrice: 100000 }
+
+
+            // 驗證 categories 是否為陣列
+            if (!Array.isArray(categories)) {
+                console.error('[Product.js] categories 不是陣列:', categories)
+            } else if (categories.length === 0) {
+
+            }
+
             return {
                 success: true,
                 data: {
-                    categories: response?.categories || [],
-                    colors: response?.colors || [],
-                    textures: response?.textures || [],
-                    priceRange: response?.priceRange || { minPrice: 0, maxPrice: 100000 }
+                    categories: Array.isArray(categories) ? categories : [],
+                    colors: Array.isArray(colors) ? colors : [],
+                    textures: Array.isArray(textures) ? textures : [],
+                    priceRange: priceRange
                 }
             }
         } catch (error) {
-            console.error('❌ 取得篩選選項失敗:', error)
+            console.error('[Product.js] 取得篩選選項失敗:', error)
+            console.error('[Product.js] 錯誤詳情:', error.response)
             return {
                 success: false,
                 message: error.message || '取得篩選選項失敗',
@@ -235,7 +270,7 @@ export const ProductAPI = {
         try {
             const response = await http.get(`/Product/${productId}`)
 
-            console.log('📦 產品詳情回應:', response)
+            console.log('產品詳情回應:', response)
 
             // 解析包裝的回應
             if (response && response.data.success) {
@@ -269,7 +304,7 @@ export const ProductAPI = {
                 data: null
             }
         } catch (error) {
-            console.error('❌ 取得產品詳情失敗:', error)
+            console.error('取得產品詳情失敗:', error)
             return {
                 success: false,
                 message: error.message || '取得產品詳情失敗',
@@ -293,7 +328,7 @@ export const ProductAPI = {
                 params: { count }
             })
 
-            console.log('🔄 相似產品回應:', response)
+            console.log('相似產品回應:', response)
 
             // 解析包裝的回應
             if (response && response.success) {
@@ -308,7 +343,7 @@ export const ProductAPI = {
                 data: Array.isArray(response) ? response : []
             }
         } catch (error) {
-            console.error('❌ 取得相似產品失敗:', error)
+            console.error('取得相似產品失敗:', error)
             return {
                 success: false,
                 message: error.message || '取得相似產品失敗',
@@ -354,7 +389,7 @@ export const ProductAPI = {
                 }
             }
         } catch (error) {
-            console.error('❌ 檢查庫存失敗:', error)
+            console.error('檢查庫存失敗:', error)
             return {
                 success: false,
                 message: error.message || '檢查庫存失敗',
@@ -377,7 +412,7 @@ export const ProductAPI = {
                 data: Array.isArray(response) ? response : (response.data || [])
             }
         } catch (error) {
-            console.error('❌ 取得類別列表失敗:', error)
+            console.error('取得類別列表失敗:', error)
             return {
                 success: false,
                 message: error.message || '取得類別列表失敗',
