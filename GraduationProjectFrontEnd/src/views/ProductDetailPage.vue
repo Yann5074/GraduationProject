@@ -93,7 +93,7 @@
       <Suspense>
         <template #default>
           <Furniture3DViewer
-            :key="viewerKey"  
+            :key="productId"  
             :product-id="productId"
             :variant-id="currentVariantId"
             :auto-rotate="true"

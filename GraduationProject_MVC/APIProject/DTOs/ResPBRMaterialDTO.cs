@@ -7,6 +7,8 @@
         public int? ProductVariantId { get; set; }
         public string ModelUrl { get; set; } = "";
         public string BaseColorUrl { get; set; } = "";
+        public string? MetallicUrl { get; set; }
+        public string? RoughnessUrl { get; set; }
         public string? MetallicRoughnessUrl { get; set; }
         public string? NormalUrl { get; set; }
         public string? AoUrl { get; set; }

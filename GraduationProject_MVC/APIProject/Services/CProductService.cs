@@ -440,7 +440,7 @@ namespace ApiProject.Services
 
         public async Task<List<ResPBRMaterialDTO>> GetPBRMaterialsAsync(int productId, HttpContext http)
         {
-            // 1) 產品模型（tProductAsset.fAssetType: 'model' / 'glb' / 'gltf'）
+            // 1) 產品模型
             var modelUrl = await _db.TProductAssets
                 .Where(a => a.FProductId == productId &&
                             (a.FAssetType == "model" || a.FAssetType == "glb" || a.FAssetType == "gltf"))
@@ -450,9 +450,8 @@ namespace ApiProject.Services
 
             if (string.IsNullOrWhiteSpace(modelUrl))
             {
-                // 允許 fallback：/ProductImages/3D/Models/{productId}.glb
                 var p = Path.Combine(_env.WebRootPath, "ProductImages", "3D", "Models", $"{productId}.glb");
-                if (File.Exists(p))
+                if (System.IO.File.Exists(p))
                     modelUrl = $"/ProductImages/3D/Models/{productId}.glb";
             }
             if (string.IsNullOrWhiteSpace(modelUrl))
@@ -460,52 +459,74 @@ namespace ApiProject.Services
 
             var modelPublicUrl = ToPublicUrl(http, modelUrl);
 
-            // 2) 產品層共用 PBR（非 basecolor）
-            //    fAssetType: 'pbr-metallic','pbr-roughness','pbr-normal','pbr-ao','pbr-emissive'
+            // 2) 產品層共用 PBR（非 baseColor）
+            //    新增支援「合併貼圖」：pbr-metallicroughness（或 ORM：R=AO, G=Rough, B=Metal）
             var commons = await _db.TProductAssets
                 .Where(a => a.FProductId == productId &&
-                            (a.FAssetType == "pbr-metallic" ||
-                             a.FAssetType == "pbr-roughness" ||
-                             a.FAssetType == "pbr-normal" ||
-                             a.FAssetType == "pbr-ao" ||
-                             a.FAssetType == "pbr-emissive"))
+                           (a.FAssetType == "pbr-metallic" ||
+                            a.FAssetType == "pbr-roughness" ||
+                            a.FAssetType == "pbr-metallicroughness" || // 👈 新增支援合併
+                            a.FAssetType == "pbr-orm" ||               // 👈 若你使用 ORM 合併
+                            a.FAssetType == "pbr-normal" ||
+                            a.FAssetType == "pbr-ao" ||
+                            a.FAssetType == "pbr-occlusion" ||         // 有些人用 pbr-occlusion 命名
+                            a.FAssetType == "pbr-emissive"))
                 .ToListAsync();
 
-            string? mrUrl = commons.FirstOrDefault(x => x.FAssetType == "pbr-metallic")?.FUrl;
-            string? roughUrl = commons.FirstOrDefault(x => x.FAssetType == "pbr-roughness")?.FUrl; // 若你用合併 MR，可只存 metallic 或另外標 'pbr-metallicroughness'
-            string? normalUrl = commons.FirstOrDefault(x => x.FAssetType == "pbr-normal")?.FUrl;
-            string? aoUrl = commons.FirstOrDefault(x => x.FAssetType == "pbr-ao")?.FUrl;
-            string? emissiveUrl = commons.FirstOrDefault(x => x.FAssetType == "pbr-emissive")?.FUrl;
+            // 逐類取一筆
+            string? metallicPath = commons.FirstOrDefault(x => x.FAssetType == "pbr-metallic")?.FUrl;
+            string? roughnessPath = commons.FirstOrDefault(x => x.FAssetType == "pbr-roughness")?.FUrl;
+            string? mrPackedPath = commons.FirstOrDefault(x => x.FAssetType == "pbr-metallicroughness")?.FUrl; // 合併圖（MR）
+            string? ormPackedPath = commons.FirstOrDefault(x => x.FAssetType == "pbr-orm")?.FUrl;               // 合併圖（ORM）
+            string? normalPath = commons.FirstOrDefault(x => x.FAssetType == "pbr-normal")?.FUrl;
+            string? aoPath = commons.FirstOrDefault(x => x.FAssetType == "pbr-ao")?.FUrl
+                                   ?? commons.FirstOrDefault(x => x.FAssetType == "pbr-occlusion")?.FUrl; // 別名
+            string? emissivePath = commons.FirstOrDefault(x => x.FAssetType == "pbr-emissive")?.FUrl;
 
-            // 允許缺漏：若 DB 沒資料，從磁碟慣例找
-            mrUrl ??= TryDiskTex(productId, "mr.png");
-            normalUrl ??= TryDiskTex(productId, "normal.png");
-            aoUrl ??= TryDiskTex(productId, "ao.png");
-            emissiveUrl ??= TryDiskTex(productId, "emissive.png");
+            // 磁碟慣例補齊（相對路徑）
+            // 若你只有一張合併 MR 圖，這裡用 mr.png；若你分開，就 metallic.png / roughness.png
+            metallicPath ??= TryDiskTex(productId, "metallic.png");
+            roughnessPath ??= TryDiskTex(productId, "roughness.png");
+            mrPackedPath ??= TryDiskTex(productId, "mr.png");     // 合併 MR
+            ormPackedPath ??= TryDiskTex(productId, "orm.png");    // 合併 ORM（R=AO, G=Rough, B=Metal）
 
-            var mrPub = mrUrl is null ? null : ToPublicUrl(http, mrUrl);
-            var roughPub = roughUrl is null ? null : ToPublicUrl(http, roughUrl);
-            var normalPub = normalUrl is null ? null : ToPublicUrl(http, normalUrl);
-            var aoPub = aoUrl is null ? null : ToPublicUrl(http, aoUrl);
-            var emissivePub = emissiveUrl is null ? null : ToPublicUrl(http, emissiveUrl);
+            normalPath ??= TryDiskTex(productId, "normal.png");
+            aoPath ??= TryDiskTex(productId, "ao.png");
+            emissivePath ??= TryDiskTex(productId, "emissive.png");
 
-            // 3) 找變體的 BaseColor（優先 DB）
-            //    你可以把 basecolor 存在 tProductAsset（fAssetType = 'pbr-basecolor' 並掛在 fProductVariantId）
+            // 以「分開欄位」為目標標準化：
+            // 若只有合併 MR/ORM，就用同一張圖同時供給兩個 map（shader 會取相應通道）
+            // 優先順序：分開 > MR 合併 > ORM 合併
+            string? finalMetallicPath = metallicPath ?? mrPackedPath ?? ormPackedPath;
+            string? finalRoughnessPath = roughnessPath ?? mrPackedPath ?? ormPackedPath;
+            string? finalAoPath = aoPath ?? ormPackedPath; // 如果是 ORM 合併，順便補 AO
+
+            // 轉為外部可取用 URL
+            var modelPub = modelPublicUrl;
+            var metallicPub = finalMetallicPath is null ? null : ToPublicUrl(http, finalMetallicPath);
+            var roughPub = finalRoughnessPath is null ? null : ToPublicUrl(http, finalRoughnessPath);
+            var normalPub = normalPath is null ? null : ToPublicUrl(http, normalPath);
+            var aoPub = finalAoPath is null ? null : ToPublicUrl(http, finalAoPath);
+            var emissivePub = emissivePath is null ? null : ToPublicUrl(http, emissivePath);
+
+            // 3) 變體 baseColor（優先 DB，其次磁碟慣例）
             var baseByVariant = await _db.TProductAssets
                 .Where(a => a.FProductId == productId &&
                             a.FProductVariantId != null &&
                             a.FAssetType == "pbr-basecolor")
-                .Select(a => new {
+                .Select(a => new
+                {
                     VariantId = a.FProductVariantId!.Value,
                     a.FUrl
                 })
                 .ToListAsync();
 
-            // 變體基本資料（為了拿 colorId）
+            // 變體資料（為了 colorId）
             var variants = await _db.TProductVariants
-                .Include(v => v.Color) // 若沒有導航屬性，改成 join
+                .Include(v => v.Color)
                 .Where(v => v.FProductId == productId)
-                .Select(v => new {
+                .Select(v => new
+                {
                     v.FProductVariantId,
                     v.FColorId,
                     ColorName = v.Color != null ? v.Color.FColorName : null,
@@ -513,38 +534,41 @@ namespace ApiProject.Services
                 })
                 .ToListAsync();
 
-            // 4) 組裝每色 DTO
             var result = new List<ResPBRMaterialDTO>();
 
             foreach (var v in variants)
             {
-                // 尋找這個變體的 basecolor（DB）
-                var bcUrl = baseByVariant.FirstOrDefault(x => x.VariantId == v.FProductVariantId)?.FUrl;
-
-                // 若 DB 沒有，從磁碟慣例找：{productId}_basecolor_{colorId}.png 或 {variantId}_basecolor.png
-                bcUrl ??= TryDiskTex(productId, $"basecolor_{v.FColorId}.png")
-                      ?? TryDiskTex(productId, $"variant_{v.FProductVariantId}_basecolor.png")
-                      ?? TryDiskTex(productId, "basecolor_default.png");
+                // 這個變體的 baseColor
+                var bcUrl = baseByVariant.FirstOrDefault(x => x.VariantId == v.FProductVariantId)?.FUrl
+                         ?? TryDiskTex(productId, $"basecolor_{v.FColorId}.png")
+                         ?? TryDiskTex(productId, $"variant_{v.FProductVariantId}_basecolor.png")
+                         ?? TryDiskTex(productId, "basecolor_default.png");
 
                 if (string.IsNullOrWhiteSpace(bcUrl))
-                    continue; // 沒 basecolor 就略過；也可改成給一筆 default
+                    continue;
 
                 result.Add(new ResPBRMaterialDTO
                 {
                     ProductId = productId,
                     ColorId = v.FColorId,
                     ProductVariantId = v.FProductVariantId,
-                    ModelUrl = modelPublicUrl,
+
+                    ModelUrl = modelPub,
                     BaseColorUrl = ToPublicUrl(http, bcUrl),
-                    MetallicRoughnessUrl = mrPub ?? roughPub,  // 若你用 packed-MR，這裡給單一張；或同時給兩張由前端處理
+
+                    // ✅ 重點：分開欄位，若只有合併圖，兩者同圖沒關係
+                    MetallicUrl = metallicPub,
+                    RoughnessUrl = roughPub,
+
                     NormalUrl = normalPub,
                     AoUrl = aoPub,
                     EmissiveUrl = emissivePub,
+
                     ModelScale = 1.0m
                 });
             }
 
-            // 若沒有任何變體或都缺 basecolor，給一筆 default
+            // 4) 若沒有任何變體或都缺 basecolor，給一筆 default
             if (result.Count == 0)
             {
                 var defaultBase = TryDiskTex(productId, "basecolor_default.png");
@@ -555,12 +579,18 @@ namespace ApiProject.Services
                         ProductId = productId,
                         ColorId = null,
                         ProductVariantId = null,
-                        ModelUrl = modelPublicUrl,
+
+                        ModelUrl = modelPub,
                         BaseColorUrl = ToPublicUrl(http, defaultBase),
-                        MetallicRoughnessUrl = mrPub ?? roughPub,
+
+                        // ✅ 這裡也改為分開欄位
+                        MetallicUrl = metallicPub,
+                        RoughnessUrl = roughPub,
+
                         NormalUrl = normalPub,
                         AoUrl = aoPub,
                         EmissiveUrl = emissivePub,
+
                         ModelScale = 1.0m
                     });
                 }
@@ -568,6 +598,7 @@ namespace ApiProject.Services
 
             return result;
         }
+
 
         public async Task<ResPBRMaterialDTO?> GetDefaultPBRAsync(int productId, HttpContext http)
         {
