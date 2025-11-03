@@ -368,6 +368,7 @@ header {
 .nav-neo.nav-solid { background: rgba(15,17,19,.9); backdrop-filter: blur(8px); box-shadow: 0 1px 0 rgba(255,255,255,.06); }
 .nav-neo .nav-link { color: #fff; opacity:.9; }
 .nav-neo .nav-link.router-link-active { opacity:1 }
+
 /* nav {
   width: 100%;
   font-size: 12px;
