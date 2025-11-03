@@ -319,6 +319,29 @@ namespace ApiProject.Services
             order.FTotalPrice = Math.Round(orderDetail.Sum(od => od.FQuantity * od.FUnitPrice) * (decimal)memLv.FDiscount) + (decimal)reqDto.ShippingCost;
             cart.FIsCheckOut = 1;
 
+            // 扣除庫存
+            var variantIds = orderDetail.Select(od => od.FProductVariantId)
+                .Distinct()
+                .ToList();
+
+            var variants = await _context.TProductVariants
+                .Where(v => variantIds.Contains(v.FProductVariantId))
+                .ToDictionaryAsync(v => v.FProductVariantId, ct);
+
+            foreach(var od in orderDetail)
+            {
+               if (!variants.TryGetValue(od.FProductVariantId, out var pv))
+                {
+                    return new ResultDTO
+                    {
+                        Ok = false,
+                        Code = StatusCodes.Status400BadRequest,
+                        Message = "查無此商品規格"
+                    };
+                }
+                pv.FStock -= od.FQuantity;
+            }
+
             await _context.SaveChangesAsync();
 
             // 建立信件需要的訂單明細資料 #TODO

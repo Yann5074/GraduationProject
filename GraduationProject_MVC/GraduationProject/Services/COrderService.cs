@@ -113,6 +113,8 @@ namespace GraduationProject.Services
 
             var oldOrderStatus = od.FOrderStatus; // 舊訂單狀態
             var oldOrderDelivery = od.FDeliveryStatus; //舊運送狀態
+            var customer = await _context.TMembers
+                .FirstOrDefaultAsync(c => c.FMemberId == od.FMemberId);
 
             od.FDiscount = dtoUi.Discount;
             od.FOrderStatus = dtoUi.OrderStatus;
@@ -125,6 +127,28 @@ namespace GraduationProject.Services
             od.FLogisticsProvider = dtoUi.LogisticsProvider;
             od.FOrderCompletionTime = dtoUi.OrderCompletionTime;
             od.FNote = dtoUi.FNote;
+
+            if (od.FDeliveryStatus == 4)
+            {
+                od.FOrderStatus = 5;
+            }
+
+            if (od.FOrderStatus == 5 && od.FPaymentStatus == 4)
+            {
+                od.FOrderCompletionTime = DateTime.Now;
+                customer.FMoneySum += (int)(od.FTotalPrice - od.FShippingCost);
+            }
+
+            var newLevelId = await _context.TLevels
+                .Where(l => customer.FMoneySum >= l.FUpgradeRules)
+                .OrderByDescending(l => l.FUpgradeRules)
+                .Select(l => l.FLevelId)
+                .FirstOrDefaultAsync();
+
+            if (customer.FLeveId != newLevelId)
+            {
+                customer.FLeveId = newLevelId;
+            }
 
             await _context.SaveChangesAsync();
 
