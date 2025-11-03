@@ -11,6 +11,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SharedStorage", "SharedStor
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MemberHeadImages", "MemberHeadImages", "{6AD3CC0E-5157-49EE-A131-E89BCCBA3ED3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Notifications", "Common.Notifications\Common.Notifications.csproj", "{211B1B20-E4CB-456B-802F-44C803C5FCDD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,6 +27,10 @@ Global
 		{AE528B18-1E4E-497F-938C-92BE292F5F97}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AE528B18-1E4E-497F-938C-92BE292F5F97}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AE528B18-1E4E-497F-938C-92BE292F5F97}.Release|Any CPU.Build.0 = Release|Any CPU
+		{211B1B20-E4CB-456B-802F-44C803C5FCDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{211B1B20-E4CB-456B-802F-44C803C5FCDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{211B1B20-E4CB-456B-802F-44C803C5FCDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{211B1B20-E4CB-456B-802F-44C803C5FCDD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

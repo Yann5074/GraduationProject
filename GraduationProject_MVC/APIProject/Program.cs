@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using System.Security.AccessControl;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +49,8 @@ builder.Services.AddScoped<IMemberService, CMemberServices>();
 builder.Services.AddScoped<IPasswordHasher<TMember>, PasswordHasher<TMember>>();
 // 加入 CMemberAuthService
 builder.Services.AddScoped<IHelpToolService, CMemberAuthService>();
+// 加入寄信相關設定
+
 
 // ✅ Session 需要「分散式快取」
 builder.Services.AddDistributedMemoryCache();
