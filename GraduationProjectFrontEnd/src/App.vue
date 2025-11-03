@@ -14,8 +14,6 @@ const isActive = (path) => route.path.startsWith(path)
 const auth = useAuthStore()
 const cart = useCartStore()
 
-
-
 /** ✅ 啟動時同步伺服器 Session 狀態 */
 // ✅ 修正版：讓 Pinia 自動用 MemberDTO 處理 imageUrl
 async function hydrateFromServer() {
@@ -24,7 +22,6 @@ async function hydrateFromServer() {
     await auth.login({ user: me }) // 交給 auth 自己轉換 DTO
   } catch {
     auth.logout()
-
   }
 }
 
@@ -52,29 +49,31 @@ onMounted(() => {
 })
 
 // 登入後購物車同步
-watch(() => auth.isLoggedIn, async (LoggedIn) =>{
-  if (LoggedIn && cart.items.length > 0){
-    try{
-      const reqDTO ={
-        memberId: auth.user?.memberId  || auth.user?.fMemberId,
-        cartItem: cart.items.map(i =>({
-          productVariantId: i.productVariantId,
-          quantity: i.qty
-        }))
+watch(
+  () => auth.isLoggedIn,
+  async (LoggedIn) => {
+    if (LoggedIn && cart.items.length > 0) {
+      try {
+        const reqDTO = {
+          memberId: auth.user?.memberId || auth.user?.fMemberId,
+          cartItem: cart.items.map((i) => ({
+            productVariantId: i.productVariantId,
+            quantity: i.qty,
+          })),
+        }
+        console.log('同步購物車', reqDTO)
+        await syncCart(reqDTO)
+        cart.clearCart()
+        console.log('購物車已同步')
+      } catch (err) {
+        console.log('購物車同步失敗', err)
       }
-      console.log('同步購物車', reqDTO)
-      await syncCart(reqDTO)
-      cart.clearCart()
-      console.log('購物車已同步')
-    }catch(err){
-      console.log('購物車同步失敗', err)
     }
-  }
-})
+  },
+)
 </script>
 
 <template>
-  
   <main>
     <!-- 自己加的聊天室浮動元件 -->
     <ChatWidget />
@@ -86,7 +85,11 @@ watch(() => auth.isLoggedIn, async (LoggedIn) =>{
     >
       <div class="container">
         <!-- 左上 Logo icon -->
-        <RouterLink class="navbar-brand" to="/home"><img src="./assets/images/Viewrniture.png" class="logo"/> Viewrniture<span>.</span></RouterLink>
+        <RouterLink class="navbar-brand" to="/home"
+          ><img src="./assets/images/Viewrniture.png" class="logo" /> Viewrniture<span
+            >.</span
+          ></RouterLink
+        >
         <div class="collapse navbar-collapse" id="navbarsFurni">
           <!-- 上方導覽 -->
           <ul class="custom-navbar-nav navbar-nav ms-auto mb-2 mb-md-0">
@@ -109,71 +112,77 @@ watch(() => auth.isLoggedIn, async (LoggedIn) =>{
               <RouterLink class="nav-link" to="/Contact">聯絡我們</RouterLink>
             </li>
           </ul>
-          <!-- 右上角 icon -->
-          <div class="custom-navbar-cta navbar-nav mb-2 mb-md-0 ms-5">
+          <!-- 右上角功能列 -->
+          <ul class="custom-navbar-cta navbar-nav mb-2 mb-md-0 ms-5 align-items-center">
             <!-- 購物車 -->
             <li class="nav-item">
-              <RouterLink class="nav-link" to="/cart"
-                ><img src="/asset/images/cart.svg"
-              /></RouterLink>
-            </li>
-            <!-- 登入 icon -->
-            <!-- 未登入 -->
-            <li v-if="!auth.isLoggedIn" class="nav-item">
-              <RouterLink class="nav-link" to="/signin"
-                ><img src="/asset/images/user.svg"
-              /></RouterLink>
-            </li>
-
-            <!-- 會員區：未登入 -->
-            <!-- <li v-if="!auth.isLoggedIn" class="nav-item">
-              <RouterLink class="nav-link d-flex align-items-center" to="/signin">
-                
-                <i class="bi bi-person fs-4 text-white"></i>
+              <RouterLink class="nav-link" to="/cart">
+                <img src="/asset/images/cart.svg" alt="cart" />
               </RouterLink>
-            </li> -->
-
-            <!-- 會員區：已登入 -->
-            <li v-else class="nav-item dropdown">
-              <a
-                class="nav-link dropdown-toggle d-flex align-items-center gap-2"
-                href="#"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                <!-- 頭貼：用 Pinia 的 avatarUrl :src="auth.avatarUrl"-->
-                <img
-                  :src="auth.avatarUrl"
-                  alt="avatar"
-                  class="rounded-circle border"
-                  style="width: 28px; height: 28px; object-fit: cover"
-                  @error="$event.target.src = '/asset/images/user.svg'"
-                />
-
-                <!-- 顯示暱稱或姓名 -->
-                <span class="text-white fw-semibold">
-                  {{ auth.displayName || auth.user?.name || '使用者' }}
-                </span>
-              </a>
-
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li>
-                  <RouterLink class="dropdown-item" to="/account/profile"> 我的帳戶 </RouterLink>
-                </li>
-                <li><hr class="dropdown-divider" /></li>
-                <li>
-                  <RouterLink class="dropdown-item" to="/Order">訂單資訊</RouterLink>
-                </li>
-                <li><hr class="dropdown-divider" /></li>
-                <li>
-                  <button class="dropdown-item" @click="handleLogout" :disabled="loggingOut">
-                    {{ loggingOut ? '登出中…' : '登出' }}
-                  </button>
-                </li>
-              </ul>
             </li>
-          </div>
+
+            <!-- 未登入：登入｜註冊 -->
+            <template v-if="!auth.isLoggedIn">
+              <li class="nav-item">
+                <RouterLink class="nav-link px-2 auth-link" to="/signin">登入</RouterLink>
+              </li>
+              <li class="nav-item disabled">
+                <span class="nav-link px-0">|</span>
+              </li>
+              <li class="nav-item">
+                <RouterLink class="nav-link px-2 auth-link" to="/signup">註冊</RouterLink>
+              </li>
+            </template>
+
+            <!-- 已登入：頭貼＋暱稱＋下拉 -->
+            <template v-else>
+              <li class="nav-item dropdown">
+                <a
+                  class="nav-link dropdown-toggle d-flex align-items-center gap-2"
+                  href="#"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  <img
+                    :src="auth.avatarUrl || fallbackAvatar"
+                    alt="avatar"
+                    class="rounded-circle border object-fit-cover"
+                    width="28"
+                    height="28"
+                    @error="onAvatarError"
+                  />
+                  <span class="text-white fw-semibold">
+                    {{ auth.displayName || auth.user?.name || auth.user?.account || '使用者' }}
+                  </span>
+                </a>
+
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <!-- <li class="dropdown-header small text-muted px-3">
+                    {{ auth.user?.email }}
+                  </li> -->
+                  <!-- <li><hr class="dropdown-divider" /></li> -->
+                  <li>
+                    <RouterLink class="dropdown-item" to="/account/profile">我的帳戶</RouterLink>
+                  </li>
+                  <li><hr class="dropdown-divider" /></li>
+                  <li>
+                    <RouterLink class="dropdown-item" to="/Order">訂單資訊</RouterLink>
+                  </li>
+                  <li><hr class="dropdown-divider" /></li>
+                  <li>
+                    <button
+                      class="dropdown-item text-danger"
+                      @click="handleLogout"
+                      :disabled="loggingOut"
+                    >
+                      {{ loggingOut ? '登出中…' : '登出' }}
+                    </button>
+                  </li>
+                </ul>
+              </li>
+            </template>
+          </ul>
         </div>
       </div>
     </nav>
@@ -181,7 +190,7 @@ watch(() => auth.isLoggedIn, async (LoggedIn) =>{
     <RouterView />
 
     <!-- Footer（把 public 圖片改成 / 開頭） -->
-        <footer class="footer-section">
+    <footer class="footer-section">
       <div class="container relative">
         <div class="sofa-img">
           <!-- public 底下的圖，請用 /asset/... -->
@@ -306,7 +315,7 @@ watch(() => auth.isLoggedIn, async (LoggedIn) =>{
 </template>
 
 <style scoped>
- /* .app-container {
+/* .app-container {
   position: relative;
   min-height: 100vh;
 }
@@ -333,9 +342,19 @@ header {
   overflow: hidden;
   z-index: 9999;
 }
-.logo{
+.logo {
   width: 75px;
   height: 75px;
+}
+.auth-link {
+  color: #212529;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-link:hover {
+  color: #198754; /* Bootstrap success 綠 */
+  text-decoration: underline;
 }
 /* nav {
   width: 100%;

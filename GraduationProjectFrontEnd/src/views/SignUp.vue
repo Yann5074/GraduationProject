@@ -62,9 +62,8 @@ const canSendCode = computed(() => {
 })
 
 const canFinish = computed(() => {
-  return emailCode.value && emailCode.value.length >= 4 && !loading.value
+  return emailCode.value && emailCode.value.length >= 6 && !loading.value
 })
-
 // --- API wrappers ---
 function sendEmailCodeAPI(payload) {
   return http.post('/Member/send-email-code', payload)
@@ -330,14 +329,20 @@ async function handleFinish() {
               <div v-if="confirmMismatch" class="text-danger small mt-1">兩次密碼不一致</div>
             </div>
 
-            <button type="submit" class="btn btn-success w-100" :disabled="!canSendCode || loading">
-              寄送驗證碼到我的信箱
+            <button
+              type="submit"
+              class="btn btn-success w-100 send-btn"
+              :disabled="!canSendCode || loading"
+            >
+              <!-- ✅ 按下時顯示 spinner -->
+              <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+              {{ loading ? '寄送中...' : '寄送驗證碼到我的信箱' }}
             </button>
 
             <!-- footer 導引：已有帳號？去登入 -->
             <div class="text-center mt-4 small text-muted">
               已經有帳號了？
-              <router-link to="/signin" class="link-success text-decoration-none">
+              <router-link to="/signin" class="link-success text-decoration-none auth-link">
                 登入
               </router-link>
             </div>
@@ -375,13 +380,11 @@ async function handleFinish() {
               重新寄驗證碼
             </button>
 
-            <hr class="my-4 divider-line" />
-
             <!-- footer 導引：其實我已經有帳號 -->
-            <div class="text-center mt-4 small text-muted">
+            <div class="text-center mt-2 small text-muted">
               已經有帳號了？
-              <router-link to="/signin" class="link-success text-decoration-none">
-                直接登入
+              <router-link to="/signin" class="link-success text-decoration-none auth-link">
+                登入
               </router-link>
             </div>
           </form>
@@ -470,5 +473,57 @@ async function handleFinish() {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
   opacity: 0.75;
+}
+
+/* ===== 通用：連結 hover/聚焦 效果 ===== */
+.auth-link {
+  text-decoration: none;
+  font-weight: 400;
+  transition:
+    color 0.15s ease,
+    text-decoration-color 0.15s ease,
+    font-weight 0.15s ease;
+}
+
+.auth-link:hover,
+.auth-link:focus-visible {
+  text-decoration: underline !important; /* 蓋掉 text-decoration-none */
+  font-weight: 600;
+}
+/* ===== 寄送驗證碼按鈕：與 SignIn 登入按鈕一致的互動效果 ===== */
+.send-btn {
+  background-color: #198754; /* 正常綠色 */
+  border-color: #198754;
+  color: #fff;
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.2s ease;
+}
+
+/* 滑鼠移入（只有可點擊時才生效） */
+.send-btn:hover:not(:disabled) {
+  background-color: #28a96b; /* 略亮 */
+  border-color: #28a96b;
+}
+
+/* 按下按鈕 */
+.send-btn:active:not(:disabled) {
+  background-color: #157347; /* 略深 */
+  border-color: #157347;
+}
+
+/* 聚焦外框（無障礙） */
+.send-btn:focus-visible {
+  box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+}
+
+/* ✅ 禁用樣式（欄位不完整或寄送中） */
+.send-btn:disabled {
+  background-color: #cde5d6; /* 淺綠，顯示不可用 */
+  border-color: #cde5d6;
+  color: #ffffff;
+  cursor: not-allowed; /* 禁止游標 */
+  opacity: 1;
 }
 </style>

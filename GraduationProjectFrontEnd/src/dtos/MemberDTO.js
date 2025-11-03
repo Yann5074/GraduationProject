@@ -71,6 +71,9 @@ export function createMemberDTO(raw) {
   const phone = src.Phone ?? src.phone ?? ''
   const address = src.Address ?? src.address ?? ''
   const gender = src.Gender ?? src.gender ?? null
+  const levelId = src.LevelId ?? src.levelId ?? null
+  const levelName = src.LevelName ?? src.levelName ?? ''
+  const moneySum = src.MoneySum ?? src.moneySum ?? 0
 
   // 依序撈常見的影像欄位（同時支援大小寫 / 不同命名）
   const rawImg =
@@ -95,6 +98,9 @@ export function createMemberDTO(raw) {
     phone,
     address,
     gender: normalizeGender(gender),
+    levelId,
+    levelName,
+    moneySum,
     imageUrl: toImageUrl(rawImg), // 👈 這裡會組出完整可用網址
   }
 }
