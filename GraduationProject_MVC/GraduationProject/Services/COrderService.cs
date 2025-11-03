@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using GraduationProject.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.CodeAnalysis;
+using Common.Notifications;
+using Common.Notifications.Interfaces;
 
 namespace GraduationProject.Services
 {
@@ -12,9 +14,13 @@ namespace GraduationProject.Services
     {
         //注入語法
         private readonly dbFurniMartContext _context;
-        public COrderService(dbFurniMartContext context)
+        private readonly IOrderNotificationService _notify;
+        private readonly ILogger<COrderService>? _logger; 
+        public COrderService(dbFurniMartContext context, IOrderNotificationService notify, ILogger<COrderService>? logger)
         {
             _context = context;
+            _notify = notify;
+            _logger = logger;
         }
 
         //Interface實作
@@ -96,12 +102,18 @@ namespace GraduationProject.Services
             return true;
         }
 
-        //更新訂單
-        public bool UpdateOrder(OrderUpdateDTO dtoUi)
+        //更新訂單 (改為非同步版本)
+        public async Task<bool> UpdateOrder(OrderUpdateDTO dtoUi, CancellationToken ct = default)
         {
-            var od = _context.TOrders.FirstOrDefault(o => o.FOrderId == dtoUi.OrderId);
+            var od = await _context.TOrders
+                .Include(o => o.Member)
+                .FirstOrDefaultAsync(o => o.FOrderId == dtoUi.OrderId);
             if (od == null)
                 return false;
+
+            var oldOrderStatus = od.FOrderStatus; // 舊訂單狀態
+            var oldOrderDelivery = od.FDeliveryStatus; //舊運送狀態
+
             od.FDiscount = dtoUi.Discount;
             od.FOrderStatus = dtoUi.OrderStatus;
             od.FPaymentStatus = dtoUi.PaymentStatus;
@@ -113,10 +125,70 @@ namespace GraduationProject.Services
             od.FLogisticsProvider = dtoUi.LogisticsProvider;
             od.FOrderCompletionTime = dtoUi.OrderCompletionTime;
             od.FNote = dtoUi.FNote;
-            _context.SaveChanges();
 
-            return true;
+            await _context.SaveChangesAsync();
+
+            try
+            {
+                var toEmail = od.Member?.FEmail;
+                var name = od.Member?.FName;
+                if (!string.IsNullOrWhiteSpace(toEmail) && !string.IsNullOrWhiteSpace(name))
+                {
+                    if (oldOrderStatus != od.FOrderStatus)
+                    {
+                        await _notify.SendOrderStatusChangedAsync(
+                            toEmail!,
+                            od.FOrderId,
+                            name!,
+                            MapOrderStatus(od.FOrderStatus),
+                            ct
+                            );
+                    }
+
+                    if (oldOrderDelivery != od.FDeliveryStatus)
+                    {
+                        await _notify.SendOrderDeliveryChangedAsync(
+                            toEmail!,
+                            od.FOrderId,
+                            name!,
+                            MapOrderDelivery(od.FDeliveryStatus),
+                            ct
+                            );
+                    }
+                }
+
+                return true;
+            }catch(DbUpdateException ex )
+            {
+                return false;
+            }catch(Exception ex)
+            {
+                return false;
+            }
+
         }
+
+        // 內部對應 - 訂單狀態
+        private static string MapOrderStatus(int code) => code switch
+        {
+            1 => "處理中",
+            2 => "訂單成立",
+            3 => "付款資訊確認",
+            4 => "訂單出貨",
+            5 => "訂單完成"
+        };
+
+        //內部對應 - 運送狀態
+        private static string MapOrderDelivery(int code) => code switch
+        {
+            1 => "備貨中",
+            2 => "運送中",
+            3 => "已送達",
+            4 => "已取貨",
+            5 => "退貨中",
+            6 => "已退貨"
+        };
+
 
         //刪除訂單
         public bool DeleteOrder(int? id)

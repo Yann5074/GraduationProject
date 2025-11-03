@@ -32,4 +32,8 @@
     <Folder Include="wwwroot\MemberHeadImages\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Common.Notifications\Common.Notifications.csproj" />
+  </ItemGroup>
+
 </Project>

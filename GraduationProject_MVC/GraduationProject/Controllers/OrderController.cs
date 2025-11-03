@@ -70,7 +70,7 @@ namespace GraduationProject.Controllers
 
         // Order/Edit [HttpPost]
         [HttpPost]
-        public IActionResult Edit(COrderEditViewModel vm)
+        public async Task<IActionResult> Edit(COrderEditViewModel vm)
         {
             // 將 VM 轉回 DTO 以傳遞至 Service 計算
             var dtoUi = new OrderUpdateDTO
@@ -90,7 +90,7 @@ namespace GraduationProject.Controllers
                 FNote = vm.FNote,
             };
 
-            var result = _orderService.UpdateOrder(dtoUi);
+            var result = await _orderService.UpdateOrder(dtoUi);
             if (result == false)
             {
                 TempData["UpdateErrorMessage"] = "更新失敗";

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Common.Notifications;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,26 +27,28 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 
 //Employee
 builder.Services.AddScoped<IEmployeeService, CEmployeeService>();
-//Hasher(Identity¤º«Ø)
+//Hasher(Identityï¿½ï¿½ï¿½ï¿½)
 builder.Services.AddScoped<IPasswordHasher<TEmployee>, PasswordHasher<TEmployee>>();
-//µn¤J¬ÛÃö
+//ï¿½nï¿½Jï¿½ï¿½ï¿½ï¿½
 builder.Services.AddScoped<IAuthService, CAuthService>();
-//«H½cÅçÃÒ¬ÛÃö
+//ï¿½Hï¿½cï¿½ï¿½ï¿½Ò¬ï¿½ï¿½ï¿½
 builder.Services.Configure<CEmployeeEmailOptions>(builder.Configuration.GetSection("Email"));
 builder.Services.AddScoped<IEmployeeEmailSender, CMailSenderService>();
-//¹Ïªí¤ÀªR
+//ï¿½Ïªï¿½ï¿½ï¿½ï¿½R
 builder.Services.AddScoped<IAnalyticsService, CAnalyticsService>();
-//¨ú±oµn¤J­û¤u¸ê®Æ
+//ï¿½ï¿½ï¿½oï¿½nï¿½Jï¿½ï¿½ï¿½uï¿½ï¿½ï¿½
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContextService, CUserContextService>();
-//½Ð°²ºÞ²z
+//ï¿½Ð°ï¿½ï¿½Þ²z
 builder.Services.AddScoped<ILeaveService, CLeaveService>();
-//«e¥x¤½§i³]©w
+//ï¿½eï¿½xï¿½ï¿½ï¿½iï¿½]ï¿½w
 builder.Services.AddHttpClient("Api", c =>
 {
-    c.BaseAddress = new Uri("https://your-api-domain/");//«Ý§ï
+    c.BaseAddress = new Uri("https://your-api-domain/");//ï¿½Ý§ï¿½
 });
 builder.Services.AddScoped<IAnnouncementService, CAnnouncementService>();
+//ï¿½Hï¿½Hï¿½ï¿½ï¿½ï¿½ (Common.Notifications)
+builder.Services.AddNotification(builder.Configuration);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession(o =>

@@ -13,7 +13,8 @@ namespace GraduationProject.Interfaces
         public bool CreateOrder(OrderCreateDTO dto);
 
         //Update 更新訂單
-        public bool UpdateOrder(OrderUpdateDTO dto);
+        //public bool UpdateOrder(OrderUpdateDTO dto);
+        public Task<bool> UpdateOrder(OrderUpdateDTO dtoUi, CancellationToken ct = default);
 
         //Delete 刪除訂單
         public bool DeleteOrder(int? id);
