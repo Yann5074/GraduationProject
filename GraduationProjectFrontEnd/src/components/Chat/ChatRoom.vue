@@ -31,6 +31,7 @@ import * as singalR from '@microsoft/signalr'
 
 const content = ref('')
 const selectedId =  ref<number | null>(1) 
+//ref 的any Vue 會幫你監控這個陣列內容，只要它改變，畫面就自動刷新
 const messages = ref<any[]>([])
 const connection  = new singalR.HubConnectionBuilder()
   .withUrl("https://localhost:7131/chathub")
@@ -39,12 +40,15 @@ const connection  = new singalR.HubConnectionBuilder()
 
 onMounted(async () => {
   // 2) 監聽後端推播  singalR的傳遞為  '方法名稱', (參數) => {}
-  connection.on('ReceiveMessage', (payload) => {
-    console.log("Received message via SignalR:", payload)
+  connection.on('ReceiveMessage', (content,senderType) => {
+    console.log("Received message via SignalR:", content,senderType);
     // payload = { chatRoomId, content, senderType, senderId, createdAt }
-    if (payload.chatRoomId === selectedId.value) {
-      messages.value.push(payload)
-    }
+   
+      messages.value.push({
+  content: content,
+  senderType: senderType,
+  createdAt: new Date().toISOString() // 給個時間
+      }) 
   })
 
   await connection.start()
