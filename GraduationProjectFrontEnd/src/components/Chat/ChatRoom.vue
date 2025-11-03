@@ -83,7 +83,7 @@ async function send() {
   if (!selectedId.value || !content.value.trim()) return
 
   await http.post('/ChatRoom/SendMessage', { chatRoomId: selectedId.value, content: content.value.trim() },{ withCredentials: true });
-  await connection.invoke("SendToRole", selectedId.value.toString(), "employee", content.value.trim());
+  await connection.invoke("SendToRole", selectedId.value.toString(), "member", content.value.trim());
   content.value = ''
   await loadMessages()
 }
