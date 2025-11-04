@@ -275,6 +275,7 @@ import EditModal from '@/components/EditModal.vue';
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import { useLoading } from '@/stores/useLoading';
 import GlobalLoading from '@/components/GlobalLoading.vue';
+import Swal from 'sweetalert2';
 
 //顯示訂單相關
 const orders = ref([]);
@@ -324,16 +325,28 @@ async function handleConfirm(newValue){
         if (fieldType.value === 'taxno'){
             const res = await EditTaxNo(currentOrder.orderId, newValue)
             currentOrder.taxNo = newValue;
-            alert(`${res.message}`)
+            Swal.fire({
+                title: res.message,
+                icon: 'success',
+                confirmButtonText: '關閉'
+            })
         }else{
             const res = await EditDeliveryAddress(currentOrder.orderId, newValue)
             currentOrder.deliveryAddress = newValue;
-            alert(`${res.message}`)
+            Swal.fire({
+                title: res.message,
+                icon: 'success',
+                confirmButtonText: '關閉'
+            })
         }
     }catch (err){
         console.error('修改失敗: ', err.message)
         const msg = err.message;
-        alert(`${msg}`)
+        Swal.fire({
+            title: msg,
+            icon: 'error',
+            confirmButtonText: '關閉'
+        })
     }
 }
 
@@ -355,7 +368,11 @@ async function handleSearch(){
     }catch (err){
         console.error('取得訂單資料失敗', err)
         const msg = err.message;
-        alert(`${msg}`)
+        Swal.fire({
+            title: msg,
+            icon: 'error',
+            confirmButtonText: '關閉'
+        })
     }
 }
 
@@ -369,8 +386,13 @@ const toggleDelete = (od) =>{
 const handleDeleteConfirm = async () =>{
     try{
         const res = await deleteOrder(currentOrder.orderId)
-        if (res.message == null)
-            alert('訂單已取消')
+        if (res.message == null){
+            Swal.fire({
+                title: '訂單已取消',
+                icon: 'success',
+                confirmButtonText: '關閉'
+            })
+        }
         if (res.ok){
             const result = await getAllOrders()
             orders.value = result.map(order =>{
@@ -381,7 +403,11 @@ const handleDeleteConfirm = async () =>{
     }catch (err){
         console.log('刪除訂單失敗', err)
         let msg = err.message
-        alert(msg)
+        Swal.fire({
+            title: msg,
+            icon: 'error',
+            confirmButtonText: '關閉'
+        })
     }
 }
 </script>
