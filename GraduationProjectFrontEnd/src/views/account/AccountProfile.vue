@@ -161,18 +161,18 @@ async function onPickFile(e) {
         </div>
 
         <div class="mb-3">
+          <label class="form-label"> Email </label>
+          <input :value="me.email" type="text" class="form-control" disabled />
+        </div>
+
+        <div class="mb-3">
           <label class="form-label">姓名</label>
           <input v-model.trim="me.name" type="text" class="form-control" />
         </div>
 
         <div class="mb-3">
-          <label class="form-label"> 暱稱（顯示名稱）<span class="text-danger">*</span> </label>
-          <input v-model.trim="me.displayName" type="text" class="form-control" required />
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label"> Email <span class="text-danger">*</span> </label>
-          <input v-model.trim="me.email" type="email" class="form-control" required />
+          <label class="form-label"> 暱稱（顯示名稱） </label>
+          <input v-model.trim="me.displayName" type="text" class="form-control" />
         </div>
 
         <div class="mb-3">
@@ -210,7 +210,7 @@ async function onPickFile(e) {
         <div class="d-grid d-sm-inline-block mt-3">
           <button class="btn btn-success px-4" :disabled="saving || !canSave" @click="onSave">
             <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
-            儲存
+            {{ saving ? '儲存中...' : '儲存' }}
           </button>
         </div>
       </div>

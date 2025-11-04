@@ -236,8 +236,13 @@ async function handleResend() {
               </div>
             </div>
 
-            <button type="submit" class="btn btn-success w-100" :disabled="!canSendCode || loading">
-              寄送驗證碼到我的信箱
+            <button
+              type="submit"
+              class="btn btn-success w-100 send-btn"
+              :disabled="!canSendCode || loading"
+            >
+              <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+              {{ loading ? '寄送中...' : '寄送驗證碼到我的信箱' }}
             </button>
 
             <!-- 回登入 -->
@@ -270,6 +275,7 @@ async function handleResend() {
                 maxlength="6"
                 placeholder="輸入 Email 收到的驗證碼"
                 required
+                @input="code = code.replace(/\D/g, '').slice(0, 6)"
               />
             </div>
 
@@ -322,7 +328,11 @@ async function handleResend() {
               <div v-if="confirmMismatch" class="text-danger small mt-1">兩次密碼不一致</div>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100" :disabled="!canReset || loading">
+            <button
+              type="submit"
+              class="btn btn-primary w-100 finish-btn"
+              :disabled="!canReset || loading"
+            >
               重設密碼
             </button>
 
@@ -442,5 +452,77 @@ async function handleResend() {
 .auth-link:focus-visible {
   text-decoration: underline !important; /* 蓋掉 text-decoration-none */
   font-weight: 600;
+}
+/* ===== Step2 提交按鈕（與 SignUp.vue 完成註冊相同風格） ===== */
+.finish-btn {
+  background-color: #0d6efd; /* Bootstrap primary */
+  border-color: #0d6efd;
+  color: #fff;
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.2s ease;
+}
+
+/* 滑鼠移入（僅可點擊時） */
+.finish-btn:hover:not(:disabled) {
+  background-color: #0b5ed7;
+  border-color: #0a58ca;
+}
+
+/* 按下 */
+.finish-btn:active:not(:disabled) {
+  background-color: #0a58ca;
+  border-color: #0a53be;
+}
+
+/* 聚焦外框（無障礙） */
+.finish-btn:focus-visible {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* ✅ 禁用（條件未滿或 loading）→ 淺藍、不可按 */
+.finish-btn:disabled {
+  background-color: #cfe2ff; /* 淺藍 */
+  border-color: #cfe2ff;
+  color: #ffffff;
+  cursor: not-allowed;
+  opacity: 1; /* 避免 Bootstrap 把按鈕灰掉 */
+}
+/* ===== 寄送驗證碼按鈕：與 SignUp.vue 一致 ===== */
+.send-btn {
+  background-color: #198754; /* 正常綠色 */
+  border-color: #198754;
+  color: #fff;
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.2s ease;
+}
+
+/* 滑鼠移入（只有可點擊時才生效） */
+.send-btn:hover:not(:disabled) {
+  background-color: #28a96b; /* 略亮 */
+  border-color: #28a96b;
+}
+
+/* 按下按鈕 */
+.send-btn:active:not(:disabled) {
+  background-color: #157347; /* 略深 */
+  border-color: #157347;
+}
+
+/* 聚焦外框（無障礙） */
+.send-btn:focus-visible {
+  box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+}
+
+/* ✅ 禁用樣式（欄位不完整或寄送中） */
+.send-btn:disabled {
+  background-color: #cde5d6; /* 淺綠 */
+  border-color: #cde5d6;
+  color: #ffffff;
+  cursor: not-allowed;
+  opacity: 1; /* 避免被 Bootstrap 灰掉 */
 }
 </style>

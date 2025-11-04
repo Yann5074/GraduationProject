@@ -28,7 +28,12 @@ const oldPwdTouched = ref(false) // 使用者是否曾經離開該欄位（避�
 // ✅ 目前密碼驗證：使用 /api/Member/me/checkPassword 來檢查
 async function checkCurrentPassword() {
   // 如果沒有輸入，就不打 API
-  if (!oldPassword.value) return
+  if (!oldPassword.value) {
+    oldPwdTouched.value = false
+    oldPwdValid.value = true
+    checkingPwd.value = false
+    return
+  }
 
   oldPwdTouched.value = true
   checkingPwd.value = true
@@ -48,10 +53,16 @@ async function checkCurrentPassword() {
   }
 }
 
+let oldPwdTimer
 // 使用者在修改舊密碼時，先把錯誤提示暫時收起來
 function handleOldPwdInput() {
   oldPwdValid.value = true
   // 等到使用者離開輸入框 (blur) 再真正去打 API
+  oldPwdTouched.value = true
+  if (oldPwdTimer) clearTimeout(oldPwdTimer)
+  oldPwdTimer = setTimeout(() => {
+    checkCurrentPassword()
+  }, 350)
 }
 
 // ✅ 點「儲存」時送更新密碼 API
@@ -68,6 +79,10 @@ async function onSave() {
   // 如果使用者還沒觸發過 blur 檢查，就先檢查一次
   if (!oldPwdTouched.value) {
     await checkCurrentPassword()
+  }
+  // 若剛好在驗證中，等它完成（避免競態）
+  while (checkingPwd.value) {
+    await new Promise((r) => setTimeout(r, 50))
   }
   if (!oldPwdValid.value) {
     errMsg.value = '目前密碼不正確'
@@ -103,6 +118,7 @@ async function onSave() {
     // 重置驗證狀態
     oldPwdValid.value = true
     oldPwdTouched.value = false
+    checkingPwd.value = false
   } catch (err) {
     errMsg.value =
       err?.response?.data?.message ||
@@ -133,6 +149,8 @@ async function onSave() {
               v-model.trim="oldPassword"
               @input="handleOldPwdInput"
               @blur="checkCurrentPassword"
+              :class="{ 'is-invalid': oldPwdTouched && !oldPwdValid }"
+              aria-describedby="oldPwdFeedback"
               autocomplete="current-password"
               required
             />
@@ -151,7 +169,11 @@ async function onSave() {
           <!-- 動態提示：驗證中 / 錯誤 -->
           <div v-if="checkingPwd" class="text-muted small mt-1">正在驗證密碼...</div>
 
-          <div v-else-if="oldPwdTouched && !oldPwdValid" class="invalid-feedback d-block mt-1">
+          <div
+            v-else-if="oldPwdTouched && !oldPwdValid"
+            class="invalid-feedback d-block mt-1"
+            id="oldPwdFeedback"
+          >
             目前密碼不正確
           </div>
         </div>
@@ -223,7 +245,7 @@ async function onSave() {
         <div class="text-start mt-3">
           <button class="btn btn-success px-4" :disabled="saving" @click="onSave">
             <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
-            儲存
+            {{ saving ? '儲存中...' : '儲存' }}
           </button>
         </div>
       </div>

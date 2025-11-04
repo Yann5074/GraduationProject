@@ -364,10 +364,15 @@ async function handleFinish() {
                 class="form-control"
                 placeholder="請輸入驗證碼"
                 required
+                @input="emailCode = emailCode.replace(/\D/g, '').slice(0, 6)"
               />
             </div>
 
-            <button type="submit" class="btn btn-primary w-100" :disabled="!canFinish || loading">
+            <button
+              type="submit"
+              class="btn btn-primary w-100 finish-btn"
+              :disabled="!canFinish || loading"
+            >
               完成註冊並登入
             </button>
 
@@ -525,5 +530,41 @@ async function handleFinish() {
   color: #ffffff;
   cursor: not-allowed; /* 禁止游標 */
   opacity: 1;
+}
+/* ===== Step2 完成註冊按鈕（主色藍） ===== */
+.finish-btn {
+  background-color: #0d6efd; /* Bootstrap primary */
+  border-color: #0d6efd;
+  color: #fff;
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.2s ease;
+}
+
+/* 滑鼠移入（只有可點擊時才生效） */
+.finish-btn:hover:not(:disabled) {
+  background-color: #0b5ed7; /* 深一點的藍 */
+  border-color: #0a58ca;
+}
+
+/* 按下按鈕 */
+.finish-btn:active:not(:disabled) {
+  background-color: #0a58ca;
+  border-color: #0a53be;
+}
+
+/* 聚焦外框（無障礙） */
+.finish-btn:focus-visible {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* ✅ 禁用樣式（未滿 6 碼或 loading）→ 淺藍色且不可按 */
+.finish-btn:disabled {
+  background-color: #cfe2ff; /* 淺藍 */
+  border-color: #cfe2ff;
+  color: #ffffff;
+  cursor: not-allowed;
+  opacity: 1; /* 避免被 Bootstrap 灰掉 */
 }
 </style>
