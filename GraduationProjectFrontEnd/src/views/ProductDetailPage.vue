@@ -322,6 +322,7 @@ import { ProductAPI } from '@/api/Product'
 import { memberAddToCart } from '@/api/Cart'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/auth'
+import Swal from 'sweetalert2'
 
 
 const Furniture3DViewer = defineAsyncComponent(() => import('@/components/Furniture3DViewer.vue'))
@@ -698,7 +699,11 @@ async function addToCart() {
     const qty = quantity.value
 
     if(!productVariantId){
-      alert('請先選擇商品規格')
+      Swal.fire({
+        title: '請先選擇商品規格',
+        icon: 'error',
+        confirmButtonText: '關閉'
+      })
     }
 
     const atc = {
@@ -709,7 +714,11 @@ async function addToCart() {
       if (auth.isLoggedIn){
         const result = await memberAddToCart(atc)
         if (result.ok){
-          alert(result.message)
+          Swal.fire({
+            title: result.message,
+            icon: 'success',
+            confirmButtonText: '關閉'
+          })
       }
       }else{
         const productVariantId = selectedVariant.value?.fProductVariantId || selectedVariant.value?.FProductVariantId
@@ -718,11 +727,19 @@ async function addToCart() {
         const unitPrice = selectedVariant.value?.fPrice || product.value?.minPrice
         cart.addItem(productVariantId, qty, productName, imageUrl, unitPrice)
         // console.log('訪客購物車', cart.items)
-        alert('已加入訪客購物車')
+        Swal.fire({
+          title: '已加入訪客購物車',
+          icon: 'success',
+          confirmButtonText: '關閉'
+        })
       }
   }catch(err){
     console.error('錯誤', err)
-    alert('加入購物車時發生問題，請重新確認')
+    Swal.fire({
+      title: '加入購物車時發生問題，請重新確認',
+      icon: 'error',
+      confirmButtonText: '關閉'
+    })
   }
 }
 
@@ -732,7 +749,11 @@ async function buyNow() {
     const qty = quantity.value
 
     if(!productVariantId){
-      alert('請先選擇商品規格')
+      Swal.fire({
+        title: '請先選擇商品規格',
+        icon: 'error',
+        confirmButtonText: '關閉'
+      })
     }
 
     const atc = {
@@ -748,7 +769,11 @@ async function buyNow() {
         const imageUrl = selectedImage.value || product.value?.ImageUrl
         const unitPrice = selectedVariant.value?.fPrice || product.value?.minPrice
         cart.addItem(productVariantId, qty, productName, imageUrl, unitPrice)
-        alert('尚未登入，商品以加入購物車')
+        // Swal.fire({
+        //   title: '尚未登入，商品以加入購物車',
+        //   icon: 'success',
+        //   confirmButtonText: '關閉'
+        // })
         router.push('/cart')
       }
   }catch(err){
