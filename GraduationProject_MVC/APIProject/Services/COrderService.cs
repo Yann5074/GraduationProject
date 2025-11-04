@@ -59,7 +59,7 @@ namespace ApiProject.Services
                     .Select(od => new ResOrderDetailDTO
                     {
                         ProductName = od.ProductVariant.Product.FName,
-                        ProductInfo = od.ProductVariant.FLength.ToString() + " x" + od.ProductVariant.FWidth.ToString() + " x" + od.ProductVariant.FHeight.ToString() + " / " + od.ProductVariant.FWeight.ToString() + "Kg",
+                        ProductInfo = ((int)od.ProductVariant.FLength).ToString() + " x " + ((int)od.ProductVariant.FWidth).ToString() + " x " + ((int)od.ProductVariant.FHeight).ToString() + " cm" +" / " + ((int)od.ProductVariant.FWeight).ToString() + " Kg",
                         UnitPrice = od.FUnitPrice,
                         Quantity = od.FQuantity,
                         ImageUrl = od.ProductVariant.ProductAsset.FUrl,

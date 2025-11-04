@@ -60,11 +60,11 @@
             </table>
           </div>
           <!-- 合計欄位 -->
-          <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 gap-3">
+          <div class="d-flex flex-column flex-md-row align-items-center mt-4 gap-3">
             <div v-if="auth.isLoggedIn" class="text-muted">
               {{ nextTierMessage }}
             </div>
-            <div class="d-flex align-items-center">
+            <div class="d-flex align-items-center ms-md-auto">
               <h5 class="mb-0 me-3">
                 結帳金額:
                 <span class="totalPrice">
@@ -313,17 +313,11 @@ onMounted(async () => {
     })
   }else{
     guestCart.hydrateCart()
-    cartItems.value = guestCart.items.map(i =>({
-      productVariantId: i.productVariantId,
-      productName: i.productName,
-      imageUrl: i.imageUrl,
-      qty: i.qty,
-      unitPrice: i.unitPrice,
-      subtotal: i.unitPrice * i.qty
-    }))
   }
 }
 )
+
+
 
 // 移除商品
 const removeItem = async (id) =>{

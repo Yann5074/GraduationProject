@@ -10,6 +10,11 @@
         public int? FWarrantyMonth { get; set; }
         public bool? FAssemblyRequired { get; set; }
         public int? FDiscount { get; set; }
+        // 商品 size 三圍 + 重量
+        public decimal FLength { get; set; }
+        public decimal FWidth { get; set; }
+        public decimal FHeight { get; set; }
+        public decimal FWeight { get; set; }
 
 
         public string F3dModelPath { get; set; }        // 3D 模型檔案路徑

@@ -7,12 +7,15 @@ export const useCartStore = defineStore('cart', {
   }),
 
   actions: {
-    addItem(productVariantId, qty, productName, imageUrl, unitPrice) {
+    addItem(productVariantId, qty, productName, imageUrl, unitPrice, extra={}) {
       const existing = this.items.find(i => i.productVariantId === productVariantId)
       if (existing) {
         existing.qty += qty
+        for (const k in extra){
+          if (existing[k]==null) existing[k] = extra[k]
+        }
       } else {
-        this.items.push({ productVariantId, qty, productName, imageUrl, unitPrice })
+        this.items.push({ productVariantId, qty, productName, imageUrl, unitPrice, ...extra})
       }
       this.persistCart()
     },
