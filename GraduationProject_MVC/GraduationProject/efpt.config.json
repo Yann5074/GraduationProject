@@ -20,6 +20,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[tAnnouncements]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[tBrowsingHistory]",
          "ObjectType": 0
       },
@@ -169,10 +173,6 @@
       },
       {
          "Name": "[dbo].[tProductPart]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[tProductPBRTexture]",
          "ObjectType": 0
       },
       {
