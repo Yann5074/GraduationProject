@@ -448,7 +448,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TEmailVerification>(entity =>
         {
-            entity.HasKey(e => e.FEmailVerificationId).HasName("PK__tEmailVe__CF847B064352DD01");
+            entity.HasKey(e => e.FEmailVerificationId).HasName("PK__tEmailVe__CF847B063FC1704C");
 
             entity.ToTable("tEmailVerification");
 
@@ -563,7 +563,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TExternalLogin>(entity =>
         {
-            entity.HasKey(e => e.FExternalLoginId).HasName("PK__tExterna__3589B5A88D49AE91");
+            entity.HasKey(e => e.FExternalLoginId).HasName("PK__tExterna__3589B5A85291DE12");
 
             entity.ToTable("tExternalLogin");
 
@@ -599,7 +599,7 @@ public partial class dbFurniMartContext : DbContext
             entity.HasOne(d => d.FMember).WithMany(p => p.TExternalLogins)
                 .HasForeignKey(d => d.FMemberId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_TExternalLogin_TMember");
+                .HasConstraintName("FK_TExternalLogin_tMember");
         });
 
         modelBuilder.Entity<TGender>(entity =>
