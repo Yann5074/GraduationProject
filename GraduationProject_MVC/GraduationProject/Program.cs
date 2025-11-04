@@ -40,6 +40,12 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContextService, CUserContextService>();
 //請假管理
 builder.Services.AddScoped<ILeaveService, CLeaveService>();
+//前台公告設定
+builder.Services.AddHttpClient("Api", c =>
+{
+    c.BaseAddress = new Uri("https://your-api-domain/");//待改
+});
+builder.Services.AddScoped<IAnnouncementService, CAnnouncementService>();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession(o =>

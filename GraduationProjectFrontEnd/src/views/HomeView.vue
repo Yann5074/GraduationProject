@@ -2,7 +2,7 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 const router = useRouter()
-const goShop = () => router.push({ name: 'shop' })
+const goShop = () => router.push({ name: 'ProductList' })
 
 onMounted(() => { 
   // 若有影片，避免 iOS 自動全屏
@@ -17,7 +17,7 @@ onMounted(() => {
 	<section class="hero-neo">
  		<!-- 用影片；若沒有影片就改成背景圖 -->
     	<video class="hero-video" autoplay muted loop playsinline preload="auto" poster="/asset/images/hero-poster.jpg">
-      		<source src="/asset/videos/hero.mp4" type="video/mp4" />
+      		<source src="/asset/videos/hero2.mp4" type="video/mp4" />
     	</video>
 
     	<div class="hero-overlay"></div>
@@ -25,7 +25,7 @@ onMounted(() => {
     	<div class="container d-flex flex-column justify-content-center align-items-start h-100">
       		<h1 class="display-3 fw-bold text-white lh-1 mb-3">Make Interiors <br><span class="grad">Feel Alive</span>
       		</h1>
-      		<p class="lead text-white-50 mb-4">以即時渲染展示你的家居靈感。從靈感到成品，只差一次點擊。
+      		<p class="lead text-white-50 mb-4">即時渲染展示你的家居靈感
       		</p>
       		<div class="d-flex gap-3">
         	<button class="btn btn-neo btn-lg px-4" @click="goShop">開始選購</button>
@@ -43,8 +43,17 @@ onMounted(() => {
     		<div class="glow glow-a"></div>
     		<div class="glow glow-b"></div>
   </section>
-
 	<!-- End Hero Section -->
+
+  <!-- Start Announcement Section -->
+  <section class="announcement py-3 bg-transparent text-dark text-center">
+    <div class="container">
+      <p class="mb-0 fs-5">
+        🎉 全館限時優惠中！滿 NT$2000 免運費，活動至 11/15 截止
+      </p>
+    </div>
+  </section>
+  <!-- End Announcement Section -->
 
   <!-- Start Product Section -->
 		<div class="product-section">

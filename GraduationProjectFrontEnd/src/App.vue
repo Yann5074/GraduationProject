@@ -1,6 +1,6 @@
 <script setup>
-import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
-import { onMounted, ref, watch } from 'vue'
+import { RouterLink, RouterView, useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
+import { onMounted, ref, watch,  onBeforeUnmount } from 'vue'
 import { Dropdown } from 'bootstrap'
 import http from '../src/api/axios'
 import { useAuthStore } from '@/stores/auth'
@@ -13,6 +13,43 @@ const router = useRouter()
 const isActive = (path) => route.path.startsWith(path)
 const auth = useAuthStore()
 const cart = useCartStore()
+const isHidden = ref(false)   // 預設顯示
+let lastY = 0
+let ticking = false
+
+const shouldHide = () => {
+  const y = Math.max(window.scrollY, 0) // iOS 可能會 < 0
+  const navIsOpen = document.getElementById('navMain')?.classList.contains('show')
+
+  // 在頂部就不要隱藏
+  if (y <= 0) {
+    isHidden.value = false
+    lastY = 0
+    return
+  }
+
+  // 手機選單展開時不要隱藏
+  if (navIsOpen) {
+    isHidden.value = false
+    lastY = y
+    return
+  }
+
+  // 往下捲 -> 隱藏；往上捲 -> 顯示
+  isHidden.value = y > lastY
+  lastY = y
+}
+
+const onScroll = () => {
+  // 用 rAF 節流、避免每像素觸發
+  if (!ticking) {
+    window.requestAnimationFrame(() => {
+      shouldHide()
+      ticking = false
+    })
+    ticking = true
+  }
+}
 
 /** ✅ 啟動時同步伺服器 Session 狀態 */
 // ✅ 修正版：讓 Pinia 自動用 MemberDTO 處理 imageUrl
@@ -46,6 +83,20 @@ onMounted(() => {
   auth.hydrate()
   hydrateFromServer()
   cart.hydrateCart()
+
+  // 捲動監聽
+  lastY = Math.max(window.scrollY, 0)
+  window.addEventListener('scroll', onScroll, { passive: true })
+})
+
+// 換頁時重置為顯示（避免新頁面一進來就縮起來）
+onBeforeRouteUpdate((to, from, next) => { 
+  isHidden.value = false 
+  next()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', onScroll)
 })
 
 // 登入後購物車同步
@@ -81,7 +132,7 @@ watch(
     <!-- 上方導覽列 -->
     <nav
       class="navbar navbar-expand-md nav-neo" 
-      :class="{ 'nav-solid': $route.path !== '/home' }" 
+      :class="[{ 'nav-solid': $route.path !== '/home' }, { 'nav-hidden': isHidden }]" 
       aria-label="Main"
     >
       <div class="container">
@@ -89,7 +140,7 @@ watch(
         <RouterLink class="navbar-brand" to="/home"> Viewrniture<span>.</span></RouterLink>
         <!-- <RouterLink class="navbar-brand" to="/home"><img src="./assets/images/Viewrniture.png" class="logo"/> Viewrniture<span>.</span></RouterLink> -->
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-expanded="false" aria-controls="navMain">
           <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -363,9 +414,16 @@ header {
 .nav-neo {
   position: fixed; top:0; left:0; right:0; z-index: 1030;
   background: transparent;
-  transition: background .3s ease, box-shadow .3s ease;
+  transition: transform .28s ease, background-color .2s ease, box-shadow .2s ease;
 }
+
 .nav-neo.nav-solid { background: rgba(15,17,19,.9); backdrop-filter: blur(8px); box-shadow: 0 1px 0 rgba(255,255,255,.06); }
+
+/* 往上滑出視口 */
+.nav-hidden {
+  transform: translateY(-100%);
+}
+
 .nav-neo .nav-link { color: #fff; opacity:.9; }
 .nav-neo .nav-link.router-link-active { opacity:1 }
 

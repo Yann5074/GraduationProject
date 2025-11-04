@@ -1,0 +1,54 @@
+﻿@using GraduationProject.DTOs
+@model List<CAnnouncementDTO>
+@{
+    ViewData["Title"] = "公告列表";
+}
+<h2>@ViewData["Title"]</h2>
+
+@if (TempData["ok"] is string msg)
+{
+    <div class="alert alert-success">@msg</div>
+}
+
+<div class="mb-3">
+    <a asp-action="Create" class="btn btn-primary">新增公告</a>
+</div>
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>標題</th>
+            <th>開始</th>
+            <th>結束</th>
+            <th>啟用</th>
+            <th>優先級</th>
+            <th>最後更新</th>
+            <th style="width:140px;"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null)
+        {
+            foreach (var x in Model)
+            {
+                <tr>
+                    <td>@x.Title</td>
+                    <td>@x.StartAt.ToLocalTime()</td>
+                    <td>@(x.EndAt.HasValue? x.EndAt.Value.ToLocalTime().ToString() : "-")</td>
+                    <td>@(x.IsActive ? "✔" : "✖")</td>
+                    <td>@x.Priority</td>
+                    <td>@x.LastUpdated.ToLocalTime()</td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@x.Id" class="btn btn-sm btn-outline-secondary">編輯</a>
+                        <form asp-action="Delete" asp-route-id="@x.Id" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('確定刪除？');">刪除</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+
