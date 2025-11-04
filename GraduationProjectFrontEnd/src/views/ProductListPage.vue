@@ -1,5 +1,6 @@
 <!-- 產品列表頁 - 單選類別版本 -->
 <template>
+  <GlobalLoading scope="product" message="商品載入中..." />
   <div class="product-list-page">
     <div class="container py-4">
       <!-- 搜尋列 -->
@@ -405,12 +406,17 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { ProductAPI } from '@/api/Product'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import ProductAPI from '@/api/Product'
+import { useLoading } from '@/stores/useLoading'
+import GlobalLoading from '@/components/GlobalLoading.vue'
 
 const route = useRoute()
 const router = useRouter()
+
+//loading相關
+const {withLoading} = useLoading('product');
 
 // 狀態
 const products = ref([])
@@ -488,6 +494,15 @@ onMounted(() => {
 watch(() => route.query, () => {
   initFiltersFromQuery()
   loadProducts()
+}, { deep: true })
+
+// 初始化
+onMounted(async () => {
+  await withLoading(async () =>{
+    await loadFilterOptions()
+    syncFiltersFromURL()
+    await loadProducts()
+  })
 })
 
 // ⭐ 修改點 5: 從 URL 查詢參數初始化篩選條件（改回單一類別）

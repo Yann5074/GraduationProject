@@ -1,4 +1,5 @@
 <template>
+  <GlobalLoading scope="cart" message="載入購物車清單..." />
   <div class="title d-flex align-items-center mb-2">
     <i class="bi bi-cart"></i>
     <h3>購物車</h3>
@@ -148,6 +149,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cartStore'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import { useLoading } from '@/stores/useLoading'
+import GlobalLoading from '@/components/GlobalLoading.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -163,6 +166,8 @@ const confirmModalRef = ref(null)
 let currentCart = null;
 // 更改數量相關
 let isRestoring  = false
+// Loading 畫面相關
+const {withLoading} = useLoading('cart');
 
 // 動態計數&呼叫數量變動API
 const onQtyChange = async (ci, newQty) =>{
@@ -283,21 +288,24 @@ const totalAmountNumber = computed(()=>
 //初始化載入
 onMounted(async () => {
   if (auth.isLoggedIn){
-    try{
-      const result = await getAllCarts()
-      const firstCart = Array.isArray(result) && result.length > 0 ? result[0] : null
-      if(!firstCart){
-        cartId.value = null
+    await withLoading(async () => {
+      try{
+        const result = await getAllCarts()
+        const firstCart = Array.isArray(result) && result.length > 0 ? result[0] : null
+        if(!firstCart){
+          cartId.value = null
+          memberItems.value = []
+          return
+        }
+        cartId.value = firstCart.cartId
+        memberItems.value = firstCart.cartItem || []
+      }catch(err){
+        console.error('載入購物車錯誤', err)
+        // if (err.code !== '401')
+        //   alert(err.message)
         memberItems.value = []
       }
-      cartId.value = firstCart.cartId
-      memberItems.value = firstCart.cartItem || []
-    }catch(err){
-      console.error('載入購物車錯誤', err)
-      // if (err.code !== '401')
-      //   alert(err.message)
-      memberItems.value = []
-    }
+    })
   }else{
     guestCart.hydrateCart()
     cartItems.value = guestCart.items.map(i =>({

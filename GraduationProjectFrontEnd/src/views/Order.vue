@@ -1,4 +1,5 @@
 <template>
+    <GlobalLoading scope="orders" message="載入訂單..."/>
     <div class="order-list container">
         <!-- 搜尋功能區塊 -->
         <div class="search-bar justify-content-between mb-4">
@@ -272,6 +273,8 @@ import {ref, onMounted} from 'vue';
 import {getAllOrders, lookupOrder, deleteOrder, EditDeliveryAddress, EditTaxNo} from '@/api/Order';
 import EditModal from '@/components/EditModal.vue';
 import ConfirmModal from '@/components/ConfirmModal.vue'
+import { useLoading } from '@/stores/useLoading';
+import GlobalLoading from '@/components/GlobalLoading.vue';
 
 //顯示訂單相關
 const orders = ref([]);
@@ -286,13 +289,17 @@ let currentOrder = null;
 const keyword = ref('');
 //刪除訂單相關
 const confirmModalRef = ref(null);
+//Loading畫面相關
+const {withLoading} = useLoading('orders');
 
 //初始載入
 onMounted(async () =>{
-    const result = await getAllOrders()
-    orders.value = result.map(order =>{
-        order.showDetails= false
-        return order
+    await withLoading(async () => {
+        const result = await getAllOrders()
+        orders.value = result.map(order =>{
+            order.showDetails= false
+            return order
+        })
     })
 })
 
