@@ -1,7 +1,7 @@
 <template>
+  <GlobalLoading scope="checkout" message="訂單建立中..."/>
   <div class="container py-4 checkout-page">
     <h2 class="mb-4 fw-bold">結帳資訊</h2>
-
     <div class="row">
       <!-- 左側主要表單 -->
       <div class="col-lg-8">
@@ -142,11 +142,15 @@ import { useAuthStore } from '@/stores/auth'
 import { useRouter, useRoute } from 'vue-router'
 import { memberCheckOut } from '@/api/Order'
 import Swal from 'sweetalert2'
+import { useLoading } from '@/stores/useLoading'
+import GlobalLoading from '@/components/GlobalLoading.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 const totalAmount = ref(0)
+//設定loading相關
+const {withLoading} = useLoading('checkout') // 建立訂單
 
 const levelName = auth.user.levelName
 
@@ -288,7 +292,9 @@ async function submitOrder(){
     }
 
     //呼叫API
-    const result = await memberCheckOut(payload)
+    const result = await withLoading(async () =>{
+      return await memberCheckOut(payload)
+    })
     const orderId = result?.data?.orderId
     // 組裝 ECPay 所需DTO
     const ecpay = {

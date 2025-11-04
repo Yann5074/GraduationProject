@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/auth'
 import ChatWidget from '@/components/Chat/ChatWidget.vue'
 import { useCartStore } from './stores/cartStore'
 import { syncCart } from './api/Cart'
+import GlobalLoading from './components/GlobalLoading.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -244,6 +245,7 @@ watch(
     </nav>
 
     <RouterView />
+    <!-- <GlobalLoading /> -->
 
     <!-- Footer（把 public 圖片改成 / 開頭） -->
     <footer class="footer-section">
