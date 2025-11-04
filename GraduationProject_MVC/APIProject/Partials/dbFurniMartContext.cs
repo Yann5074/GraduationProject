@@ -1,25 +1,25 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿    using Microsoft.EntityFrameworkCore;
 
-namespace ApiProject.Models
-{
-    public partial class dbFurniMartContext : DbContext
+    namespace ApiProject.Models
     {
-        public dbFurniMartContext() { }
-
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        public partial class dbFurniMartContext : DbContext
         {
-            if (!optionsBuilder.IsConfigured)
+            public dbFurniMartContext() { }
+
+
+            protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             {
-                IConfiguration Config = new ConfigurationBuilder()
-                    .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                    .AddJsonFile("appsettings.json")
-                    .Build();
-                optionsBuilder.UseSqlServer(Config.GetConnectionString("dbFurniMart"));
+                if (!optionsBuilder.IsConfigured)
+                {
+                    IConfiguration Config = new ConfigurationBuilder()
+                        .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                        .AddJsonFile("appsettings.json")
+                        .Build();
+                    optionsBuilder.UseSqlServer(Config.GetConnectionString("dbFurniMart"));
+                }
             }
+
+
+
         }
-
-
-
     }
-}
