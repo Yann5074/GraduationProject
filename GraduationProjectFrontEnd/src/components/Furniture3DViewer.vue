@@ -120,7 +120,7 @@ async function setupEnvMap(envUrl) {
 
   scene.environment = envMap
 
-  // ✅ 用 IBL 同時當背景，並讓背景「模糊」
+  //  用 IBL 同時當背景，並讓背景「模糊」
   scene.background = envMap
   // 0~1（甚至可 >1），數值越大越模糊
   scene.backgroundBlurriness = 0.6
@@ -271,7 +271,7 @@ async function boot() {
     controls.target.set(0, 0.35, 0)                                      // [MATCH-EXAMPLE]
     controls.update()
 
-    // ⚠️ 不加入任何燈光（保持與示例一致）
+    // 不加入任何燈光（保持與示例一致）
 
     // 後端資料
     const dto = await getPBRDto()

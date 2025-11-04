@@ -28,19 +28,19 @@
         <!-- 側邊篩選欄 -->
         <div class="col-lg-3 col-md-4 mb-4">
           <div class="card shadow-sm sticky-top" style="top: 20px;">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header  text-black">
               <h5 class="mb-0">
                 <i class="bi bi-funnel me-2"></i>篩選條件
               </h5>
             </div>
             <div class="card-body">
-              <!-- ⭐ 修改點 1: 類別篩選 - 單選 (取消註解並改為 radio) -->
+
               <div class="mb-4">
                 <h6 class="fw-bold mb-3">
                   <i class="bi bi-grid me-2"></i>產品類別
                 </h6>
                 <div v-if="filterOptions.categories && filterOptions.categories.length > 0">
-                  <!-- ⭐ 修改：改為顯示全部選項 -->
+
                   <div class="form-check mb-2">
                     <input
                       id="category-all"
@@ -57,7 +57,7 @@
                       <span>全部類別</span>
                     </label>
                   </div>
-                  <!-- ⭐ 修改：使用 radio 單選 -->
+
                   <div
                     v-for="category in filterOptions.categories"
                     :key="category.categoryId"
@@ -76,13 +76,13 @@
                       :for="`category-${category.categoryId}`"
                     >
                       <span>{{ category.name }}</span>
-                      <!-- ⭐ 修改：顯示產品數量 -->
+  
                       <span class="badge bg-secondary rounded-pill ms-2" style="font-size: 0.7rem;">
                         {{ category.productCount }}
                       </span>
                     </label>
                   </div>
-                  <!-- ⭐ 修改：清除按鈕條件 -->
+        
                   <button
                     v-if="localFilters.categoryId !== null"
                     class="btn btn-sm btn-outline-secondary mt-2 w-100"
@@ -200,13 +200,13 @@
                 <i class="bi bi-x-circle me-1"></i>清除所有篩選
               </button>
 
-              <!-- ⭐ 修改點 2: 當前篩選摘要 -->
+
               <div v-if="hasActiveFilters" class="mt-3 p-2 bg-light rounded">
                 <small class="text-muted d-block mb-2">
                   <strong>已套用篩選：</strong>
                 </small>
                 <div class="d-flex flex-wrap gap-1">
-                  <!-- ⭐ 修改：改為顯示單一類別 -->
+ 
                   <span v-if="localFilters.categoryId !== null" class="badge bg-secondary">
                     類別
                   </span>
@@ -331,22 +331,22 @@
                         <span v-if="product.fDiscount && product.fDiscount > 0" class="text-muted text-decoration-line-through me-2 small">
                           NT$ {{ formatPrice(calculateOriginalPrice(product.minPrice, product.fDiscount)) }}
                         </span>
-                        <span class="fs-5 fw-bold text-primary">
+                        <span class="fs-5 fw-bold text-black">
                           NT$ {{ formatPrice(product.minPrice) }}
                         </span>
                       </div>
                       <div v-else>
-                        <span class="fs-6 fw-bold text-primary">
+                        <span class="fs-6 fw-bold text-black">
                           NT$ {{ formatPrice(product.minPrice) }} - {{ formatPrice(product.maxPrice) }}
                         </span>
                       </div>
                       <div class="mt-2">
-                        <span v-if="product.totalStock > 0" class="badge bg-success">
+                        <!-- <span v-if="product.totalStock > 0" class="badge bg-success">
                           庫存 {{ product.totalStock }}
                         </span>
                         <span v-else class="badge bg-secondary">
                           已售完
-                        </span>
+                        </span> -->
                       </div>
                     </div>
                   </div>
@@ -818,8 +818,8 @@ function getProductImageUrl(product) {
 }
 
 .form-check-input:checked {
-  background-color: #0d6efd;
-  border-color: #0d6efd;
+  background-color: #f5efe3;
+  border-color: #cfcabb;
 }
 
 .badge {
