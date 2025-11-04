@@ -591,6 +591,7 @@
           return max + 1;
         }
 
+
         // 新增某變體的資產
         variantList?.addEventListener('click', function (e) {
           const btn = e.target.closest('.btn-add-asset-for-variant');
@@ -683,5 +684,28 @@
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           return await res.json();
         }
+
+
+
+
+                // 表單提交前重新編號所有資產索引
+        document.querySelector('form')?.addEventListener('submit', function(e) {
+            const allAssets = Array.from(document.querySelectorAll('.asset-item'))
+                .filter(asset => {
+                    const deletedFlag = asset.querySelector('input[name$=".Deleted"]');
+                    return !deletedFlag || deletedFlag.value !== 'true';
+                });
+
+            allAssets.forEach((asset, newIndex) => {
+                asset.setAttribute('data-asset-index', newIndex);
+                asset.querySelectorAll('input, select, textarea').forEach(input => {
+                    const name = input.getAttribute('name');
+                    if (name && name.match(/Data\.Assets\[\d+\]/)) {
+                        const newName = name.replace(/Data\.Assets\[\d+\]/, `Data.Assets[${newIndex}]`);
+                        input.setAttribute('name', newName);
+                    }
+                });
+            });
+        });
     </script>
 }

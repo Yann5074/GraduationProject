@@ -634,7 +634,7 @@ namespace GraduationProject.Services
             }
         }
 
-       
+
         private static void EnforceSinglePrimaryInDbScope(TProduct product)
         {
             var groups = (product.ProductAssets ?? Enumerable.Empty<TProductAsset>())
@@ -642,20 +642,56 @@ namespace GraduationProject.Services
 
             foreach (var g in groups)
             {
-                
-                var keep = g.Where(a => a.FIsPrimary == true) 
-                            .OrderBy(a => a.FSortOrder ?? int.MaxValue)
-                            .ThenBy(a => a.FAssetId)
-                            .FirstOrDefault()
-                       ?? g.OrderBy(a => a.FSortOrder ?? int.MaxValue)
-                            .ThenBy(a => a.FAssetId)
-                            .FirstOrDefault();
+                var variantId = g.Key;
+                var assetList = g.ToList();
 
-                bool kept = false;
-                foreach (var a in g)
+                // 修復：區分變體資產和通用資產
+                // 通用資產（FProductVariantId = null，分組後 key = 0）不強制設主圖
+                bool isCommonAsset = (variantId == 0);
+
+                // 找出已標記為主圖的資產
+                var primaries = assetList.Where(a => a.FIsPrimary == true)
+                                         .OrderBy(a => a.FSortOrder ?? int.MaxValue)
+                                         .ThenBy(a => a.FAssetId)
+                                         .ToList();
+
+                TProductAsset? keep = null;
+
+                if (primaries.Count > 1)
                 {
-                    if (!kept && a == keep) { a.FIsPrimary = true; kept = true; }
-                    else a.FIsPrimary = false;
+                    // 情況1：有多個主圖 → 只保留第一個
+                    keep = primaries.First();
+                }
+                else if (primaries.Count == 1)
+                {
+                    // 情況2：剛好一個主圖 → 保持不變
+                    keep = primaries.First();
+                }
+                else if (!isCommonAsset && assetList.Count > 0)
+                {
+                    // 情況3：變體資產沒有主圖 → 自動設置第一個為主圖
+                    // 注意：只對變體資產執行此邏輯，通用資產不強制
+                    keep = assetList.OrderBy(a => a.FSortOrder ?? int.MaxValue)
+                                   .ThenBy(a => a.FAssetId)
+                                   .First();
+                }
+                // else: 通用資產且沒有主圖 → 不做任何處理，尊重用戶選擇
+
+                // 更新資產的主圖狀態
+                foreach (var a in assetList)
+                {
+                    if (keep != null && a == keep)
+                    {
+                        a.FIsPrimary = true;
+                    }
+                    else if (primaries.Count > 1 || (!isCommonAsset && keep != null))
+                    {
+                        // 只在以下情況清除主圖標記：
+                        // 1. 有多個主圖時，清除非選中的
+                        // 2. 變體資產需要主圖時，清除其他的
+                        a.FIsPrimary = false;
+                    }
+                    // 通用資產如果沒有 keep，則不修改 FIsPrimary（保持原值）
                 }
             }
         }

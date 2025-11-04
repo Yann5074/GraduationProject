@@ -475,11 +475,11 @@ async function loadProductDetail() {
       await loadVariants(pid )
       await loadRelatedProducts(product.value.fCategoryId)
     } else {
-      console.error('❌ 載入失敗:', response)
+      console.error(' 載入失敗:', response)
       error.value = response.message || '載入產品失敗'
     }
   } catch (err) {
-    console.error('❌ 發生錯誤:', err)
+    console.error(' 發生錯誤:', err)
     error.value = err.message || '載入產品時發生錯誤'
   } finally {
     loading.value = false
@@ -497,7 +497,7 @@ function isImageUrl(url) {
 
 // 正：設定產品圖片（避免重複、排除 3D）
 function setupProductImages() {
-  console.log('🖼️ 設定產品圖片')
+  console.log(' 設定產品圖片')
 
   const imageSet = new Set()
   const newImages = []
@@ -510,7 +510,7 @@ function setupProductImages() {
     if (!stableUrl || imageSet.has(stableUrl)) return
     imageSet.add(stableUrl)
     newImages.push(stableUrl)
-    console.log('  ✅ 加入圖片:', stableUrl)
+    console.log('   加入圖片:', stableUrl)
   }
 
   // 1) 主圖優先
@@ -552,7 +552,7 @@ function setupProductImages() {
 
   productImages.value = newImages
   selectedImage.value = newImages[0]
-  console.log('✅ 圖片設定完成，共 ' + newImages.length + ' 張（無 3D/貼圖，且無重複）')
+  console.log(' 圖片設定完成，共 ' + newImages.length + ' 張（無 3D/貼圖，且無重複）')
 }
 
 async function toggle3D() {
@@ -560,7 +560,7 @@ async function toggle3D() {
     try {
       const res = await ProductAPI.getPBR(productId.value)
       
-      console.log('🔍 PBR API 回應:', res)
+      console.log(' PBR API 回應:', res)
       
       if (!res || !res.success) {
         alert('無法載入 3D 資料')
@@ -578,10 +578,10 @@ async function toggle3D() {
         return
       }
       
-      console.log('✅ 3D 模型 URL:', firstItem.modelUrl)
+      console.log(' 3D 模型 URL:', firstItem.modelUrl)
       
     } catch (e) {
-      console.error('❌ 查詢 PBR 失敗', e)
+      console.error(' 查詢 PBR 失敗', e)
       alert('無法載入 3D 模型：' + (e.message || '未知錯誤'))
       return
     }
@@ -594,7 +594,7 @@ async function toggle3D() {
 // 載入變體
 async function loadVariants(productId) {
   if (product.value.variants && Array.isArray(product.value.variants)) {
-    console.log('📦 使用產品資料中的變體:', product.value.variants.length, '個')
+    console.log('使用產品資料中的變體:', product.value.variants.length, '個')
     
     variants.value = product.value.variants
     
@@ -602,7 +602,7 @@ async function loadVariants(productId) {
     const available = variants.value.find(v => (v.fStock || v.FStock) > 0)
     if (available) {
       selectVariant(available)
-      console.log('✅ 已選擇變體:', available.fSku || available.FSku)
+      console.log(' 已選擇變體:', available.fSku || available.FSku)
     } else if (variants.value.length === 1) {
       // 如果只有一個變體，即使缺貨也選擇它
       selectVariant(variants.value[0])
@@ -634,7 +634,7 @@ async function loadRelatedProducts(categoryId) {
         })
     }
   } catch (err) {
-    console.error('❌ 載入相關產品失敗:', err)
+    console.error(' 載入相關產品失敗:', err)
   }
 }
 

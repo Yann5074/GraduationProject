@@ -222,9 +222,28 @@ namespace GraduationProject.Controllers
             var saveDir = Path.Combine(webRoot, "ProductImages");
             Directory.CreateDirectory(saveDir);
 
-            // 以時間 + Guid 命名避免重名
-            var fname = $"{DateTime.UtcNow:yyyyMMddHHmmssfff}_{Guid.NewGuid():N}{ext}";
-            var fullPath = Path.Combine(saveDir, fname);
+            // 保留原始檔名
+            var originalFileName = Path.GetFileName(file.FileName);
+            var fileNameWithoutExt = Path.GetFileNameWithoutExtension(originalFileName);
+
+            // 處理檔名中的非法字元
+            var invalidChars = Path.GetInvalidFileNameChars();
+            foreach (var c in invalidChars)
+            {
+                fileNameWithoutExt = fileNameWithoutExt.Replace(c, '_');
+            }
+
+            // 檢查檔名是否已存在，如果存在就加上編號
+            var finalFileName = $"{fileNameWithoutExt}{ext}";
+            var fullPath = Path.Combine(saveDir, finalFileName);
+
+            int counter = 1;
+            while (System.IO.File.Exists(fullPath))
+            {
+                finalFileName = $"{fileNameWithoutExt}_{counter}{ext}";
+                fullPath = Path.Combine(saveDir, finalFileName);
+                counter++;
+            }
 
             // 寫檔
             await using (var fs = System.IO.File.Create(fullPath))
@@ -232,9 +251,15 @@ namespace GraduationProject.Controllers
                 await file.CopyToAsync(fs);
             }
 
-            // 回傳可供前端填入的 URL 與 mime
-            var publicUrl = $"/ProductImages/{fname}";
-            return Json(new { url = publicUrl, mime = file.ContentType, name = fname });
+            var publicUrl = $"/ProductImages/{finalFileName}";
+            return Json(new
+            {
+                url = publicUrl,                      // 實際儲存的 URL
+                mime = file.ContentType,              // MIME 類型
+                name = finalFileName,                 // 實際儲存的檔名
+                originalFileName = originalFileName,  // 原始檔名
+                fileType = ext.TrimStart('.')         // 檔案類型
+            });
         }
 
     }
