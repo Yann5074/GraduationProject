@@ -55,6 +55,8 @@ builder.Services.AddScoped<IHelpToolService, CMemberAuthService>();
 builder.Services.AddNotification(builder.Configuration);
 builder.Services.AddScoped<IRecommonedService, CRecommonedService>();
 builder.Services.AddMemoryCache(options => { options.SizeLimit = 1025; }); //註冊記憶體
+//公告
+builder.Services.AddScoped<IAnnouncementService, CAnnouncementService>();
 // ✅ Session 需要「分散式快取」
 builder.Services.AddDistributedMemoryCache();
 

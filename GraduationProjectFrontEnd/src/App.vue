@@ -415,16 +415,6 @@ header {
   width: 75px;
   height: 75px;
 }
-/*.auth-link {
-  color: #212529;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.auth-link:hover {
-  color: #198754; /* Bootstrap success 綠 
-  text-decoration: underline;
-}*/
 
 .nav-neo {
   position: fixed;
@@ -451,9 +441,26 @@ header {
   transform: translateY(-100%);
 }
 
-.nav-neo .nav-link {
-  color: #fff;
-  opacity: 0.9;
+.nav-neo .nav-link { color: #fff; opacity:.9; }
+.nav-neo .nav-link.router-link-active { opacity:1 }
+
+/* 登入/註冊連結樣式 */
+.auth-link {
+  color: #212529;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-link:hover {
+  color: #a3a5a4;
+  text-decoration: underline;
+}
+
+/* nav {
+  width: 100%;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 2rem;
 }
 .nav-neo .nav-link.router-link-active {
   opacity: 1;

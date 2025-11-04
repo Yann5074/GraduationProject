@@ -1,6 +1,7 @@
 ﻿using ApiProject.DTOs;
 using ApiProject.Interfaces;
 using ApiProject.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace ApiProject.Services
 {
@@ -29,5 +30,17 @@ namespace ApiProject.Services
             };
         }
 
+        public async Task<IReadOnlyList<CAnnouncementDTO>> GetAllAsync(bool? active, CancellationToken ct)
+        {
+            var q = _context.TAnnouncements.AsNoTracking();
+
+            if (active.HasValue)
+                q = q.Where(x => (x.FIsActive ?? false) == active.Value);
+
+            var list = await q.OrderByDescending(x => x.FLastUpdated ?? DateTime.MinValue)
+                              .ToListAsync(ct);
+
+            return list.Select(ToDto).ToList();
+        }
     }
 }
