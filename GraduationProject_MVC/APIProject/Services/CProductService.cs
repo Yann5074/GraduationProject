@@ -234,6 +234,10 @@ namespace ApiProject.Services
             var envMapAsset = product.ProductAssets
                 .FirstOrDefault(a => a.FAssetType == "env_map");
 
+            // 取得變體三圍 +重量
+            var variant = product.ProductVariants
+                .FirstOrDefault();
+
             var result = new ResProductDetailDTO
             {
                 FProductId = product.FProductId,
@@ -243,6 +247,12 @@ namespace ApiProject.Services
                 CategoryName = product.Category?.FName,
                 FWarrantyMonth = product.FWarrantyMonth,
                 FAssemblyRequired = product.FAssemblyRequired,
+
+                // 產品三圍 + 重量
+                FLength = (decimal)variant.FLength,
+                FWidth = (decimal)variant.FWidth,
+                FHeight = (decimal)variant.FHeight,
+                FWeight = (decimal)variant.FWeight,
 
 
                 // 主圖 URL
@@ -316,7 +326,7 @@ namespace ApiProject.Services
                         Price = v.FPrice ?? 0,
                         Stock = v.FStock ?? 0,
                         SKU = v.FSku,
-                        SizeLabel = v.FSizeLabel
+                        //SizeLabel = v.FSizeLabel
                     })
                     .ToList(),
 

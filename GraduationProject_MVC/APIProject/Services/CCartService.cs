@@ -4,6 +4,7 @@ using ApiProject.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using System.Diagnostics;
+using System.Linq.Expressions;
 using System.Security.Claims;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
@@ -25,6 +26,20 @@ namespace ApiProject.Services
             var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
             if (idCheck.Ok != true)
                 return new List<ResCartDTO>();
+
+            // 可用圖片查詢
+            var photos = _context.TProductAssets
+                .AsNoTracking()
+                .Where(p =>
+                    p.FUrl != null &&
+                    (p.FAssetType == "image" || p.FMimeType.StartsWith("image/")) &&
+                    !p.FUrl.Contains("/3D/") &&                           // 排除 3D
+                    (p.FUrl.EndsWith(".png") || p.FUrl.EndsWith(".jpg")  // 副檔名白名單（可留可去）
+                     || p.FUrl.EndsWith(".jpeg") || p.FUrl.EndsWith(".webp")
+                     || p.FUrl.EndsWith(".gif") || p.FUrl.EndsWith(".bmp")
+                     || p.FUrl.EndsWith(".svg"))
+                );
+
             var query = _context.TCarts
                 .Include(c => c.CartItem)
                     .ThenInclude(c => c.ProductVariant)
@@ -48,8 +63,30 @@ namespace ApiProject.Services
                         UnitPrice = ci.FUnitPrice,
                         Qty = ci.FQuantity,
                         SubTotal = ci.FSubtotal,
-                        ImageUrl = ci.ProductVariant.ProductAsset.FUrl,
-                        Size = $"{ci.ProductVariant.FLength} X {ci.ProductVariant.FWidth} X {ci.ProductVariant.FHeight} / {ci.ProductVariant.FWeight} Kg"
+                        //ImageUrl = ci.ProductVariant.ProductAsset.FUrl,
+
+
+                        ImageUrl = // 先找「同變體」的最佳圖
+                    photos
+                        .Where(p => p.FProductId == ci.ProductVariant.FProductId
+                                 && p.FProductVariantId == ci.FProductVariantId)
+                        .OrderByDescending(p => p.FIsPrimary)   // 若沒有這些欄位就移掉
+                        .ThenBy(p => p.FSortOrder)
+                        .Select(p => p.FUrl)
+                        .FirstOrDefault()
+                    // 找不到就退回「商品層」的最佳圖
+                    ?? photos
+                        .Where(p => p.FProductId == ci.ProductVariant.FProductId
+                                 && p.FProductVariantId == null)
+                        .OrderByDescending(p => p.FIsPrimary)
+                        .ThenBy(p => p.FSortOrder)
+                        .Select(p => p.FUrl)
+                        .FirstOrDefault()
+                    // 全無 → 預設圖
+                    ?? "/ProductImages/default.png",
+
+
+                        Size = $"{(int)ci.ProductVariant.FLength} x {(int)ci.ProductVariant.FWidth} x {(int)ci.ProductVariant.FHeight} cm / {(int)ci.ProductVariant.FWeight} Kg"
                     })
                 });
             return await query.ToListAsync();

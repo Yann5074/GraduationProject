@@ -692,6 +692,30 @@ function validateQuantity() {
   else if (quantity.value > maxQuantity.value) quantity.value = maxQuantity.value
 }
 
+// 尺寸轉換
+const toInt = (v) =>Number.isFinite(Number(v)) ? Math.trunc(Number(v)) : null;
+const makeSize = (l, w, h, W, unit= 'cm')=>{
+  if ([l, w, h].every(v =>v !==null && v !== undefined)){
+    return `${toInt(l)} x ${toInt(w)} x ${toInt(h)} ${unit} / ${toInt(W)} Kg`
+  }
+  return undefined
+}
+
+// 加入購物車時顯示正確2D圖
+function pickFirstPhoto(candidates) {
+  for (const raw of candidates) {
+    const url = typeof raw === 'string'
+      ? raw
+      : (raw?.fUrl || raw?.FUrl || raw?.fAssetUrl || raw?.FAssetUrl || raw?.colorThumbnail || raw?.ColorThumbnail)
+
+    if (isImageUrl(url)) {
+      return getStableImageUrl(url)
+    }
+  }
+  return getStableImageUrl('/ProductImages/default.png')
+}
+
+
 //加入購物車方法
 async function addToCart() {
   if (!canAddToCart.value) return
@@ -723,10 +747,23 @@ async function addToCart() {
       }else{
         const productVariantId = selectedVariant.value?.fProductVariantId || selectedVariant.value?.FProductVariantId
         const productName = product.value?.fName
-        const imageUrl = selectedImage.value || product.value?.ImageUrl
+        const imageUrl = pickFirstPhoto([
+          selectedImage.value,
+          selectedVariant.value?.colorThumbnail,
+          selectedVariant.value?.ColorThumbnail,
+          product.value?.mainImageUrl,
+          product.value?.MainImageUrl,
+          ...(Array.isArray(product.value?.assets) ? product.value.assets : []),
+          ...(Array.isArray(product.value?.Assets) ? product.value.Assets : []),
+        ])
         const unitPrice = selectedVariant.value?.fPrice || product.value?.minPrice
-        cart.addItem(productVariantId, qty, productName, imageUrl, unitPrice)
-        // console.log('訪客購物車', cart.items)
+        const length = selectedVariant.value?.fLength || product.value?.fLength
+        const width = selectedVariant.value?.fWidth || product.value?.fWidth
+        const height = selectedVariant.value?.fHeight || product.value?.fHeight
+        const weight = selectedVariant.value?.fWeight || product.value?.fWeight
+        const size = makeSize(length, width, height, weight)
+        cart.addItem(productVariantId, qty, productName, imageUrl, unitPrice, {length, width, height, weight, size})
+        console.log('訪客購物車', cart.items)
         Swal.fire({
           title: '已加入訪客購物車',
           icon: 'success',
@@ -766,9 +803,22 @@ async function buyNow() {
         router.push('/cart')
       }else{
         const productName = product.value?.fName
-        const imageUrl = selectedImage.value || product.value?.ImageUrl
+        const imageUrl = pickFirstPhoto([
+          selectedImage.value,
+          selectedVariant.value?.colorThumbnail,
+          selectedVariant.value?.ColorThumbnail,
+          product.value?.mainImageUrl,
+          product.value?.MainImageUrl,
+          ...(Array.isArray(product.value?.assets) ? product.value.assets : []),
+          ...(Array.isArray(product.value?.Assets) ? product.value.Assets : []),
+        ])
         const unitPrice = selectedVariant.value?.fPrice || product.value?.minPrice
-        cart.addItem(productVariantId, qty, productName, imageUrl, unitPrice)
+        const length = selectedVariant.value?.fLength || product.value?.fLength
+        const width = selectedVariant.value?.fWidth || product.value?.fWidth
+        const height = selectedVariant.value?.fHeight || product.value?.fHeight
+        const weight = selectedVariant.value?.fWeight || product.value?.fWeight
+        const size = makeSize(length, width, height, weight)
+        cart.addItem(productVariantId, qty, productName, imageUrl, unitPrice, {length, width, height, weight, size})
         // Swal.fire({
         //   title: '尚未登入，商品以加入購物車',
         //   icon: 'success',
