@@ -274,7 +274,11 @@ const discountText = computed(() =>{
 // 送出訂單的主流程
 async function submitOrder(){
   if(!validateForm()){
-    alert('請完整填寫必要資訊')
+    Swal.fire({
+      title: '請完整填寫必要資訊',
+      icon: 'error',
+      confirmButtonText: '關閉'
+    })
     return
   }
   try {
@@ -309,7 +313,11 @@ async function submitOrder(){
   
       if (payload.paymentMethod === 1){
         console.log('我的ECPay', ecpay)
-        alert('訂單建立成功，請依付款方式完成支付')
+        Swal.fire({
+          title: '訂單建立成功，請依付款方式完成支付',
+          icon: 'success',
+          confirmButtonText: '關閉'
+          })
         router.push('/Order')
         return
       }
@@ -318,10 +326,19 @@ async function submitOrder(){
         await handleECpay(ecpay)
         return
       }
-      alert('未知付款方式，請重新選擇')
+      Swal.fire({
+        title: '未知付款方式，請重新選擇',
+        icon: 'error',
+        confirmButtonText: '關閉'
+      })
   }catch (err){
     console.error('建立訂單失敗', err)
-    alert(err.message)
+    Swal.fire({
+      title: '錯誤',
+      text: err.message,
+      icon: 'error',
+      confirmButtonText: '關閉'
+      })
   }
 }
 
@@ -335,7 +352,11 @@ async function handleECpay(ecpay){
     newWindow.document.close()
   }catch (err){
     console.log('ECPay 啟動失敗', err)
-    alert('ECPay付款頁面載入失敗，請稍後再試')
+    Swal.fire({
+      title: 'ECPay付款頁面載入失敗，請稍後再試',
+      icon: 'error',
+      confirmButtonText: '關閉'
+      })
   }
 }
 

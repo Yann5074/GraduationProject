@@ -151,6 +151,7 @@ import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useLoading } from '@/stores/useLoading'
 import GlobalLoading from '@/components/GlobalLoading.vue'
+import Swal from 'sweetalert2'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -198,8 +199,12 @@ const onQtyChange = async (ci, newQty) =>{
         ci.qty = stock
         ci.subtotal = ci.unitPrice * stock
         console.error('更新購物車商品數量失敗-.vue', err)
-        alert(err.message)
-
+        Swal.fire({
+          title: '錯誤',
+          text: err.message,
+          icon: 'error',
+          confirmButtonText: '關閉'
+        })
         isRestoring = false
       }
   }else{
@@ -337,7 +342,12 @@ const removeItem = async (id) =>{
   }catch(err){
     console.log('刪除購物車商品失敗', err)
     let msg = err.message
-    alert(msg)
+    Swal.fire({
+      title: '錯誤',
+      text: msg,
+      icon: 'error',
+      confirmButtonText: '關閉'
+    })
   }
 }
 
@@ -356,14 +366,23 @@ const cleanCart = async () =>{
           const result = await getAllCarts()
           cartItems.value = result[0]?.cartItem || []
         }
-        alert(result.message)
+        Swal.fire({
+          title: result.message,
+          icon: 'success',
+          confirmButtonText: '關閉'
+        })
     }else{
       guestCart.clearCart()
       cartItems.value = []
     }
   }catch(err){
     console.log('清空購物車失敗', err)
-    alert(err.message)
+    Swal.fire({
+      title: '錯誤',
+      text: err.message,
+      icon: 'error',
+      confirmButtonText: '關閉'
+    })
   }
 }
 
