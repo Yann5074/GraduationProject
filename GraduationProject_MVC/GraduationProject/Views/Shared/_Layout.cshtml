@@ -72,7 +72,13 @@
             <li class="@(ctrl == "Analytics" ? "active" : "")">
                 <a asp-area="" asp-controller="Analytics" asp-action="OrderDashboard">
                     <i class="bx bxs-bar-chart-alt-2 bx-sm"></i>
-                    <span class="text">圖表管理</span>
+                    <span class="text">圖表</span>
+                </a>
+            </li>
+            <li class="@(ctrl == "Announcement" ? "active" : "")">
+                <a asp-area="" asp-controller="Announcement" asp-action="List">
+                    <i class="bx bxs-user-circle bx-sm"></i>
+                    <span class="text">前台公告設定</span>
                 </a>
             </li>
             <li class="@(ctrl == "Member" ? "active" : "")">
