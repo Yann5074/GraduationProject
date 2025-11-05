@@ -202,24 +202,56 @@ namespace GraduationProject.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("檔案為空");
 
-            // 僅允許圖片
-            if (string.IsNullOrWhiteSpace(file.ContentType) || !file.ContentType.StartsWith("image/"))
-                return BadRequest("只允許上傳圖片類型 (image/*)");
+            // 取得副檔名
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
 
-            // 大小限制（例如 10MB）
-            const long MaxSize = 10L * 1024 * 1024;
-            if (file.Length > MaxSize)
-                return BadRequest("檔案過大，請小於 10MB");
+            // 檔案大小限制
+            const long MaxImageSize = 10L * 1024 * 1024; // 10MB for images
+            const long Max3DModelSize = 100L * 1024 * 1024; // 100MB for 3D models
 
-            // 副檔名白名單（可依實際需求增減）
-            var allowedExt = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".png", ".jpg", ".jpeg", ".gif", ".webp" };
-            var ext = Path.GetExtension(file.FileName);
-            if (!allowedExt.Contains(ext))
-                return BadRequest("僅允許 png/jpg/jpeg/gif/webp");
+            // 允許的圖片副檔名
+            var allowedImageExt = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                { ".png", ".jpg", ".jpeg", ".gif", ".webp" };
 
-            // 目的資料夾：/wwwroot/ProductImages
-            var webRoot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var saveDir = Path.Combine(webRoot, "ProductImages");
+            // 允許的3D模型副檔名
+            var allowed3DModelExt = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                { ".glb", ".gltf" };
+
+            string saveDir;
+            string publicUrlPrefix;
+
+            // 判斷檔案類型
+            if (allowedImageExt.Contains(ext))
+            {
+                // 處理圖片檔案
+                if (!string.IsNullOrWhiteSpace(file.ContentType) && !file.ContentType.StartsWith("image/"))
+                    return BadRequest("圖片檔案的 MIME 類型不正確");
+
+                if (file.Length > MaxImageSize)
+                    return BadRequest("圖片檔案過大，請小於 10MB");
+
+                // 儲存到 ProductImages 資料夾
+                var webRoot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                saveDir = Path.Combine(webRoot, "ProductImages");
+                publicUrlPrefix = "/ProductImages/";
+            }
+            else if (allowed3DModelExt.Contains(ext))
+            {
+                // 處理3D模型檔案
+                if (file.Length > Max3DModelSize)
+                    return BadRequest("3D模型檔案過大，請小於 100MB");
+
+                // 儲存到 ProductModels 資料夾
+                var webRoot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                saveDir = Path.Combine(webRoot, "ProductModels");
+                publicUrlPrefix = "/ProductModels/";
+            }
+            else
+            {
+                return BadRequest($"不支援的檔案類型。僅允許：圖片({string.Join(", ", allowedImageExt)}) 或 3D模型({string.Join(", ", allowed3DModelExt)})");
+            }
+
+            // 建立目錄
             Directory.CreateDirectory(saveDir);
 
             // 保留原始檔名
@@ -251,14 +283,24 @@ namespace GraduationProject.Controllers
                 await file.CopyToAsync(fs);
             }
 
-            var publicUrl = $"/ProductImages/{finalFileName}";
+            var publicUrl = $"{publicUrlPrefix}{finalFileName}";
+
+            // 根據檔案類型設定正確的 MIME type
+            string mimeType = file.ContentType;
+            if (ext == ".glb")
+                mimeType = "model/gltf-binary";
+            else if (ext == ".gltf")
+                mimeType = "model/gltf+json";
+
             return Json(new
             {
                 url = publicUrl,                      // 實際儲存的 URL
-                mime = file.ContentType,              // MIME 類型
+                mime = mimeType,                      // MIME 類型
                 name = finalFileName,                 // 實際儲存的檔名
                 originalFileName = originalFileName,  // 原始檔名
-                fileType = ext.TrimStart('.')         // 檔案類型
+                fileType = ext.TrimStart('.'),        // 檔案類型
+                isImage = allowedImageExt.Contains(ext),  // 是否為圖片
+                is3DModel = allowed3DModelExt.Contains(ext)  // 是否為3D模型
             });
         }
 

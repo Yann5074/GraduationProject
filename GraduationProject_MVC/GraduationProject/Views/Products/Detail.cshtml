@@ -1,4 +1,5 @@
 ﻿@model GraduationProject.ViewModels.CProductDetailViewModel
+@using System.IO
 @{
     ViewData["Title"] = "商品明細";
 
@@ -32,9 +33,22 @@
         .ThenBy(a => a.AssetId ?? int.MaxValue)
         .ToList();
 
-    // 商品通用資產（未綁任何變體）
+    // 商品通用資產（未綁任何變體）- 排除3D資產
     var productAssets = assets
-        .Where(a => (a.ProductVariantId ?? -1) < 0)
+        .Where(a => (a.ProductVariantId ?? -1) < 0 &&
+                    a.AssetType != "glb" &&
+                    a.AssetType != "gltf" &&
+                    !((a.AssetType ?? "").StartsWith("pbr-")))
+        .OrderBy(a => a.SortOrder ?? int.MaxValue)
+        .ThenBy(a => a.AssetId ?? int.MaxValue)
+        .ToList();
+
+    // 3D模型資產（商品層級）
+    var modelAssets = assets
+        .Where(a => (a.ProductVariantId ?? -1) < 0 &&
+                    (a.AssetType == "glb" ||
+                     a.AssetType == "gltf" ||
+                     (a.AssetType ?? "").StartsWith("pbr-")))
         .OrderBy(a => a.SortOrder ?? int.MaxValue)
         .ThenBy(a => a.AssetId ?? int.MaxValue)
         .ToList();
@@ -60,6 +74,19 @@
 
     string StatusText(string? name, int? code)
         => string.IsNullOrWhiteSpace(name) ? $"狀態 {code?.ToString() ?? "未知"}" : name;
+
+    string GetAssetTypeName(string? assetType) => assetType switch
+    {
+        "glb" => "GLB模型",
+        "gltf" => "GLTF模型",
+        "pbr-basecolor" => "PBR - BaseColor",
+        "pbr-normal" => "PBR - Normal",
+        "pbr-metallic" => "PBR - Metallic",
+        "pbr-roughness" => "PBR - Roughness",
+        "pbr-ao" => "PBR - AO",
+        "pbr-emissive" => "PBR - Emissive",
+        _ => assetType ?? "未知"
+    };
 }
 
 <div class="container py-4">
@@ -218,9 +245,9 @@
         </div>
     </div>
 
-    <!-- 商品通用資產 -->
+    <!-- 商品通用圖片資產 -->
     <div class="card shadow-sm mt-3">
-        <div class="card-header">商品通用資產（非變體專屬）</div>
+        <div class="card-header">商品通用圖片（非變體專屬）</div>
         <div class="card-body">
             @if (productAssets.Any())
             {
@@ -241,7 +268,7 @@
                                         <source src="@a.Url" type="@a.MimeType" />
                                     </video>
                                 }
-                                @* 其他（3D/檔案） *@
+                                @* 其他檔案 *@
                                 else
                                 {
                                     <div class="bg-light rounded p-3 mb-2 small">
@@ -270,11 +297,12 @@
             }
             else
             {
-                <div class="text-muted">尚無商品通用資產</div>
+                <div class="text-muted">尚無商品通用圖片資產</div>
             }
         </div>
     </div>
 
+    
     <!-- 各變體資產 -->
     <div class="card shadow-sm mt-3">
         <div class="card-header">各變體資產</div>
@@ -349,4 +377,90 @@
             }
         </div>
     </div>
+
+    <!-- ===== 新增：3D模型資產區域 ===== -->
+    @if (modelAssets.Any())
+    {
+        <div class="card shadow-sm mt-3 border-primary">
+            <div class="card-header bg-primary bg-opacity-10">
+                <i class="bi bi-box-seam me-2"></i>3D模型資產
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    @foreach (var a in modelAssets)
+                    {
+                        var fileName = a.Url?.Contains("/") == true ? a.Url.Substring(a.Url.LastIndexOf("/") + 1) : a.Url;
+                        var isModel = a.AssetType == "glb" || a.AssetType == "gltf";
+                        var isPbrTexture = (a.AssetType ?? "").StartsWith("pbr-");
+
+                        <div class="col-md-6 col-lg-4">
+                            <div class="border border-primary rounded p-3 h-100">
+                                <!-- 資產類型標籤 -->
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-primary">@GetAssetTypeName(a.AssetType)</span>
+                                    <small class="text-muted">排序: @(a.SortOrder?.ToString() ?? "-")</small>
+                                </div>
+
+                                <!-- 檔案資訊 -->
+                                <div class="bg-light rounded p-3 mb-2">
+                                    @if (isModel)
+                                    {
+                                        <div class="text-center mb-2">
+                                            <i class="bi bi-box-seam fs-1 text-primary"></i>
+                                        </div>
+                                    }
+                                    else if (isPbrTexture && a.MimeType?.StartsWith("image/") == true)
+                                    {
+                                        <img src="@a.Url" class="img-fluid rounded mb-2" alt="PBR貼圖" />
+                                    }
+
+                                    <div class="small">
+                                        <div class="mb-1">
+                                            <strong>檔名：</strong>
+                                            <span class="text-break">@fileName</span>
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(a.MimeType))
+                                        {
+                                            <div class="mb-1">
+                                                <strong>MIME：</strong>
+                                                <code class="small">@a.MimeType</code>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(a.PosterUrl))
+                                        {
+                                            <div class="mb-1">
+                                                <strong>縮圖：</strong>
+                                                <a href="@a.PosterUrl" target="_blank" class="small">查看</a>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(a.MetadateJson))
+                                        {
+                                            <div class="mb-1">
+                                                <strong>Metadata：</strong>
+                                                <code class="small text-break">@a.MetadateJson</code>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- 操作按鈕 -->
+                                <div class="d-flex gap-2">
+                                    <a class="btn btn-sm btn-outline-primary flex-fill" href="@a.Url" target="_blank">
+                                        <i class="bi bi-eye me-1"></i>檢視
+                                    </a>
+                                    @* @if (isModel)
+                                    {
+                                        <a class="btn btn-sm btn-primary flex-fill" href="@a.Url" target="_blank">
+                                            <i class="bi bi-eye me-1"></i>預覽
+                                        </a>
+                                    } *@
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
 </div>
