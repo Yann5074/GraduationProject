@@ -8,13 +8,20 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using OpenAI.Chat;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 builder.Services.AddSignalR();
 builder.Services.AddScoped<ChatAiProductService>();
+builder.Services.AddSingleton<ChatClient>(serviceProvider =>
+{
+    var key = "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";
+    var model = "gpt-4o";
 
+    return new ChatClient(model, key);
+});
 
 
 // MVC/Controllers
@@ -73,7 +80,6 @@ builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
 
 
-builder.Services.AddScoped<IProductService, CProductService>();
 
 var app = builder.Build();
 

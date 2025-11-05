@@ -40,13 +40,13 @@ const connection  = new singalR.HubConnectionBuilder()
 
 onMounted(async () => {
   // 2) 監聽後端推播  singalR的傳遞為  '方法名稱', (參數) => {}
-  connection.on('ReceiveMessage', (content,senderType) => {
-    console.log("Received message via SignalR:", content,senderType);
+  connection.on('ReceiveMessage', (msg) => {
+    console.log("Received message via SignalR:", msg.content,msg.senderType);
     // payload = { chatRoomId, content, senderType, senderId, createdAt }
    
       messages.value.push({
   content: content,
-  senderType: senderType,
+  senderType: msg.senderType,
   createdAt: new Date().toISOString() // 給個時間
       }) 
   })
