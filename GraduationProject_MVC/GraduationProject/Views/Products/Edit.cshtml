@@ -1,67 +1,73 @@
 ﻿@model GraduationProject.ViewModels.CProductEditViewModel
+@using System.IO
 @{
     ViewData["Title"] = "編輯商品";
 
     var d = Model.Data ?? new GraduationProject.DTOs.CProductUpdateDTO();
     d.Variants ??= new List<GraduationProject.DTOs.CProductVariantDTO>();
-    d.Assets   ??= new List<GraduationProject.DTOs.CProductAssetDTO>();
+    d.Assets ??= new List<GraduationProject.DTOs.CProductAssetDTO>();
 
     // 資產分組
-    var commonAssets   = d.Assets.Where(a => !a.ProductVariantId.HasValue).ToList();
-    var variantAssets  = d.Assets.Where(a => a.ProductVariantId.HasValue).ToList();
+    var commonAssets = d.Assets.Where(a => !a.ProductVariantId.HasValue &&
+                                        a.AssetType != "glb" &&
+                                        a.AssetType != "gltf" &&
+                                        !((a.AssetType ?? "").StartsWith("pbr-"))).ToList();
+    var variantAssets = d.Assets.Where(a => a.ProductVariantId.HasValue).ToList();
+    var modelAssets = d.Assets.Where(a => a.AssetType == "glb" ||
+                                        a.AssetType == "gltf" ||
+                                        ((a.AssetType ?? "").StartsWith("pbr-"))).ToList();
 
     // 索引起點（保持既有索引，動態新增用 JS 維護）
-    var assetIndex  = 0;
-    var variantIndex= 0;
+    var assetIndex = 0;
+    var variantIndex = 0;
 
     // 方便把 SelectListItem 轉成簡單資料
-    var catOpts  = (Model.CategoryOptions ?? new List<SelectListItem>())
+    var catOpts = (Model.CategoryOptions ?? new List<SelectListItem>())
                    .Select(x => new { v = x.Value ?? "", t = x.Text ?? "" }).ToList();
-    var pstOpts  = (Model.PStatusOptions ?? new List<SelectListItem>())
+    var pstOpts = (Model.PStatusOptions ?? new List<SelectListItem>())
                    .Select(x => new { v = x.Value ?? "", t = x.Text ?? "" }).ToList();
-    var clrOpts  = (Model.ColorOptions ?? new List<SelectListItem>())
+    var clrOpts = (Model.ColorOptions ?? new List<SelectListItem>())
                    .Select(x => new { v = x.Value ?? "", t = x.Text ?? "" }).ToList();
 }
 
 <div class="container py-4">
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <h2 class="mb-0">編輯商品</h2>
-    <div class="d-flex gap-2">
-      <a asp-action="List" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i> 返回列表
-      </a>
-      <a asp-action="Detail" asp-route-id="@d.ProductId" class="btn btn-outline-primary">
-        <i class="bi bi-eye me-1"></i> 檢視
-      </a>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="mb-0">編輯商品</h2>
+        <div class="d-flex gap-2">
+            <a asp-action="List" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> 返回列表
+            </a>
+            <a asp-action="Detail" asp-route-id="@d.ProductId" class="btn btn-outline-primary">
+                <i class="bi bi-eye me-1"></i> 檢視
+            </a>
+        </div>
     </div>
-  </div>
 
-  @if (TempData["Error"] != null)
-  {
-      <div class="alert alert-danger">@TempData["Error"]</div>
-  }
-  @if (TempData["Ok"] != null)
-  {
-      <div class="alert alert-success">@TempData["Ok"]</div>
-  }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+    @if (TempData["Ok"] != null)
+    {
+        <div class="alert alert-success">@TempData["Ok"]</div>
+    }
 
-  <form asp-action="Edit" method="post" enctype="multipart/form-data" id="editForm">
-    @Html.AntiForgeryToken()
+    <form asp-action="Edit" method="post" enctype="multipart/form-data" id="editForm">
+        @Html.AntiForgeryToken()
 
-    <input type="hidden" name="Data.ProductId" value="@d.ProductId" />
+        <input type="hidden" name="Data.ProductId" value="@d.ProductId" />
 
-    <!-- 基本資料 -->
-    <div class="card shadow-sm mb-3">
-      <div class="card-header">基本資料</div>
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">商品名稱</label>
-            <input class="form-control" name="Data.Name" value="@(d.Name ?? "")" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">分類</label>
-            <!-- 純 HTML select，避免 option TagHelper 衝突 -->
+        <!-- 基本資料 -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">基本資料</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">商品名稱</label>
+                        <input class="form-control" name="Data.Name" value="@(d.Name ?? "")" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">分類</label>
                         <select class="form-select" name="Data.CategoryId">
                             <option value="">— 未選擇 —</option>
                             @foreach (var c in catOpts)
@@ -76,16 +82,15 @@
                                 }
                             }
                         </select>
+                    </div>
 
-          </div>
+                    <div class="col-12">
+                        <label class="form-label">商品描述</label>
+                        <textarea class="form-control" name="Data.Description" rows="3">@d.Description</textarea>
+                    </div>
 
-          <div class="col-12">
-            <label class="form-label">商品描述</label>
-            <textarea class="form-control" name="Data.Description" rows="3">@d.Description</textarea>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label">商品狀態</label>
+                    <div class="col-md-4">
+                        <label class="form-label">商品狀態</label>
                         <select class="form-select" name="Data.PStatus">
                             <option value="">— 未選擇 —</option>
                             @foreach (var p in pstOpts)
@@ -100,135 +105,63 @@
                                 }
                             }
                         </select>
-
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label">保固(月)</label>
-            <input type="number" class="form-control" name="Data.WarrantyMonth" value="@(d.WarrantyMonth?.ToString() ?? "")" />
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label d-block">是否需組裝</label>
-            <input type="hidden" name="Data.AssemblyRequired" value="false" />
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="Data.AssemblyRequired" value="true" @(d.AssemblyRequired == true ? "checked" : null) />
-              <label class="form-check-label">需要</label>
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">組裝零件</label>
-            <input class="form-control" name="Data.AssemblyPart" value="@(d.AssemblyPart ?? "")" />
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">折扣</label>
-            <input type="number" step="0.01" class="form-control" name="Data.Discount" value="@(d.Discount?.ToString() ?? "")" />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 通用資產（商品層，不需 VariantId） -->
-    <div class="card shadow-sm mb-3">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <span>商品通用資產（非變體專屬）</span>
-        <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddCommonAsset">＋新增通用資產</button>
-      </div>
-      <div class="card-body">
-        <div class="row g-2" id="common-asset-list">
-          @for (int i = 0; i < commonAssets.Count; i++)
-          {
-              var a = commonAssets[i];
-              <div class="col-12 asset-item border rounded p-2" data-asset-index="@assetIndex">
-                <input type="hidden" name="Data.Assets[@assetIndex].AssetId" value="@a.AssetId" />
-                <input type="hidden" name="Data.Assets[@assetIndex].Deleted" value="" />
-                <input type="hidden" name="Data.Assets[@assetIndex].ProductVariantId" value="" />
-                <input type="hidden" name="Data.Assets[@assetIndex].VariantTempIndex" value="-1" />
-
-                <div class="row g-2 align-items-end">
-                  <div class="col-md-3">
-                    <label class="form-label">上傳圖片</label>
-                    <input type="file" class="form-control file-picker" accept="image/*" data-target="@assetIndex" />
-                  </div>
-                  <div class="col-md-5">
-                    <label class="form-label">資產網址 (Url)</label>
-                    <input class="form-control asset-url" name="Data.Assets[@assetIndex].Url" value="@(a.Url ?? "")" />
-                    <div class="form-text">上傳後自動填入；也可貼外部檔案 URL。</div>
-                  </div>
-                  <div class="col-md-2">
-                    <label class="form-label">MIME</label>
-                    <input class="form-control asset-mime" name="Data.Assets[@assetIndex].MimeType" value="@(a.MimeType ?? "")" />
-                  </div>
-                  <div class="col-md-2">
-                    <label class="form-label">排序</label>
-                    <input type="number" class="form-control" name="Data.Assets[@assetIndex].SortOrder" value="@(a.SortOrder?.ToString() ?? "")" />
-                  </div>
-
-                  <div class="col-md-3">
-                    <label class="form-label">Poster(影片/3D)</label>
-                    <input class="form-control" name="Data.Assets[@assetIndex].PosterUrl" value="@(a.PosterUrl ?? "")" />
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">類型(可留空)</label>
-                    <input class="form-control" name="Data.Assets[@assetIndex].AssetType" value="@(a.AssetType ?? "")" />
-                  </div>
-                  <div class="col-md-2">
-                    <input type="hidden" name="Data.Assets[@assetIndex].IsPrimary" value="false" />
-                    <div class="form-check mt-4">
-                      <input class="form-check-input" type="checkbox" name="Data.Assets[@assetIndex].IsPrimary" value="true" @(a.IsPrimary == true ? "checked" : null) />
-                      <label class="form-check-label">主圖</label>
                     </div>
-                  </div>
-                  <div class="col-md-2">
-                    <button type="button" class="btn btn-outline-danger mt-4 btn-del-asset">刪除</button>
-                  </div>
 
-                  <div class="col-12">
-                    @if (!string.IsNullOrWhiteSpace(a.Url) && (a.MimeType?.StartsWith("image/") ?? false))
-                    {
-                        <div class="ratio ratio-1x1" style="max-width: 220px;">
-                            <img src="@a.Url" class="img-fluid rounded border" />
+                    <div class="col-md-4">
+                        <label class="form-label">保固(月)</label>
+                        <input type="number" class="form-control" name="Data.WarrantyMonth" value="@(d.WarrantyMonth?.ToString() ?? "")" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label d-block">是否需組裝</label>
+                        <input type="hidden" name="Data.AssemblyRequired" value="false" />
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="Data.AssemblyRequired" value="true" @(d.AssemblyRequired == true ? "checked" : null) />
+                            <label class="form-check-label">需要</label>
                         </div>
-                    }
-                  </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">組裝零件</label>
+                        <input class="form-control" name="Data.AssemblyPart" value="@(d.AssemblyPart ?? "")" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">折扣</label>
+                        <input type="number" step="0.01" class="form-control" name="Data.Discount" value="@(d.Discount?.ToString() ?? "")" />
+                    </div>
                 </div>
-              </div>
-              assetIndex++;
-          }
+            </div>
         </div>
-      </div>
-    </div>
 
-    <!-- 變體（含各變體專屬資產） -->
-    <div class="card shadow-sm mb-3">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <span>變體（顏色 / 尺寸 / 庫存 / 售價）與變體資產</span>
-        <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddVariant">＋新增變體</button>
-      </div>
-      <div class="card-body">
-        <div id="variant-list">
-          @for (int i = 0; i < d.Variants.Count; i++)
-          {
-              var v = d.Variants[i];
-              <div class="border rounded p-2 mb-3 variant-item" data-variant-index="@i">
-                <input type="hidden" name="Data.Variants[@i].VariantId" value="@v.VariantId" />
-                <input type="hidden" name="Data.Variants[@i].ClientTempIndex" value="@i" />
-                <input type="hidden" name="Data.Variants[@i].Deleted" value="" />
+        <!-- 變體 -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>商品變體（顏色 / 尺寸 / 庫存 / 售價）</span>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddVariant">＋新增變體</button>
+            </div>
+            <div class="card-body">
+                <div id="variant-list">
+                    @for (int vIdx = 0; vIdx < d.Variants.Count; vIdx++)
+                    {
+                        var v = d.Variants[vIdx];
+                        <div class="border rounded p-2 mb-3 variant-item" data-variant-index="@variantIndex">
+                            <input type="hidden" name="Data.Variants[@variantIndex].VariantId" value="@v.VariantId" />
+                            <input type="hidden" name="Data.Variants[@variantIndex].Deleted" value="" />
 
-                <div class="row g-2">
-                  <div class="col-md-3">
-                    <label class="form-label">SKU</label>
-                    <input class="form-control" name="Data.Variants[@i].SKU" value="@(v.SKU ?? "")" />
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">顏色</label>
-                                    <select class="form-select" name="Data.Variants[@i].ColorId">
-                                        <option value="">— 未選擇 —</option>
+                            <div class="row g-2">
+                                <div class="col-md-2">
+                                    <label class="form-label">SKU</label>
+                                    <input class="form-control" name="Data.Variants[@variantIndex].SKU" value="@(v.SKU ?? "")" />
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">顏色</label>
+                                    <select class="form-select" name="Data.Variants[@variantIndex].ColorId">
+                                        <option value="">無</option>
                                         @foreach (var c in clrOpts)
                                         {
-                                            if (d.Variants[i].ColorId?.ToString() == c.v)
+                                            if (v.ColorId?.ToString() == c.v)
                                             {
                                                 <option value="@c.v" selected>@c.t</option>
                                             }
@@ -238,50 +171,30 @@
                                             }
                                         }
                                     </select>
+                                </div>
 
-                  </div>
-                  <div class="col-md-2">
-                    <label class="form-label">售價</label>
-                    <input type="number" step="0.01" class="form-control" name="Data.Variants[@i].Price" value="@(v.Price?.ToString() ?? "")" />
-                  </div>
-                  <div class="col-md-2">
-                    <label class="form-label">成本</label>
-                    <input type="number" step="0.01" class="form-control" name="Data.Variants[@i].Cost" value="@(v.Cost?.ToString() ?? "")" />
-                  </div>
-                  <div class="col-md-2">
-                    <label class="form-label">庫存</label>
-                    <input type="number" class="form-control" name="Data.Variants[@i].Stock" value="@(v.Stock?.ToString() ?? "")" />
-                  </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">售價</label>
+                                    <input class="form-control" name="Data.Variants[@variantIndex].Price" value="@(v.Price?.ToString() ?? "")" />
+                                </div>
 
-                  @* <div class="col-md-3">
-                    <label class="form-label">尺寸標籤</label>
-                    <input class="form-control" name="Data.Variants[@i].SizeLabel" value="@(v.SizeLabel ?? "")" />
-                  </div> *@
-                  <div class="col-md-3">
-                    <label class="form-label">長</label>
-                    <input type="number" step="0.01" class="form-control" name="Data.Variants[@i].Length" value="@(v.Length?.ToString() ?? "")" />
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">寬</label>
-                    <input type="number" step="0.01" class="form-control" name="Data.Variants[@i].Width" value="@(v.Width?.ToString() ?? "")" />
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">高</label>
-                    <input type="number" step="0.01" class="form-control" name="Data.Variants[@i].Height" value="@(v.Height?.ToString() ?? "")" />
-                  </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">成本</label>
+                                    <input class="form-control" name="Data.Variants[@variantIndex].Cost" value="@(v.Cost?.ToString() ?? "")" />
+                                </div>
 
-                  <div class="col-md-3">
-                    <label class="form-label">重量</label>
-                    <input type="number" step="0.01" class="form-control" name="Data.Variants[@i].Weight" value="@(v.Weight?.ToString() ?? "")" />
-                  </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">庫存</label>
+                                    <input class="form-control" name="Data.Variants[@variantIndex].Stock" value="@(v.Stock?.ToString() ?? "")" />
+                                </div>
 
-                  <div class="col-md-3">
-                    <label class="form-label">狀態</label>
-                                    <select class="form-select" name="Data.Variants[@i].PStatus">
-                                        <option value="">— 未選擇 —</option>
+                                <div class="col-md-2">
+                                    <label class="form-label">狀態</label>
+                                    <select class="form-select" name="Data.Variants[@variantIndex].PStatus">
+                                        <option value="">請選擇</option>
                                         @foreach (var p in pstOpts)
                                         {
-                                            if (d.Variants[i].PStatus?.ToString() == p.v)
+                                            if (v.PStatus?.ToString() == p.v)
                                             {
                                                 <option value="@p.v" selected>@p.t</option>
                                             }
@@ -291,421 +204,705 @@
                                             }
                                         }
                                     </select>
+                                </div>
+                            </div>
 
-                  </div>
-
-                  <div class="col-md-2 d-flex align-items-end">
-                    <button type="button" class="btn btn-outline-danger w-100 btn-del-variant">刪除變體</button>
-                  </div>
-                </div>
-
-                <!-- 此變體資產 -->
-                <div class="bg-light rounded p-2 mt-2">
-                  <div class="d-flex align-items-center justify-content-between mb-2">
-                    <strong>此變體的資產</strong>
-                    <button type="button" class="btn btn-sm btn-outline-primary btn-add-asset-for-variant" data-variant-index="@i">＋新增此變體資產</button>
-                  </div>
-
-                  <div class="row g-2 variant-asset-list">
-                    @{
-                        // 渲染屬於此變體的既有資產（依 ProductVariantId）
-                        var these = variantAssets.Where(x => x.ProductVariantId == v.VariantId).ToList();
-                        foreach (var a in these)
-                        {
-                            <div class="col-12 asset-item border rounded p-2" data-asset-index="@assetIndex">
-                              <input type="hidden" name="Data.Assets[@assetIndex].AssetId" value="@a.AssetId" />
-                              <input type="hidden" name="Data.Assets[@assetIndex].Deleted" value="" />
-                              <input type="hidden" name="Data.Assets[@assetIndex].ProductVariantId" value="@a.ProductVariantId" />
-                              <input type="hidden" name="Data.Assets[@assetIndex].VariantTempIndex" value="@i" />
-
-                              <div class="row g-2 align-items-end">
+                            <div class="row g-2 mt-2">
                                 <div class="col-md-3">
-                                  <label class="form-label">上傳圖片</label>
-                                  <input type="file" class="form-control file-picker" accept="image/*" data-target="@assetIndex" />
+                                    <label class="form-label">尺寸標籤</label>
+                                    <input class="form-control" name="Data.Variants[@variantIndex].SizeLabel" value="@(v.SizeLabel ?? "")" />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">長(cm)</label>
+                                    <input class="form-control" name="Data.Variants[@variantIndex].Length" value="@(v.Length?.ToString() ?? "")" />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">寬(cm)</label>
+                                    <input class="form-control" name="Data.Variants[@variantIndex].Width" value="@(v.Width?.ToString() ?? "")" />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">高(cm)</label>
+                                    <input class="form-control" name="Data.Variants[@variantIndex].Height" value="@(v.Height?.ToString() ?? "")" />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">重量(kg)</label>
+                                    <input class="form-control" name="Data.Variants[@variantIndex].Weight" value="@(v.Weight?.ToString() ?? "")" />
+                                </div>
+                            </div>
+
+                            <!-- 此變體的資產 -->
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <small class="text-muted">此變體的專屬圖片</small>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-add-asset-for-variant" data-variant-index="@variantIndex">＋新增圖片</button>
+                                </div>
+                                <div class="variant-asset-list">
+                                    @{
+                                        var vAssets = variantAssets.Where(va => va.ProductVariantId == v.VariantId).ToList();
+                                    }
+                                    @for (int k = 0; k < vAssets.Count; k++)
+                                    {
+                                        var va = vAssets[k];
+                                        <div class="asset-item border rounded p-2 mb-2" data-asset-index="@assetIndex">
+                                            <input type="hidden" name="Data.Assets[@assetIndex].AssetId" value="@va.AssetId" />
+                                            <input type="hidden" name="Data.Assets[@assetIndex].ProductVariantId" value="@va.ProductVariantId" />
+                                            <input type="hidden" name="Data.Assets[@assetIndex].Deleted" value="" />
+
+                                            <div class="row g-2 align-items-end">
+                                                <div class="col-md-3">
+                                                    <label class="form-label small">上傳圖片</label>
+                                                    <input type="file" class="form-control form-control-sm file-picker" accept="image/*" data-target="@assetIndex" />
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label small">Url</label>
+                                                    <input class="form-control form-control-sm asset-url" name="Data.Assets[@assetIndex].Url" value="@(va.Url ?? "")" />
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label small">MIME</label>
+                                                    <input class="form-control form-control-sm asset-mime" name="Data.Assets[@assetIndex].MimeType" value="@(va.MimeType ?? "")" />
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <label class="form-label small">排序</label>
+                                                    <input type="number" class="form-control form-control-sm" name="Data.Assets[@assetIndex].SortOrder" value="@(va.SortOrder?.ToString() ?? "")" />
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <input type="hidden" name="Data.Assets[@assetIndex].IsPrimary" value="false" />
+                                                    <div class="form-check mt-4">
+                                                        <input class="form-check-input" type="checkbox" name="Data.Assets[@assetIndex].IsPrimary" value="true" @(va.IsPrimary == true ? "checked" : null) />
+                                                        <label class="form-check-label small">主圖</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-del-asset">刪</button>
+                                                </div>
+                                            </div>
+
+                                            @if (!string.IsNullOrWhiteSpace(va.Url) && (va.MimeType?.StartsWith("image/") ?? false))
+                                            {
+                                                <img src="@va.Url" class="img-fluid rounded border mt-2" style="max-height: 120px;" />
+                                            }
+                                        </div>
+                                        assetIndex++;
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="mt-2 text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-del-variant">刪除此變體</button>
+                            </div>
+                        </div>
+                        variantIndex++;
+                    }
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 通用資產（商品層，不需 VariantId） -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>商品通用圖片（非變體專屬）</span>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddCommonAsset">＋新增通用圖片</button>
+            </div>
+            <div class="card-body">
+                <div class="row g-2" id="common-asset-list">
+                    @for (int i = 0; i < commonAssets.Count; i++)
+                    {
+                        var a = commonAssets[i];
+                        <div class="col-12 asset-item border rounded p-2" data-asset-index="@assetIndex">
+                            <input type="hidden" name="Data.Assets[@assetIndex].AssetId" value="@a.AssetId" />
+                            <input type="hidden" name="Data.Assets[@assetIndex].Deleted" value="" />
+                            <input type="hidden" name="Data.Assets[@assetIndex].ProductVariantId" value="" />
+                            <input type="hidden" name="Data.Assets[@assetIndex].VariantTempIndex" value="-1" />
+
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-3">
+                                    <label class="form-label">上傳圖片</label>
+                                    <input type="file" class="form-control file-picker" accept="image/*" data-target="@assetIndex" />
                                 </div>
                                 <div class="col-md-5">
-                                  <label class="form-label">資產網址 (Url)</label>
-                                  <input class="form-control asset-url" name="Data.Assets[@assetIndex].Url" value="@(a.Url ?? "")" />
+                                    <label class="form-label">資產網址 (Url)</label>
+                                    <input class="form-control asset-url" name="Data.Assets[@assetIndex].Url" value="@(a.Url ?? "")" />
+                                    <div class="form-text">上傳後自動填入；也可貼外部檔案 URL。</div>
                                 </div>
                                 <div class="col-md-2">
-                                  <label class="form-label">MIME</label>
-                                  <input class="form-control asset-mime" name="Data.Assets[@assetIndex].MimeType" value="@(a.MimeType ?? "")" />
+                                    <label class="form-label">MIME</label>
+                                    <input class="form-control asset-mime" name="Data.Assets[@assetIndex].MimeType" value="@(a.MimeType ?? "")" />
                                 </div>
                                 <div class="col-md-2">
-                                  <label class="form-label">排序</label>
-                                  <input type="number" class="form-control" name="Data.Assets[@assetIndex].SortOrder" value="@(a.SortOrder?.ToString() ?? "")" />
+                                    <label class="form-label">排序</label>
+                                    <input type="number" class="form-control" name="Data.Assets[@assetIndex].SortOrder" value="@(a.SortOrder?.ToString() ?? "")" />
                                 </div>
 
                                 <div class="col-md-3">
-                                  <label class="form-label">Poster(影片/3D)</label>
-                                  <input class="form-control" name="Data.Assets[@assetIndex].PosterUrl" value="@(a.PosterUrl ?? "")" />
-                                </div>
-                                <div class="col-md-3">
-                                  <label class="form-label">類型(可留空)</label>
-                                  <input class="form-control" name="Data.Assets[@assetIndex].AssetType" value="@(a.AssetType ?? "")" />
+                                    <label class="form-label">類型</label>
+                                    <input class="form-control" name="Data.Assets[@assetIndex].AssetType" value="@(a.AssetType ?? "image")" readonly />
                                 </div>
                                 <div class="col-md-2">
-                                  <input type="hidden" name="Data.Assets[@assetIndex].IsPrimary" value="false" />
-                                  <div class="form-check mt-4">
-                                    <input class="form-check-input" type="checkbox" name="Data.Assets[@assetIndex].IsPrimary" value="true" @(a.IsPrimary == true ? "checked" : null) />
-                                    <label class="form-check-label">主圖</label>
-                                  </div>
+                                    <input type="hidden" name="Data.Assets[@assetIndex].IsPrimary" value="false" />
+                                    <div class="form-check mt-4">
+                                        <input class="form-check-input" type="checkbox" name="Data.Assets[@assetIndex].IsPrimary" value="true" @(a.IsPrimary == true ? "checked" : null) />
+                                        <label class="form-check-label">主圖</label>
+                                    </div>
                                 </div>
                                 <div class="col-md-2">
-                                  <button type="button" class="btn btn-outline-danger mt-4 btn-del-asset">刪除</button>
+                                    <button type="button" class="btn btn-outline-danger mt-4 btn-del-asset">刪除</button>
                                 </div>
 
                                 <div class="col-12">
-                                  @if (!string.IsNullOrWhiteSpace(a.Url) && (a.MimeType?.StartsWith("image/") ?? false))
-                                  {
-                                      <div class="ratio ratio-1x1" style="max-width: 220px;">
-                                        <img src="@a.Url" class="img-fluid rounded border" />
-                                      </div>
-                                  }
+                                    @if (!string.IsNullOrWhiteSpace(a.Url) && (a.MimeType?.StartsWith("image/") ?? false))
+                                    {
+                                        <img src="@a.Url" class="img-fluid rounded border mt-2" style="max-height: 200px;" />
+                                    }
                                 </div>
-                              </div>
                             </div>
-                            assetIndex++;
-                        }
+                        </div>
+                        assetIndex++;
                     }
-                  </div>
                 </div>
-              </div>
-              variantIndex = i + 1;
-          }
+            </div>
         </div>
-      </div>
-    </div>
 
-    <div class="d-flex justify-content-end gap-2">
-      <button type="submit" class="btn btn-primary">儲存</button>
-    </div>
-  </form>
+        <!-- ===== 新增：3D模型資產區域 ===== -->
+        <div class="card shadow-sm mb-3 border-primary">
+            <div class="card-header bg-primary bg-opacity-10 d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-box-seam me-2"></i>3D模型資產</span>
+                <button type="button" class="btn btn-sm btn-primary" id="btnAdd3DAsset">＋新增3D模型</button>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info small mb-3">
+                    <i class="bi bi-info-circle me-1"></i>
+                    支援 GLB/GLTF 格式的3D模型檔案，以及 PBR 材質貼圖（basecolor、normal、metallic、roughness等）
+                </div>
+                <div id="model-asset-list">
+                    @for (int i = 0; i < modelAssets.Count; i++)
+                    {
+                        var a = modelAssets[i];
+                        <div class="asset-item model-asset-item border rounded p-3 mb-3" data-asset-index="@assetIndex">
+                            <input type="hidden" name="Data.Assets[@assetIndex].AssetId" value="@a.AssetId" />
+                            <input type="hidden" name="Data.Assets[@assetIndex].Deleted" value="" />
+                            <input type="hidden" name="Data.Assets[@assetIndex].ProductVariantId" value="" />
+                            <input type="hidden" class="asset-url" name="Data.Assets[@assetIndex].Url" value="@(a.Url ?? "")" />
+                            <input type="hidden" class="asset-mime" name="Data.Assets[@assetIndex].MimeType" value="@(a.MimeType ?? "")" />
+
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <strong class="text-primary">3D模型 #@(i + 1)</strong>
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-del-asset">刪除此模型</button>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">資產類型</label>
+                                    <select class="form-select model-asset-type-select" name="Data.Assets[@assetIndex].AssetType">
+                                        <option value="glb" selected="@(a.AssetType == "glb")">GLB模型</option>
+                                        <option value="gltf" selected="@(a.AssetType == "gltf")">GLTF模型</option>
+                                        <option value="pbr-basecolor" selected="@(a.AssetType == "pbr-basecolor")">PBR - BaseColor (基礎顏色)</option>
+                                        <option value="pbr-normal" selected="@(a.AssetType == "pbr-normal")">PBR - Normal (法線貼圖)</option>
+                                        <option value="pbr-metallic" selected="@(a.AssetType == "pbr-metallic")">PBR - Metallic (金屬度)</option>
+                                        <option value="pbr-roughness" selected="@(a.AssetType == "pbr-roughness")">PBR - Roughness (粗糙度)</option>
+                                        <option value="pbr-ao" selected="@(a.AssetType == "pbr-ao")">PBR - AO (環境光遮蔽)</option>
+                                        <option value="pbr-emissive" selected="@(a.AssetType == "pbr-emissive")">PBR - Emissive (自發光)</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">上傳檔案</label>
+                                    <input type="file" class="form-control model-file-picker"
+                                           accept=".glb,.gltf,image/*"
+                                           data-target="@assetIndex" />
+                                    <small class="text-muted">支援 .glb, .gltf 或圖片檔案</small>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">檔案URL</label>
+                                    <input type="text" class="form-control form-control-sm model-url-display"
+                                           value="@(a.Url ?? "")" readonly />
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">縮圖URL (可選)</label>
+                                    <input type="text" class="form-control form-control-sm"
+                                           name="Data.Assets[@assetIndex].PosterUrl"
+                                           value="@(a.PosterUrl ?? "")"
+                                           placeholder="3D模型的預覽圖" />
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">排序</label>
+                                    <input type="number" class="form-control form-control-sm"
+                                           name="Data.Assets[@assetIndex].SortOrder"
+                                           value="@(a.SortOrder?.ToString() ?? "")" />
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Metadata (JSON, 可選)</label>
+                                    <input type="text" class="form-control form-control-sm"
+                                           name="Data.Assets[@assetIndex].MetadateJson"
+                                           value="@(a.MetadateJson ?? "")"
+                                           placeholder='{"scale": 1.0, "rotation": [0,0,0]}' />
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(a.Url))
+                            {
+                                var fileName = a.Url.Contains("/") ? a.Url.Substring(a.Url.LastIndexOf("/") + 1) : a.Url;
+                                <div class="mt-2 p-2 bg-light rounded">
+                                    <small class="text-success">
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        已上傳: @fileName
+                                    </small>
+                                </div>
+                            }
+                        </div>
+                        assetIndex++;
+                    }
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="d-flex gap-2 justify-content-end mb-4">
+            <a asp-action="List" class="btn btn-secondary">取消</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-1"></i> 儲存變更
+            </button>
+        </div>
+    </form>
 </div>
 
-<!-- 模板區：通用資產 -->
+<!-- 模板：通用資產 -->
 <template id="tpl-common-asset">
-  <div class="col-12 asset-item border rounded p-2" data-asset-index="__AIDX__">
-    <input type="hidden" name="Data.Assets[__AIDX__].AssetId" value="" />
-    <input type="hidden" name="Data.Assets[__AIDX__].Deleted" value="" />
-    <input type="hidden" name="Data.Assets[__AIDX__].ProductVariantId" value="" />
-    <input type="hidden" name="Data.Assets[__AIDX__].VariantTempIndex" value="-1" />
-    <div class="row g-2 align-items-end">
-      <div class="col-md-3">
-        <label class="form-label">上傳圖片</label>
-        <input type="file" class="form-control file-picker" accept="image/*" data-target="__AIDX__" />
-      </div>
-      <div class="col-md-5">
-        <label class="form-label">資產網址 (Url)</label>
-        <input class="form-control asset-url" name="Data.Assets[__AIDX__].Url" />
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">MIME</label>
-        <input class="form-control asset-mime" name="Data.Assets[__AIDX__].MimeType" />
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">排序</label>
-        <input type="number" class="form-control" name="Data.Assets[__AIDX__].SortOrder" />
-      </div>
+    <div class="col-12 asset-item border rounded p-2" data-asset-index="__AIDX__">
+        <input type="hidden" name="Data.Assets[__AIDX__].AssetId" value="" />
+        <input type="hidden" name="Data.Assets[__AIDX__].Deleted" value="" />
+        <input type="hidden" name="Data.Assets[__AIDX__].ProductVariantId" value="" />
+        <input type="hidden" name="Data.Assets[__AIDX__].VariantTempIndex" value="-1" />
 
-      <div class="col-md-3">
-        <label class="form-label">Poster(影片/3D)</label>
-        <input class="form-control" name="Data.Assets[__AIDX__].PosterUrl" />
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">類型(可留空)</label>
-        <input class="form-control" name="Data.Assets[__AIDX__].AssetType" />
-      </div>
-      <div class="col-md-2">
-        <input type="hidden" name="Data.Assets[__AIDX__].IsPrimary" value="false" />
-        <div class="form-check mt-4">
-          <input class="form-check-input" type="checkbox" name="Data.Assets[__AIDX__].IsPrimary" value="true" />
-          <label class="form-check-label">主圖</label>
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">上傳圖片</label>
+                <input type="file" class="form-control file-picker" accept="image/*" data-target="__AIDX__" />
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">資產網址</label>
+                <input class="form-control asset-url" name="Data.Assets[__AIDX__].Url" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">MIME</label>
+                <input class="form-control asset-mime" name="Data.Assets[__AIDX__].MimeType" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">排序</label>
+                <input type="number" class="form-control" name="Data.Assets[__AIDX__].SortOrder" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">類型</label>
+                <input class="form-control" name="Data.Assets[__AIDX__].AssetType" value="image" readonly />
+            </div>
+            <div class="col-md-2">
+                <input type="hidden" name="Data.Assets[__AIDX__].IsPrimary" value="false" />
+                <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" name="Data.Assets[__AIDX__].IsPrimary" value="true" />
+                    <label class="form-check-label">主圖</label>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-outline-danger mt-4 btn-del-asset">刪除</button>
+            </div>
         </div>
-      </div>
-      <div class="col-md-2">
-        <button type="button" class="btn btn-outline-danger mt-4 btn-del-asset">刪除</button>
-      </div>
-      <div class="col-12 preview-slot"></div>
     </div>
-  </div>
 </template>
 
-<!-- 模板區：變體 -->
+<!-- 模板：3D模型資產 -->
+<template id="tpl-3d-asset">
+    <div class="asset-item model-asset-item border rounded p-3 mb-3" data-asset-index="__AIDX__">
+        <input type="hidden" name="Data.Assets[__AIDX__].AssetId" value="" />
+        <input type="hidden" name="Data.Assets[__AIDX__].Deleted" value="" />
+        <input type="hidden" name="Data.Assets[__AIDX__].ProductVariantId" value="" />
+        <input type="hidden" class="asset-url" name="Data.Assets[__AIDX__].Url" value="" />
+        <input type="hidden" class="asset-mime" name="Data.Assets[__AIDX__].MimeType" value="" />
+
+        <div class="row g-3">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <strong class="text-primary">3D模型 (新增)</strong>
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-del-asset">刪除此模型</button>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">資產類型</label>
+                <select class="form-select model-asset-type-select" name="Data.Assets[__AIDX__].AssetType">
+                    <option value="glb">GLB模型</option>
+                    <option value="gltf">GLTF模型</option>
+                    <option value="pbr-basecolor">PBR - BaseColor (基礎顏色)</option>
+                    <option value="pbr-normal">PBR - Normal (法線貼圖)</option>
+                    <option value="pbr-metallic">PBR - Metallic (金屬度)</option>
+                    <option value="pbr-roughness">PBR - Roughness (粗糙度)</option>
+                    <option value="pbr-ao">PBR - AO (環境光遮蔽)</option>
+                    <option value="pbr-emissive">PBR - Emissive (自發光)</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">上傳檔案</label>
+                <input type="file" class="form-control model-file-picker"
+                       accept=".glb,.gltf,image/*"
+                       data-target="__AIDX__" />
+                <small class="text-muted">支援 .glb, .gltf 或圖片檔案</small>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">檔案URL</label>
+                <input type="text" class="form-control form-control-sm model-url-display" readonly />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">縮圖URL (可選)</label>
+                <input type="text" class="form-control form-control-sm"
+                       name="Data.Assets[__AIDX__].PosterUrl"
+                       placeholder="3D模型的預覽圖" />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">排序</label>
+                <input type="number" class="form-control form-control-sm"
+                       name="Data.Assets[__AIDX__].SortOrder" />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Metadata (JSON, 可選)</label>
+                <input type="text" class="form-control form-control-sm"
+                       name="Data.Assets[__AIDX__].MetadateJson"
+                       placeholder='{"scale": 1.0, "rotation": [0,0,0]}' />
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- 模板：變體 -->
 <template id="tpl-variant">
-  <div class="border rounded p-2 mb-3 variant-item" data-variant-index="__VIDX__">
-    <input type="hidden" name="Data.Variants[__VIDX__].VariantId" value="" />
-    <input type="hidden" name="Data.Variants[__VIDX__].ClientTempIndex" value="__VIDX__" />
-    <input type="hidden" name="Data.Variants[__VIDX__].Deleted" value="" />
+    <div class="border rounded p-2 mb-3 variant-item" data-variant-index="__VIDX__">
+        <input type="hidden" name="Data.Variants[__VIDX__].VariantId" value="" />
+        <input type="hidden" name="Data.Variants[__VIDX__].Deleted" value="" />
 
-    <div class="row g-2">
-      <div class="col-md-3">
-        <label class="form-label">SKU</label>
-        <input class="form-control" name="Data.Variants[__VIDX__].SKU" />
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">顏色</label>
-        <select class="form-select" name="Data.Variants[__VIDX__].ColorId">
-          <option value="">— 未選擇 —</option>
-          @foreach (var c in clrOpts) { <option value="@c.v">@c.t</option> }
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">售價</label>
-        <input type="number" step="0.01" class="form-control" name="Data.Variants[__VIDX__].Price" />
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">成本</label>
-        <input type="number" step="0.01" class="form-control" name="Data.Variants[__VIDX__].Cost" />
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">庫存</label>
-        <input type="number" class="form-control" name="Data.Variants[__VIDX__].Stock" />
-      </div>
+        <div class="row g-2">
+            <div class="col-md-2">
+                <label class="form-label">SKU</label>
+                <input class="form-control" name="Data.Variants[__VIDX__].SKU" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">顏色</label>
+                <select class="form-select" name="Data.Variants[__VIDX__].ColorId">
+                    <option value="">無</option>
+                    @foreach (var c in clrOpts)
+                    {
+                        <option value="@c.v">@c.t</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">售價</label>
+                <input class="form-control" name="Data.Variants[__VIDX__].Price" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">成本</label>
+                <input class="form-control" name="Data.Variants[__VIDX__].Cost" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">庫存</label>
+                <input class="form-control" name="Data.Variants[__VIDX__].Stock" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">狀態</label>
+                <select class="form-select" name="Data.Variants[__VIDX__].PStatus">
+                    <option value="">請選擇</option>
+                    @foreach (var p in pstOpts)
+                    {
+                        <option value="@p.v">@p.t</option>
+                    }
+                </select>
+            </div>
+        </div>
 
-      
-      <div class="col-md-3">
-        <label class="form-label">長</label>
-        <input type="number" step="0.01" class="form-control" name="Data.Variants[__VIDX__].Length" />
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">寬</label>
-        <input type="number" step="0.01" class="form-control" name="Data.Variants[__VIDX__].Width" />
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">高</label>
-        <input type="number" step="0.01" class="form-control" name="Data.Variants[__VIDX__].Height" />
-      </div>
+        <div class="row g-2 mt-2">
+            <div class="col-md-3">
+                <label class="form-label">尺寸標籤</label>
+                <input class="form-control" name="Data.Variants[__VIDX__].SizeLabel" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">長(cm)</label>
+                <input class="form-control" name="Data.Variants[__VIDX__].Length" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">寬(cm)</label>
+                <input class="form-control" name="Data.Variants[__VIDX__].Width" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">高(cm)</label>
+                <input class="form-control" name="Data.Variants[__VIDX__].Height" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">重量(kg)</label>
+                <input class="form-control" name="Data.Variants[__VIDX__].Weight" />
+            </div>
+        </div>
 
-      <div class="col-md-3">
-        <label class="form-label">重量</label>
-        <input type="number" step="0.01" class="form-control" name="Data.Variants[__VIDX__].Weight" />
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">狀態</label>
-        <select class="form-select" name="Data.Variants[__VIDX__].PStatus">
-          <option value="">— 未選擇 —</option>
-          @foreach (var p in pstOpts) { <option value="@p.v">@p.t</option> }
-        </select>
-      </div>
-      <div class="col-md-2 d-flex align-items-end">
-        <button type="button" class="btn btn-outline-danger w-100 btn-del-variant">刪除變體</button>
-      </div>
+        <div class="mt-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <small class="text-muted">此變體的專屬圖片</small>
+                <button type="button" class="btn btn-sm btn-outline-secondary btn-add-asset-for-variant" data-variant-index="__VIDX__">＋新增圖片</button>
+            </div>
+            <div class="variant-asset-list"></div>
+        </div>
+
+        <div class="mt-2 text-end">
+            <button type="button" class="btn btn-sm btn-outline-danger btn-del-variant">刪除此變體</button>
+        </div>
     </div>
-
-    <div class="bg-light rounded p-2 mt-2">
-      <div class="d-flex align-items-center justify-content-between mb-2">
-        <strong>此變體的資產</strong>
-        <button type="button" class="btn btn-sm btn-outline-primary btn-add-asset-for-variant" data-variant-index="__VIDX__">＋新增此變體資產</button>
-      </div>
-      <div class="row g-2 variant-asset-list"></div>
-    </div>
-  </div>
 </template>
 
-<!-- 模板區：變體資產 -->
+<!-- 模板：變體資產 -->
 <template id="tpl-variant-asset">
-  <div class="col-12 asset-item border rounded p-2" data-asset-index="__AIDX__">
-    <input type="hidden" name="Data.Assets[__AIDX__].AssetId" value="" />
-    <input type="hidden" name="Data.Assets[__AIDX__].Deleted" value="" />
-    <input type="hidden" name="Data.Assets[__AIDX__].ProductVariantId" value="" />
-    <input type="hidden" name="Data.Assets[__AIDX__].VariantTempIndex" value="__VIDX__" />
-    <div class="row g-2 align-items-end">
-      <div class="col-md-3">
-        <label class="form-label">上傳圖片</label>
-        <input type="file" class="form-control file-picker" accept="image/*" data-target="__AIDX__" />
-      </div>
-      <div class="col-md-5">
-        <label class="form-label">資產網址 (Url)</label>
-        <input class="form-control asset-url" name="Data.Assets[__AIDX__].Url" />
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">MIME</label>
-        <input class="form-control asset-mime" name="Data.Assets[__AIDX__].MimeType" />
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">排序</label>
-        <input type="number" class="form-control" name="Data.Assets[__AIDX__].SortOrder" />
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Poster(影片/3D)</label>
-        <input class="form-control" name="Data.Assets[__AIDX__].PosterUrl" />
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">類型(可留空)</label>
-        <input class="form-control" name="Data.Assets[__AIDX__].AssetType" />
-      </div>
-      <div class="col-md-2">
-        <input type="hidden" name="Data.Assets[__AIDX__].IsPrimary" value="false" />
-        <div class="form-check mt-4">
-          <input class="form-check-input" type="checkbox" name="Data.Assets[__AIDX__].IsPrimary" value="true" />
-          <label class="form-check-label">主圖</label>
+    <div class="asset-item border rounded p-2 mb-2" data-asset-index="__AIDX__">
+        <input type="hidden" name="Data.Assets[__AIDX__].AssetId" value="" />
+        <input type="hidden" name="Data.Assets[__AIDX__].ProductVariantId" value="__VIDX__" />
+        <input type="hidden" name="Data.Assets[__AIDX__].Deleted" value="" />
+
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small">上傳圖片</label>
+                <input type="file" class="form-control form-control-sm file-picker" accept="image/*" data-target="__AIDX__" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">Url</label>
+                <input class="form-control form-control-sm asset-url" name="Data.Assets[__AIDX__].Url" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">MIME</label>
+                <input class="form-control form-control-sm asset-mime" name="Data.Assets[__AIDX__].MimeType" />
+            </div>
+            <div class="col-md-1">
+                <label class="form-label small">排序</label>
+                <input type="number" class="form-control form-control-sm" name="Data.Assets[__AIDX__].SortOrder" />
+            </div>
+            <div class="col-md-1">
+                <input type="hidden" name="Data.Assets[__AIDX__].IsPrimary" value="false" />
+                <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" name="Data.Assets[__AIDX__].IsPrimary" value="true" />
+                    <label class="form-check-label small">主圖</label>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <button type="button" class="btn btn-sm btn-outline-danger btn-del-asset">刪</button>
+            </div>
         </div>
-      </div>
-      <div class="col-md-2">
-        <button type="button" class="btn btn-outline-danger mt-4 btn-del-asset">刪除</button>
-      </div>
-      <div class="col-12 preview-slot"></div>
     </div>
-  </div>
 </template>
 
 @section Scripts {
-<script>
-(() => {
-  // 從伺服器產生正確上傳端點
-  const UPLOAD_URL = '@Url.Action("UploadAsset","Products")';
+    <script>
+        (() => {
+          const UPLOAD_URL = '@Url.Action("UploadAsset", "Products")';
 
-  let assetIdx = @assetIndex;      // 續用 server 渲染後的最後索引
-  let variantIdx = @variantIndex;
+          let assetIdx = @assetIndex;
+          let variantIdx = @variantIndex;
 
-  const form = document.getElementById('editForm');
-  const commonList = document.getElementById('common-asset-list');
-  const variantList = document.getElementById('variant-list');
+          const form = document.getElementById('editForm');
+          const commonList = document.getElementById('common-asset-list');
+          const modelList = document.getElementById('model-asset-list');
+          const variantList = document.getElementById('variant-list');
 
-  // 工具：取得防偽 Token
-  const getToken = () => document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+          const getToken = () => document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
 
-  // 上傳圖片（僅 image/* 預覽；伺服器也再驗 MIME）
-  async function uploadImage(file) {
-    if (!file) throw new Error('no file');
-    if (!file.type?.startsWith('image/')) throw new Error('只允許上傳圖片類型');
+          // 上傳圖片
+          async function uploadFile(file) {
+            if (!file) throw new Error('no file');
 
-    const fd = new FormData();
-    fd.append('file', file);
+            const fd = new FormData();
+            fd.append('file', file);
 
-    const res = await fetch(UPLOAD_URL, {
-      method: 'POST',
-      headers: { 'RequestVerificationToken': getToken() },
-      body: fd
-    });
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(`Upload failed: ${res.status} ${txt}`);
-    }
-    return await res.json(); // { url, mime, name }
-  }
-
-  // 綁定檔案選擇器
-  function bindFilePickers(scope) {
-    (scope ?? document).querySelectorAll('.file-picker').forEach(ip => {
-      ip.addEventListener('change', async (e) => {
-        const inp = e.currentTarget;
-        const target = inp.getAttribute('data-target');
-        const file = inp.files?.[0];
-        if (!file) return;
-
-        try {
-          const j = await uploadImage(file);
-          const urlEl = document.querySelector(`input[name="Data.Assets[${target}].Url"]`);
-          const mimeEl = document.querySelector(`input[name="Data.Assets[${target}].MimeType"]`);
-          if (urlEl) urlEl.value = j.url ?? '';
-          if (mimeEl) mimeEl.value = j.mime ?? '';
-
-          // 預覽
-          const card = inp.closest('.asset-item');
-          const slot = card?.querySelector('.preview-slot') || card?.querySelector('.col-12:last-child');
-          if (slot) {
-            slot.innerHTML = '';
-            if ((j.mime ?? '').startsWith('image/')) {
-              const img = document.createElement('img');
-              img.src = j.url;
-              img.className = 'img-fluid rounded border';
-              slot.appendChild(img);
-            } else {
-              const a = document.createElement('a');
-              a.href = j.url; a.target = '_blank';
-              a.textContent = '開啟檔案';
-              slot.appendChild(a);
+            const res = await fetch(UPLOAD_URL, {
+              method: 'POST',
+              headers: { 'RequestVerificationToken': getToken() },
+              body: fd
+            });
+            if (!res.ok) {
+              const txt = await res.text();
+              throw new Error(`Upload failed: ${res.status} ${txt}`);
             }
+            return await res.json();
           }
-        } catch (err) {
-          alert(err.message || err);
-        } finally {
-          inp.value = '';
-        }
-      });
-    });
-  }
 
-  // 刪除按鈕：標記 Deleted = "true" 並隱藏
-  function bindDeleteButtons(scope) {
-    (scope ?? document).querySelectorAll('.btn-del-asset').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const card = btn.closest('.asset-item');
-        if (!card) return;
-        const idx = card.getAttribute('data-asset-index');
-        const del = card.querySelector(`input[name="Data.Assets[${idx}].Deleted"]`);
-        if (del) del.value = "true";
-        card.style.display = 'none';
-      });
-    });
+          // 綁定圖片檔案選擇器
+          function bindFilePickers(scope) {
+            (scope ?? document).querySelectorAll('.file-picker').forEach(ip => {
+              ip.addEventListener('change', async (e) => {
+                const inp = e.currentTarget;
+                const target = inp.getAttribute('data-target');
+                const file = inp.files?.[0];
+                if (!file) return;
 
-    (scope ?? document).querySelectorAll('.btn-del-variant').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const card = btn.closest('.variant-item');
-        if (!card) return;
-        const i = card.getAttribute('data-variant-index');
-        const del = card.querySelector(`input[name="Data.Variants[${i}].Deleted"]`);
-        if (del) del.value = "true";
-        card.style.display = 'none';
-      });
-    });
-  }
+                try {
+                  const j = await uploadFile(file);
+                  const urlEl = document.querySelector(`input[name="Data.Assets[${target}].Url"]`);
+                  const mimeEl = document.querySelector(`input[name="Data.Assets[${target}].MimeType"]`);
+                  if (urlEl) urlEl.value = j.url ?? '';
+                  if (mimeEl) mimeEl.value = j.mime ?? '';
 
-  // 新增通用資產
-  document.getElementById('btnAddCommonAsset')?.addEventListener('click', () => {
-    const tpl = document.getElementById('tpl-common-asset').innerHTML.replaceAll('__AIDX__', assetIdx);
-    const wrap = document.createElement('div');
-    wrap.innerHTML = tpl.trim();
-    const node = wrap.firstElementChild;
-    commonList.appendChild(node);
-    bindFilePickers(node);
-    bindDeleteButtons(node);
-    assetIdx++;
-  });
+                  const card = inp.closest('.asset-item');
+                  const slot = card?.querySelector('.preview-slot') || card?.querySelector('.col-12:last-child');
+                  if (slot && (j.mime ?? '').startsWith('image/')) {
+                    slot.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = j.url;
+                    img.className = 'img-fluid rounded border mt-2';
+                    img.style.maxHeight = '200px';
+                    slot.appendChild(img);
+                  }
+                } catch (err) {
+                  alert(err.message || err);
+                } finally {
+                  inp.value = '';
+                }
+              });
+            });
+          }
 
-  // 新增變體
-  document.getElementById('btnAddVariant')?.addEventListener('click', () => {
-    const tpl = document.getElementById('tpl-variant').innerHTML.replaceAll('__VIDX__', variantIdx);
-    const wrap = document.createElement('div'); wrap.innerHTML = tpl.trim();
-    const node = wrap.firstElementChild;
-    variantList.appendChild(node);
-    bindDeleteButtons(node);
-    // 綁定該變體中的「新增變體資產」按鈕
-    bindAddVariantAssetButtons(node, variantIdx);
-    bindFilePickers(node);
-    variantIdx++;
-  });
+          // 綁定3D模型檔案選擇器
+          function bindModelFilePickers(scope) {
+            (scope ?? document).querySelectorAll('.model-file-picker').forEach(ip => {
+              ip.addEventListener('change', async (e) => {
+                const inp = e.currentTarget;
+                const target = inp.getAttribute('data-target');
+                const file = inp.files?.[0];
+                if (!file) return;
 
-  // 綁定「新增此變體資產」按鈕
-  function bindAddVariantAssetButtons(scope, fixedVIdx=null) {
-    (scope ?? document).querySelectorAll('.btn-add-asset-for-variant').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const vIdx = fixedVIdx ?? btn.getAttribute('data-variant-index');
-        const container = btn.closest('.variant-item')?.querySelector('.variant-asset-list');
-        if (!container) return;
-        const tpl = document.getElementById('tpl-variant-asset').innerHTML
-                      .replaceAll('__AIDX__', assetIdx)
-                      .replaceAll('__VIDX__', vIdx);
-        const wrap = document.createElement('div'); wrap.innerHTML = tpl.trim();
-        const node = wrap.firstElementChild;
-        container.appendChild(node);
-        bindFilePickers(node);
-        bindDeleteButtons(node);
-        assetIdx++;
-      });
-    });
-  }
+                const card = inp.closest('.model-asset-item');
+                const urlBox = card.querySelector('.asset-url');
+                const mimeBox = card.querySelector('.asset-mime');
+                const typeBox = card.querySelector('.model-asset-type-select');
+                const urlDisplay = card.querySelector('.model-url-display');
 
-  // 初始化既有元素的事件
-  bindFilePickers();
-  bindDeleteButtons();
-  bindAddVariantAssetButtons();
+                try {
+                  inp.disabled = true;
+                  const fileName = file.name.toLowerCase();
+                  const uploadResult = await uploadFile(file);
 
-})();
+                  if (fileName.endsWith('.glb')) {
+                    typeBox.value = 'glb';
+                  } else if (fileName.endsWith('.gltf')) {
+                    typeBox.value = 'gltf';
+                  }
 
-               document.getElementById('editForm')?.addEventListener('submit', function(e) {
+                  if (urlBox) urlBox.value = uploadResult.url;
+                  if (mimeBox) mimeBox.value = uploadResult.mime || file.type;
+                  if (urlDisplay) urlDisplay.value = uploadResult.url;
+
+                  alert('檔案上傳成功！');
+                } catch (err) {
+                  alert('上傳失敗：' + (err?.message ?? 'Unknown'));
+                } finally {
+                  inp.disabled = false;
+                }
+              });
+            });
+          }
+
+          // 刪除按鈕：標記 Deleted
+          function bindDeleteButtons(scope) {
+            (scope ?? document).querySelectorAll('.btn-del-asset').forEach(btn => {
+              btn.addEventListener('click', () => {
+                const card = btn.closest('.asset-item');
+                if (!card) return;
+                const idx = card.getAttribute('data-asset-index');
+                const del = card.querySelector(`input[name="Data.Assets[${idx}].Deleted"]`);
+                if (del) del.value = "true";
+                card.style.display = 'none';
+              });
+            });
+
+            (scope ?? document).querySelectorAll('.btn-del-variant').forEach(btn => {
+              btn.addEventListener('click', () => {
+                const card = btn.closest('.variant-item');
+                if (!card) return;
+                const i = card.getAttribute('data-variant-index');
+                const del = card.querySelector(`input[name="Data.Variants[${i}].Deleted"]`);
+                if (del) del.value = "true";
+                card.style.display = 'none';
+              });
+            });
+          }
+
+          // 新增通用資產
+          document.getElementById('btnAddCommonAsset')?.addEventListener('click', () => {
+            const tpl = document.getElementById('tpl-common-asset').innerHTML.replaceAll('__AIDX__', assetIdx);
+            const wrap = document.createElement('div');
+            wrap.innerHTML = tpl.trim();
+            const node = wrap.firstElementChild;
+            commonList.appendChild(node);
+            bindFilePickers(node);
+            bindDeleteButtons(node);
+            assetIdx++;
+          });
+
+          // 新增3D模型資產
+          document.getElementById('btnAdd3DAsset')?.addEventListener('click', () => {
+            const tpl = document.getElementById('tpl-3d-asset').innerHTML.replaceAll('__AIDX__', assetIdx);
+            const wrap = document.createElement('div');
+            wrap.innerHTML = tpl.trim();
+            const node = wrap.firstElementChild;
+            modelList.appendChild(node);
+            bindModelFilePickers(node);
+            bindDeleteButtons(node);
+            assetIdx++;
+          });
+
+          // 新增變體
+          document.getElementById('btnAddVariant')?.addEventListener('click', () => {
+            const tpl = document.getElementById('tpl-variant').innerHTML.replaceAll('__VIDX__', variantIdx);
+            const wrap = document.createElement('div');
+            wrap.innerHTML = tpl.trim();
+            const node = wrap.firstElementChild;
+            variantList.appendChild(node);
+            bindDeleteButtons(node);
+            bindAddVariantAssetButtons(node, variantIdx);
+            bindFilePickers(node);
+            variantIdx++;
+          });
+
+          // 綁定變體資產新增按鈕
+          function bindAddVariantAssetButtons(scope, fixedVIdx=null) {
+            (scope ?? document).querySelectorAll('.btn-add-asset-for-variant').forEach(btn => {
+              btn.addEventListener('click', () => {
+                const vIdx = fixedVIdx ?? btn.getAttribute('data-variant-index');
+                const container = btn.closest('.variant-item')?.querySelector('.variant-asset-list');
+                if (!container) return;
+                const tpl = document.getElementById('tpl-variant-asset').innerHTML
+                              .replaceAll('__AIDX__', assetIdx)
+                              .replaceAll('__VIDX__', vIdx);
+                const wrap = document.createElement('div');
+                wrap.innerHTML = tpl.trim();
+                const node = wrap.firstElementChild;
+                container.appendChild(node);
+                bindFilePickers(node);
+                bindDeleteButtons(node);
+                assetIdx++;
+              });
+            });
+          }
+
+          // 初始化既有元素
+          bindFilePickers();
+          bindModelFilePickers();
+          bindDeleteButtons();
+          bindAddVariantAssetButtons();
+
+          // 表單提交前重新編號
+          form?.addEventListener('submit', function(e) {
             console.log('表單提交前重新編號資產...');
 
             const allAssets = Array.from(document.querySelectorAll('.asset-item'))
@@ -733,8 +930,9 @@
                 });
             });
 
-            console.log('資產重新編號完成，索引現在是連續的：0-' + (allAssets.length - 1));
-        });
+            console.log('資產重新編號完成');
+          });
 
-</script>
+        })();
+    </script>
 }

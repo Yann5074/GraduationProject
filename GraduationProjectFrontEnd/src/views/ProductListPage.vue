@@ -33,14 +33,14 @@
           <div class="card shadow-sm sticky-top" style="top: 20px;">
             <div class="card-header  text-black">
               <h5 class="mb-0">
-                <i class="bi bi-funnel me-2"></i>篩選條件
+                篩選商品
               </h5>
             </div>
             <div class="card-body">
 
               <div class="mb-4">
                 <h6 class="fw-bold mb-3">
-                  <i class="bi bi-grid me-2"></i>產品類別
+                  <i class="bi bi-grid me-2"></i>商品種類
                 </h6>
                 <div v-if="filterOptions.categories && filterOptions.categories.length > 0">
 
@@ -57,7 +57,7 @@
                       class="form-check-label d-flex justify-content-between align-items-center"
                       for="category-all"
                     >
-                      <span>全部類別</span>
+                      <span>全部商品</span>
                     </label>
                   </div>
 
@@ -80,7 +80,7 @@
                     >
                       <span>{{ category.name }}</span>
   
-                      <span class="badge bg-secondary rounded-pill ms-2" style="font-size: 0.7rem;">
+                      <span class="badge text-dark bg-light ms-2" style="font-size: 0.7rem;">
                         {{ category.productCount }}
                       </span>
                     </label>
@@ -322,10 +322,10 @@
                       {{ truncateText(product.fDescription, 60) }}
                     </p> -->
                     <div class="d-flex flex-wrap gap-1 mb-2">
-                      <span class="badge bg-light text-dark border">
+                      <span class="badge  text-dark ">
                         {{ product.categoryName }}
                       </span>
-                      <span v-if="product.availableColorCount > 0" class="badge bg-light text-dark border">
+                      <span v-if="product.availableColorCount > 0" class="badge  text-dark">
                         {{ product.availableColorCount }} 種顏色
                       </span>
                     </div>
