@@ -60,7 +60,7 @@ builder.Services.AddScoped<ILeaveService, CLeaveService>();
 //�e�x���i�]�w
 builder.Services.AddHttpClient("Api", c =>
 {
-    c.BaseAddress = new Uri("https://your-api-domain/");//�ݧ�
+    c.BaseAddress = new Uri("https://localhost:7131/");//�ݧ�
 });
 builder.Services.AddScoped<IAnnouncementService, CAnnouncementService>();
 //�H�H���� (Common.Notifications)
