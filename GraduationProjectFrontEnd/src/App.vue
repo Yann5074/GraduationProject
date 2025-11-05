@@ -128,121 +128,121 @@ watch(
 
 <template>
   
-  <main>
+  <!-- 上方導覽列 -->
+  <nav
+    class="navbar navbar-expand-md nav-neo" 
+    :class="[{ 'nav-solid': $route.path !== '/home' }, { 'nav-hidden': isHidden }]" 
+    aria-label="Main"
+  >
+    <div class="container">
+      <!-- 左上 Logo icon -->
+      <RouterLink class="navbar-brand" to="/home"> Viewrniture<span>.</span></RouterLink>
+      <!-- <RouterLink class="navbar-brand" to="/home"><img src="./assets/images/Viewrniture.png" class="logo"/> Viewrniture<span>.</span></RouterLink> -->
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-expanded="false" aria-controls="navMain">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navMain">
+        <!-- 上方導覽 -->
+        <ul class="custom-navbar-nav navbar-nav ms-auto mb-2 mb-md-0">
+          <li class="nav-item" :class="{ active: isActive('/home') }">
+            <RouterLink class="nav-link" to="/home">首頁</RouterLink>
+          </li>
+          <li class="nav-item" :class="{ active: isActive('/products') }">
+            <RouterLink class="nav-link" to="/products">購物</RouterLink>
+          </li>
+          <li class="nav-item" :class="{ active: isActive('/about') }">
+            <RouterLink class="nav-link" to="/about">關於我們</RouterLink>
+          </li>
+          <li class="nav-item" :class="{ active: isActive('/services') }">
+            <RouterLink class="nav-link" to="/services">服務項目</RouterLink>
+          </li>
+          <li class="nav-item" :class="{ active: isActive('/design') }">
+            <RouterLink class="nav-link" to="/design">布置靈感</RouterLink>
+          </li>
+          <li class="nav-item" :class="{ active: isActive('/Contact') }">
+            <RouterLink class="nav-link" to="/Contact">聯絡我們</RouterLink>
+          </li>
+        </ul>
+        <!-- 右上角功能列 -->
+        <ul class="custom-navbar-cta navbar-nav mb-2 mb-md-0 ms-5 align-items-center">
+          <!-- 購物車 -->
+          <li class="nav-item">
+            <RouterLink class="nav-link" to="/cart">
+              <img src="/asset/images/cart.svg" alt="cart" />
+            </RouterLink>
+          </li>
+
+          <!-- 未登入：登入｜註冊 -->
+          <template v-if="!auth.isLoggedIn">
+            <li class="nav-item">
+              <RouterLink class="nav-link px-2 auth-link" to="/signin">登入</RouterLink>
+            </li>
+            <li class="nav-item disabled">
+              <span class="nav-link px-0">|</span>
+            </li>
+            <li class="nav-item">
+              <RouterLink class="nav-link px-2 auth-link" to="/signup">註冊</RouterLink>
+            </li>
+          </template>
+
+          <!-- 已登入：頭貼＋暱稱＋下拉 -->
+          <template v-else>
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle d-flex align-items-center gap-2"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <img
+                  :src="auth.avatarUrl || fallbackAvatar"
+                  alt="avatar"
+                  class="rounded-circle border object-fit-cover"
+                  width="28"
+                  height="28"
+                  @error="onAvatarError"
+                />
+                <span class="text-white fw-semibold">
+                  {{ auth.displayName || auth.user?.name || auth.user?.account || '使用者' }}
+                </span>
+              </a>
+
+              <ul class="dropdown-menu dropdown-menu-end">
+                <!-- <li class="dropdown-header small text-muted px-3">
+                  {{ auth.user?.email }}
+                </li> -->
+                <!-- <li><hr class="dropdown-divider" /></li> -->
+                <li>
+                  <RouterLink class="dropdown-item" to="/account/profile">我的帳戶</RouterLink>
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <RouterLink class="dropdown-item" to="/Order">訂單資訊</RouterLink>
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <button
+                    class="dropdown-item text-danger"
+                    @click="handleLogout"
+                    :disabled="loggingOut"
+                  >
+                    {{ loggingOut ? '登出中…' : '登出' }}
+                  </button>
+                </li>
+              </ul>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main :class="['app-main', {'has-offset': route.path  !=='/home'}]">
     <!-- 自己加的聊天室浮動元件 -->
     <ChatWidget />
-
-    <!-- 上方導覽列 -->
-    <nav
-      class="navbar navbar-expand-md nav-neo" 
-      :class="[{ 'nav-solid': $route.path !== '/home' }, { 'nav-hidden': isHidden }]" 
-      aria-label="Main"
-    >
-      <div class="container">
-        <!-- 左上 Logo icon -->
-        <RouterLink class="navbar-brand" to="/home"> Viewrniture<span>.</span></RouterLink>
-        <!-- <RouterLink class="navbar-brand" to="/home"><img src="./assets/images/Viewrniture.png" class="logo"/> Viewrniture<span>.</span></RouterLink> -->
-
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-expanded="false" aria-controls="navMain">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="navMain">
-          <!-- 上方導覽 -->
-          <ul class="custom-navbar-nav navbar-nav ms-auto mb-2 mb-md-0">
-            <li class="nav-item" :class="{ active: isActive('/home') }">
-              <RouterLink class="nav-link" to="/home">首頁</RouterLink>
-            </li>
-            <li class="nav-item" :class="{ active: isActive('/products') }">
-              <RouterLink class="nav-link" to="/products">購物</RouterLink>
-            </li>
-            <li class="nav-item" :class="{ active: isActive('/about') }">
-              <RouterLink class="nav-link" to="/about">關於我們</RouterLink>
-            </li>
-            <li class="nav-item" :class="{ active: isActive('/services') }">
-              <RouterLink class="nav-link" to="/services">服務項目</RouterLink>
-            </li>
-            <li class="nav-item" :class="{ active: isActive('/design') }">
-              <RouterLink class="nav-link" to="/design">布置靈感</RouterLink>
-            </li>
-            <li class="nav-item" :class="{ active: isActive('/Contact') }">
-              <RouterLink class="nav-link" to="/Contact">聯絡我們</RouterLink>
-            </li>
-          </ul>
-          <!-- 右上角功能列 -->
-          <ul class="custom-navbar-cta navbar-nav mb-2 mb-md-0 ms-5 align-items-center">
-            <!-- 購物車 -->
-            <li class="nav-item">
-              <RouterLink class="nav-link" to="/cart">
-                <img src="/asset/images/cart.svg" alt="cart" />
-              </RouterLink>
-            </li>
-
-            <!-- 未登入：登入｜註冊 -->
-            <template v-if="!auth.isLoggedIn">
-              <li class="nav-item">
-                <RouterLink class="nav-link px-2 auth-link" to="/signin">登入</RouterLink>
-              </li>
-              <li class="nav-item disabled">
-                <span class="nav-link px-0">|</span>
-              </li>
-              <li class="nav-item">
-                <RouterLink class="nav-link px-2 auth-link" to="/signup">註冊</RouterLink>
-              </li>
-            </template>
-
-            <!-- 已登入：頭貼＋暱稱＋下拉 -->
-            <template v-else>
-              <li class="nav-item dropdown">
-                <a
-                  class="nav-link dropdown-toggle d-flex align-items-center gap-2"
-                  href="#"
-                  role="button"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
-                >
-                  <img
-                    :src="auth.avatarUrl || fallbackAvatar"
-                    alt="avatar"
-                    class="rounded-circle border object-fit-cover"
-                    width="28"
-                    height="28"
-                    @error="onAvatarError"
-                  />
-                  <span class="text-white fw-semibold">
-                    {{ auth.displayName || auth.user?.name || auth.user?.account || '使用者' }}
-                  </span>
-                </a>
-
-                <ul class="dropdown-menu dropdown-menu-end">
-                  <!-- <li class="dropdown-header small text-muted px-3">
-                    {{ auth.user?.email }}
-                  </li> -->
-                  <!-- <li><hr class="dropdown-divider" /></li> -->
-                  <li>
-                    <RouterLink class="dropdown-item" to="/account/profile">我的帳戶</RouterLink>
-                  </li>
-                  <li><hr class="dropdown-divider" /></li>
-                  <li>
-                    <RouterLink class="dropdown-item" to="/Order">訂單資訊</RouterLink>
-                  </li>
-                  <li><hr class="dropdown-divider" /></li>
-                  <li>
-                    <button
-                      class="dropdown-item text-danger"
-                      @click="handleLogout"
-                      :disabled="loggingOut"
-                    >
-                      {{ loggingOut ? '登出中…' : '登出' }}
-                    </button>
-                  </li>
-                </ul>
-              </li>
-            </template>
-          </ul>
-        </div>
-      </div>
-    </nav>
 
     <RouterView />
     <!-- <GlobalLoading /> -->
@@ -417,6 +417,7 @@ header {
 
 .nav-neo {
   position: fixed; top:0; left:0; right:0; z-index: 1030;
+  /* position: sticky; top:  0; z-index: 1030; */
   background: transparent;
   transition: transform .28s ease, background-color .2s ease, box-shadow .2s ease;
 }
@@ -431,71 +432,15 @@ header {
 .nav-neo .nav-link { color: #fff; opacity:.9; }
 .nav-neo .nav-link.router-link-active { opacity:1 }
 
-/* nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
+
+</style>
+
+<style>
+.app-main.has-offset{
+  padding-top: var(--nav-h);
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
+:root{
+  --nav-h: 64px;
 }
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-} */
-
-/* @media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
-}
-.floating-button {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #007bff;
-  color: white;
-  font-size: 24px;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  z-index: 99999;
-}*/
 </style>
