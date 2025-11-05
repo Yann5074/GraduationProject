@@ -136,7 +136,7 @@ watch(
   >
     <div class="container">
       <!-- 左上 Logo icon -->
-      <RouterLink class="navbar-brand" to="/home"> Viewrniture<span>.</span></RouterLink>
+      <RouterLink class="navbar-brand" to="/home">  FurniView<span>.</span></RouterLink>
       <!-- <RouterLink class="navbar-brand" to="/home"><img src="./assets/images/Viewrniture.png" class="logo"/> Viewrniture<span>.</span></RouterLink> -->
 
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-expanded="false" aria-controls="navMain">
