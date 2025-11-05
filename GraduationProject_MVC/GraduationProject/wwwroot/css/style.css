@@ -35,10 +35,11 @@ html {
   overflow-x: hidden;
 }
 
-html.dark, body.dark {
-        --light: #0c0c1e;
-        --grey: #060714;
-        --dark: #fbfbfb;
+html.dark,
+body.dark {
+  --light: #0c0c1e;
+  --grey: #060714;
+  --dark: #fbfbfb;
 }
 
 body {
@@ -70,19 +71,26 @@ body {
 }
 
 #sidebar .brand {
-    font-size: 24px;
-    font-weight: 700;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    color: #3f6489;
-    position: sticky;
-    top: 0;
-    left: 0;
-    background: var(--light);
-    z-index: 500;
-    padding-bottom: 20px;
-    box-sizing: content-box;
+  font-size: 24px;
+  font-weight: 700;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  color: #3f6489;
+  position: sticky;
+  top: 0;
+  left: 0;
+  background: var(--light);
+  z-index: 500;
+  /*padding-bottom: 20px;*/
+  padding: 50px 0px;
+  box-sizing: content-box;
+}
+
+.brand img {
+  display: block;
+  /* 去掉 inline 對齊問題 */
+  width: 70%;
 }
 
 #sidebar .brand .bx {
@@ -93,7 +101,7 @@ body {
 
 #sidebar .side-menu {
   width: 100%;
-  margin-top: 48px;
+  margin-top: 30px;
   padding: 0px;
 }
 
@@ -197,7 +205,7 @@ body {
   transition: 0.3s ease;
 }
 
-#sidebar.hide ~ #content {
+#sidebar.hide~#content {
   width: calc(100% - 60px);
   left: 60px;
 }
@@ -437,7 +445,7 @@ body.dark #content nav .profile-menu li a {
   transition: all 0.3s ease;
 }
 
-#content nav #switch-mode:checked + .switch-mode::before {
+#content nav #switch-mode:checked+.switch-mode::before {
   left: calc(100% - (25px - 4px) - 2px);
 }
 
@@ -456,18 +464,18 @@ body.dark #content nav .profile-menu li a {
 }
 
 #content nav .swith-lm .ball {
-    background-color: #a2bad1;
-    border-radius: 50%;
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    height: 20px;
-    width: 20px;
-    transform: translateX(0px);
-    transition: transform 0.2s linear;
+  background-color: #a2bad1;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  height: 20px;
+  width: 20px;
+  transform: translateX(0px);
+  transition: transform 0.2s linear;
 }
 
-#content nav .checkbox:checked + .swith-lm .ball {
+#content nav .checkbox:checked+.swith-lm .ball {
   transform: translateX(22px);
 }
 
@@ -599,7 +607,7 @@ body.dark #content nav .profile-menu li a {
   color: var(--dark);
 }
 
-#content main .table-data > div {
+#content main .table-data>div {
   border-radius: 20px;
   background: var(--light);
   padding: 24px;
@@ -763,6 +771,7 @@ body.dark #content nav .profile-menu li a {
 
 /* Media Query for Smaller Screens */
 @media screen and (max-width: 768px) {
+
   /* Reduce width of notification and profile menu */
   #content nav .notification-menu,
   #content nav .profile-menu {
@@ -784,6 +793,7 @@ body.dark #content nav .profile-menu li a {
 }
 
 @media screen and (max-width: 576px) {
+
   #content nav .notification-menu,
   #content nav .profile-menu {
     width: 150px;
@@ -814,8 +824,8 @@ body.dark #content nav .profile-menu li a {
     background: var(--red);
   }
 
-  #content nav form.show ~ .notification,
-  #content nav form.show ~ .profile {
+  #content nav form.show~.notification,
+  #content nav form.show~.profile {
     display: none;
   }
 
@@ -901,7 +911,7 @@ body.dark #content nav .profile-menu li a {
   border-color: var(--grey) !important;
 }
 
-.table > :not(caption) > * > * {
+.table> :not(caption)>*>* {
   background-color: transparent !important;
   /* 讓底色走父層 */
   color: var(--dark) !important;
@@ -918,12 +928,12 @@ body.dark #content nav .profile-menu li a {
 }
 
 /* 斑馬紋 */
-.table-striped > tbody > tr:nth-of-type(odd) {
+.table-striped>tbody>tr:nth-of-type(odd) {
   --bs-table-accent-bg: var(--grey) !important;
   background-color: var(--grey) !important;
 }
 
-.table-hover > tbody > tr:hover {
+.table-hover>tbody>tr:hover {
   --bs-table-accent-bg: var(--grey) !important;
   background-color: var(--grey) !important;
   filter: brightness(0.98);
@@ -1058,7 +1068,7 @@ body.dark .btn-outline-secondary {
 /* 文字顏色 */
 body.dark .form-label,
 body.dark .form-control {
-    color: var(--light) !important;
+  color: var(--light) !important;
 }
 
 /* 輸入框（form-control） */
@@ -1140,8 +1150,8 @@ body.dark .form-control {
 
 /* ====Dark theme overrides for labels==== */
 body.dark .form-label {
-    color: var(--dark) !important;
-    /* 確保 label 文字為淺色 */
+  color: var(--dark) !important;
+  /* 確保 label 文字為淺色 */
 }
 
 /* 確保表單控件在深色模式下能正確顯示 */
@@ -1170,20 +1180,22 @@ body.dark .text-danger {
 
 
 .table thead tr th {
-    border-top: none !important; /* 去掉表頭上方 */
+  border-top: none !important;
+  /* 去掉表頭上方 */
 }
 
 .table tbody tr:last-child td {
-    border-bottom: none !important; /* 去掉最後一列下方 */
+  border-bottom: none !important;
+  /* 去掉最後一列下方 */
 }
 
 .custom-table thead tr th {
-    border-top: none !important;
+  border-top: none !important;
 }
 
 /* 去掉最後一列下方邊框 */
 .custom-table tbody tr:last-child td {
-    border-bottom: none !important;
+  border-bottom: none !important;
 }
 
 
@@ -1191,42 +1203,58 @@ body.dark .text-danger {
 
 /* 預設 (亮色模式) */
 .pagination .page-link {
-    color: var(--dark) !important;
-    background-color: var(--light) !important;
-    border: 1px solid var(--grey) !important;
+  color: var(--dark) !important;
+  background-color: var(--light) !important;
+  border: 1px solid var(--grey) !important;
 }
 
 .pagination .page-item.active .page-link {
-    background-color: var(--blue) !important;
-    border-color: var(--blue) !important;
-    color: var(--light) !important;
+  background-color: var(--blue) !important;
+  border-color: var(--blue) !important;
+  color: var(--light) !important;
 }
 
 .pagination .page-item.disabled .page-link {
-    background-color: var(--grey) !important;
-    color: var(--dark-grey) !important;
-    border-color: var(--grey) !important;
+  background-color: var(--grey) !important;
+  color: var(--dark-grey) !important;
+  border-color: var(--grey) !important;
 }
 
 /* ==== 深色模式 ==== */
 body.dark .pagination .page-link {
-    color: var(--light) !important;
-    background-color: var(--dark-grey) !important;
-    border: 1px solid var(--grey) !important;
+  color: var(--light) !important;
+  background-color: var(--dark-grey) !important;
+  border: 1px solid var(--grey) !important;
 }
 
 body.dark .pagination .page-item.active .page-link {
-    background-color: var(--blue) !important;
-    border-color: var(--blue) !important;
-    color: var(--light) !important;
+  background-color: var(--blue) !important;
+  border-color: var(--blue) !important;
+  color: var(--light) !important;
 }
 
 body.dark .pagination .page-item.disabled .page-link {
-    background-color: var(--grey) !important;
-    color: var(--dark) !important;
-    border-color: var(--grey) !important;
+  background-color: var(--grey) !important;
+  color: var(--dark) !important;
+  border-color: var(--grey) !important;
 }
 
-html, body, .card, .form-control, .table, .pagination .page-link {
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+html,
+body,
+.card,
+.form-control,
+.table,
+.pagination .page-link {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.bx {
+  vertical-align: middle;
+  /* 圖片與文字垂直對齊 */
+  margin-right: 8px;
+  /* 👉 控制間距，常見值 4~12px */
+}
+
+.text {
+  vertical-align: middle;
 }
