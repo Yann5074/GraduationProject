@@ -30,6 +30,7 @@
     <Folder Include="Wraps\" />
     <Folder Include="Api\" />
     <Folder Include="Tools\" />
+    <Folder Include="wwwroot\icon\" />
   </ItemGroup>
 
   <ItemGroup>

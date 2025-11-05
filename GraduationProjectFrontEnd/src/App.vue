@@ -61,6 +61,7 @@ async function hydrateFromServer() {
     await auth.login({ user: me }) // 交給 auth 自己轉換 DTO
   } catch {
     auth.logout()
+
   }
 }
 
@@ -128,29 +129,19 @@ watch(
 </script>
 
 <template>
+  
   <!-- 上方導覽列 -->
   <nav
-    class="navbar navbar-expand-md nav-neo"
-    :class="[{ 'nav-solid': $route.path !== '/home' }, { 'nav-hidden': isHidden }]"
+    class="navbar navbar-expand-md nav-neo" 
+    :class="[{ 'nav-solid': $route.path !== '/home' }, { 'nav-hidden': isHidden }]" 
     aria-label="Main"
   >
     <div class="container">
       <!-- 左上 Logo icon -->
-      <RouterLink class="navbar-brand" to="/home" style="color: white"
-        ><img src="./assets/images/FurniViewLogo.png" class="logo" /> FurniView<span
-          >.</span
-        ></RouterLink
-      >
+      <RouterLink class="navbar-brand" to="/home" style="color:white;"><img src="./assets/images/FurniViewLogo.png" class="logo"/> FurniView<span>.</span></RouterLink>
       <!-- <RouterLink class="navbar-brand" to="/home"><img src="./assets/images/Viewrniture.png" class="logo"/> Viewrniture<span>.</span></RouterLink> -->
 
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#navMain"
-        aria-expanded="false"
-        aria-controls="navMain"
-      >
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-expanded="false" aria-controls="navMain">
         <span class="navbar-toggler-icon"></span>
       </button>
 
@@ -251,7 +242,7 @@ watch(
     </div>
   </nav>
 
-  <main :class="['app-main', { 'has-offset': route.path !== '/home' }]">
+  <main :class="['app-main', {'has-offset': route.path  !=='/home'}]">
     <!-- 自己加的聊天室浮動元件 -->
     <ChatWidget />
 
@@ -384,19 +375,6 @@ watch(
 </template>
 
 <style scoped>
-/* .app-container {
-  position: relative;
-  min-height: 100vh;
-}
-header {
-  line-height: 1.5;
-  max-height: 100vh;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-} */
 
 .chat-popup {
   position: fixed;
@@ -417,11 +395,7 @@ header {
 }
 
 .nav-neo {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1030;
+  position: fixed; top:0; left:0; right:0; z-index: 1030;
   /* position: sticky; top:  0; z-index: 1030; */
   background: transparent;
   transition:
@@ -444,7 +418,6 @@ header {
 .nav-neo .nav-link { color: #fff; opacity:.9; }
 .nav-neo .nav-link.router-link-active { opacity:1 }
 
-/* 登入/註冊連結樣式 */
 .auth-link {
   color: #212529;
   text-decoration: none;
@@ -452,27 +425,17 @@ header {
 }
 
 .auth-link:hover {
-  color: #a3a5a4;
+  color: #adadad;
   text-decoration: underline;
-}
-
-/* nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
-}
-.nav-neo .nav-link.router-link-active {
-  opacity: 1;
 }
 </style>
 
 <style>
-.app-main.has-offset {
+.app-main.has-offset{
   padding-top: var(--nav-h);
 }
 
-:root {
-  --nav-h: 85px;
+:root{
+  --nav-h: 100px;
 }
 </style>
