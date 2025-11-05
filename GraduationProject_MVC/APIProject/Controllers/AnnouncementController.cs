@@ -1,6 +1,7 @@
 ﻿using ApiProject.DTOs;
 using ApiProject.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace ApiProject.Controllers
 {
@@ -14,7 +15,7 @@ namespace ApiProject.Controllers
             _announcementService = announcementService;
         }
 
-        // GET: /api/announcements?active=true|false
+        // GET: /api/announcement?active=true|false
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CAnnouncementDTO>>> GetAll([FromQuery] bool? active, CancellationToken ct)
         {
@@ -24,6 +25,24 @@ namespace ApiProject.Controllers
                 return NotFound("沒有公告");
 
             return Ok(announcement);
+        }
+
+        // 給前台用的有效公告
+        // GET: /api/announcement
+        [HttpGet("active")]
+        public async Task<ActionResult<IEnumerable<CAnnouncementDTO>>> GetActive(CancellationToken ct)
+        {
+            var announcement = await _announcementService.GetActiveAsync(ct);
+
+            return Ok(announcement);
+        }
+
+        // GET: /api/announcement/5
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<CAnnouncementDTO>> Get(int id, CancellationToken ct)
+        {
+            var announcement = await _announcementService.GetAsync(id, ct);
+            return announcement is null ? NotFound() : Ok(announcement);
         }
     }
 }

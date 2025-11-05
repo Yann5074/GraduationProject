@@ -42,5 +42,26 @@ namespace ApiProject.Services
 
             return list.Select(ToDto).ToList();
         }
+
+        public async Task<IReadOnlyList<CAnnouncementDTO>> GetActiveAsync(CancellationToken ct)
+        {
+            var now = DateTime.Now;
+            var list = await _context.TAnnouncements.AsNoTracking()
+                .Where(a => (a.FIsActive ?? false) &&
+                            (a.FStartAt ?? now) <= now &&
+                            (a.FEndAt == null || a.FEndAt >= now))
+                .OrderByDescending(a => a.FPriority ?? 0)
+                .ThenByDescending(a => a.FStartAt ?? DateTime.MinValue)
+                .ToListAsync(ct);
+
+            return list.Select(ToDto).ToList();
+        }
+
+        public async Task<CAnnouncementDTO?> GetAsync(int id, CancellationToken ct)
+        {
+            var a = await _context.TAnnouncements.AsNoTracking()
+                                           .FirstOrDefaultAsync(x => x.FId == id, ct);
+            return a == null ? null : ToDto(a);
+        }
     }
 }

@@ -1,6 +1,8 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import AnnouncementBar from '@/components/AnnouncementBar.vue';
+
 const router = useRouter()
 const goShop = () => router.push({ name: 'ProductList' })
 
@@ -48,9 +50,10 @@ onMounted(() => {
   <!-- Start Announcement Section -->
   <section class="announcement py-3 bg-transparent text-dark text-center">
     <div class="container">
-      <p class="mb-0 fs-5">
+      <!-- <p class="mb-0 fs-5">
         🎉 全館限時優惠中！滿 NT$2000 免運費，活動至 11/15 截止
-      </p>
+      </p> -->
+	  <AnnouncementBar />
     </div>
   </section>
   <!-- End Announcement Section -->
