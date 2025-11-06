@@ -164,7 +164,7 @@ watch(
             <RouterLink class="nav-link" to="/design">布置靈感</RouterLink>
           </li>
           <li class="nav-item" :class="{ active: isActive('/Contact') }">
-            <RouterLink class="nav-link" to="/Contact">聯絡我們</RouterLink>
+            <RouterLink class="nav-link" to="/contact">聯絡我們</RouterLink>
           </li>
         </ul>
         <!-- 右上角功能列 -->
@@ -396,12 +396,9 @@ watch(
 
 .nav-neo {
   position: fixed; top:0; left:0; right:0; z-index: 1030;
-  /* position: sticky; top:  0; z-index: 1030; */
-  background: transparent;
-  transition:
-    transform 0.28s ease,
-    background-color 0.2s ease,
-    box-shadow 0.2s ease;
+  background: rgba(20, 20, 20, 0.6); /* ← 改這裡，0.6 表示 60% 不透明 */
+  backdrop-filter: blur(8px);
+  transition: transform .28s ease, background-color .2s ease, box-shadow .2s ease;
 }
 
 .nav-neo.nav-solid {
@@ -415,7 +412,7 @@ watch(
   transform: translateY(-100%);
 }
 
-.nav-neo .nav-link { color: #fff; opacity:.9; }
+.nav-neo .nav-link { color: #fff; opacity:.6; }
 .nav-neo .nav-link.router-link-active { opacity:1 }
 
 .auth-link {
