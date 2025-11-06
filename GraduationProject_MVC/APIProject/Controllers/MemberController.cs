@@ -421,5 +421,26 @@ namespace ApiProject.Controllers
             }
         }
 
+        // 單一整合式檢查（推薦）
+        [HttpPost("check-unique")]
+        public async Task<IActionResult> CheckUnique([FromBody] ReqUniqueCheckDTO req)
+        {
+            var data = await _memberService.CheckUniqueAsync(req);
+            return Ok(new ResultDTO { Ok = true, Code = 200, Data = data, Message = "OK" });
+        }
+
+        // 若想要逐一檢查，也可以提供這三支（可選）
+        [HttpGet("check-account")]
+        public async Task<IActionResult> CheckAccount([FromQuery] string account)
+            => Ok(new ResultDTO { Ok = true, Code = 200, Data = new { taken = await _memberService.IsAccountTakenAsync(account) } });
+
+        [HttpGet("check-email")]
+        public async Task<IActionResult> CheckEmail([FromQuery] string email)
+            => Ok(new ResultDTO { Ok = true, Code = 200, Data = new { taken = await _memberService.IsEmailTakenAsync(email) } });
+
+        [HttpGet("check-phone")]
+        public async Task<IActionResult> CheckPhone([FromQuery] string phone)
+            => Ok(new ResultDTO { Ok = true, Code = 200, Data = new { taken = await _memberService.IsPhoneTakenAsync(phone) } });
+
     }
 }
