@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.Security.Claims;
 using Common.Notifications;
 using Common.Notifications.Interfaces;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace ApiProject.Services
 {
@@ -384,6 +385,26 @@ namespace ApiProject.Services
                 Code = StatusCodes.Status200OK,
                 Message = "訂單建立成功"
             };
+        }
+
+        public async Task<IReadOnlyList<ResOrderItemForEventDTO>> GetOrderItemForEventAsync(int orderId, ClaimsPrincipal user, CancellationToken ct)
+        {
+            var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
+            if (!idCheck.Ok)
+                return Array.Empty<ResOrderItemForEventDTO>();
+
+            var item = await _context.TOrders
+                .Where(o => o.FMemberId == idCheck.Member.FMemberId && o.FIsDeleted == 0 && o.FOrderId == orderId)
+                .SelectMany(o => o.OrderDetail
+                    .Where(od => od.FIsDeleted == 0)
+                    .Select(od => new ResOrderItemForEventDTO
+                    {
+                        ProductId = od.ProductVariant.Product.FProductId,
+                        ProductVariantId = od.FProductVariantId,
+                        Qty = od.FQuantity
+                    })).AsNoTracking()
+                    .ToListAsync(ct);
+            return item;
         }
         
     }

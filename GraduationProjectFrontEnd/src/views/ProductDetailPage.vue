@@ -292,6 +292,8 @@
           </div>
         </div>
       </div>
+      <!--推薦商品-->
+      <RecommendList />
 
       <!-- 相關產品 -->
       <div v-if="relatedProducts.length > 0" class="row mt-5">
@@ -315,7 +317,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch,defineAsyncComponent } from 'vue'
+import { ref, computed, onMounted, watch,defineAsyncComponent, onBeforeMount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ProductAPI } from '@/api/Product'
 
@@ -323,6 +325,8 @@ import { memberAddToCart } from '@/api/Cart'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/auth'
 import Swal from 'sweetalert2'
+import { trackEvent } from '@/api/Event'
+import RecommendList from '@/components/RecommendList.vue'
 
 
 const Furniture3DViewer = defineAsyncComponent(() => import('@/components/Furniture3DViewer.vue'))
@@ -344,6 +348,7 @@ const quantity = ref(1)
 const selectedImage = ref('')
 const productImages = ref([])
 const relatedProducts = ref([])
+let enterTs = 0
 
 
 const viewerKey = computed(() => `${productId.value}-${currentVariantId.value ?? 'none'}`)
@@ -652,6 +657,10 @@ function selectVariant(variant) {
       selectedImage.value = imageUrl
     }
   }
+  const vid = variant.fProductVariantId || variant.FProductVariantId
+  if(vid){
+    trackEvent({productId: productId.value, productVariantId: vid, eventType: 1})
+  }
 }
 
 // 檢查是否選中
@@ -715,6 +724,13 @@ function pickFirstPhoto(candidates) {
   return getStableImageUrl('/ProductImages/default.png')
 }
 
+// 紀錄觀看秒數
+onBeforeMount(() =>{
+  const dwellSec = Math.round((performance.now() - enterTs) / 1000)
+  trackEvent({
+    productId: productId.value, eventType: 1, dwellSec
+  })
+})
 
 //加入購物車方法
 async function addToCart() {
@@ -737,6 +753,10 @@ async function addToCart() {
     try{
       if (auth.isLoggedIn){
         const result = await memberAddToCart(atc)
+        const vid = selectedVariant.value?.fProductVariantId || selectedVariant.value?.FProductVariantId
+        if (vid){
+          trackEvent({ productId: productId.value, productVariantId: vid, eventType: 2, userId: auth.user?.memberId })
+        }
         if (result.ok){
           Swal.fire({
             title: result.message,
@@ -764,6 +784,10 @@ async function addToCart() {
         const size = makeSize(length, width, height, weight)
         cart.addItem(productVariantId, qty, productName, imageUrl, unitPrice, {length, width, height, weight, size})
         console.log('訪客購物車', cart.items)
+        const vid  = currentVariantId.value
+        if (vid){
+        trackEvent({productId: productId.value, productVariantId: vid, eventType: 2})
+        }
         Swal.fire({
           title: '已加入訪客購物車',
           icon: 'success',
@@ -800,6 +824,10 @@ async function buyNow() {
     try{
       if (auth.isLoggedIn){
         await memberAddToCart(atc)
+        const vid = currentVariantId.value
+        if (vid){
+          trackEvent({productId: productId.value, productVariantId: vid, eventType: 2, userId: auth.user?.memberId})
+        }
         router.push('/cart')
       }else{
         const productName = product.value?.fName
@@ -885,6 +913,8 @@ function handleImageError(event) {
 // 進入頁面時直接跳轉到頂部
 onMounted(() => {
   loadProductDetail()
+  trackEvent({productId: productId.value, eventType: 1})
+  enterTs = performance.now()
   // 從列表進入詳情頁時，直接跳轉到頂部（無動畫）
   window.scrollTo(0, 0)
   console.log('📜 進入產品頁，直接跳轉到頂部')

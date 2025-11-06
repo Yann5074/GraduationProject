@@ -9,13 +9,24 @@ export const useCartStore = defineStore('cart', {
   actions: {
     addItem(productVariantId, qty, productName, imageUrl, unitPrice, extra={}) {
       const existing = this.items.find(i => i.productVariantId === productVariantId)
+      const priceNum = Number(unitPrice) || 0
       if (existing) {
         existing.qty += qty
         for (const k in extra){
           if (existing[k]==null) existing[k] = extra[k]
         }
+        existing.subtotal = priceNum * existing.qty
       } else {
-        this.items.push({ productVariantId, qty, productName, imageUrl, unitPrice, ...extra})
+        const item = {
+          productVariantId,
+          qty,
+          productName,
+          imageUrl,
+          unitPrice: priceNum,
+          ...extra
+        }
+        item.subtotal = priceNum * qty
+        this.items.push(item)
       }
       this.persistCart()
     },

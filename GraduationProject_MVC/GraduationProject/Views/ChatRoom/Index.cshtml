@@ -1,8 +1,8 @@
 ﻿@model GraduationProject.ViewModels.CChatRoomsPageVm
-@{
-    ViewData["Title"] = "Chat Rooms";
-    var selectedId = Model?.SelectedId;
-}
+    @{
+        ViewData["Title"] = "Chat Rooms";
+        var selectedId = Model?.SelectedId;
+    }
 
 <style>
     /* ===== 左側：列表（沿用原本淺色） ===== */
@@ -309,3 +309,113 @@
           const senderSpan = document.createElement("span");
           senderSpan.className = "sender";
           senderSpan.textContent = senderType ?? "";
+
+          const timeSpan = document.createElement("span");
+          timeSpan.textContent = formattedTime; // ✅ 當前時間
+
+          metaDiv.appendChild(senderSpan);
+          metaDiv.appendChild(timeSpan);
+          bubble.appendChild(contentDiv);
+          bubble.appendChild(metaDiv);
+          row.appendChild(bubble);
+
+          // 加入訊息容器
+          const container = document.getElementById("messages");
+          container.appendChild(row);
+          container.scrollTop = container.scrollHeight; // 自動捲到底
+        });
+
+
+        // 3️⃣ 啟動連線後加入群組
+        async function startConnection() {
+            try {
+                await connection.start();
+                console.log("SignalR connected ✅");
+
+                // 假設後台開某個聊天室的頁面，例如 /Chat/Detail/5
+                // 那我們可以從後端 Razor 傳入 chatRoomId
+
+
+                const chatRoomId = "@Model.SelectedId";
+                console.log(chatRoomId);
+                await connection.invoke("JoinRoom", chatRoomId);
+                console.log(`加入群組：room:${chatRoomId}`);
+            } catch (err) {
+                console.error(err);
+                setTimeout(startConnection, 3000);
+            }
+        }
+
+
+        // 5️⃣ 啟動
+        startConnection();
+        document.addEventListener('DOMContentLoaded', function () {
+        const box  = document.getElementById('messages');
+             const form = document.querySelector('form.composer');
+             const ta   = document.getElementById('msgInput');
+             const btn  = document.getElementById('sendBtn');
+
+          if (!form) {
+            console.error('❌ 找不到 form.composer，請確認 Script 在 <body> 最後或使用 DOMContentLoaded 包住。');
+            return;
+          }
+
+          console.log('✅ 已找到 form：', form);
+
+          if (box) box.scrollTop = box.scrollHeight;
+          if (!ta || !btn) return;
+
+          const autoresize = () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 160) + 'px'; };
+          ta.addEventListener('input', autoresize);
+          autoresize();
+
+          ta.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();   // 阻止 textarea 自動換行
+            form.requestSubmit(); // ✅ 模擬點擊 <button type="submit">
+            }
+          });
+
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = ta.value.trim();
+            if (!text) return;
+
+
+            const fd = new FormData(form);
+
+             const chatRoomId = "@Model.SelectedId";
+
+            try {
+
+              await connection.invoke("SendToRole", chatRoomId, "employee", text);
+
+              const res = await fetch(form.action, { method: 'POST', body: fd });
+              if (!res.ok) throw new Error('Network error');
+              const data = await res.json();
+              if (!data.ok) throw new Error('Server says not ok');
+
+              const m = data.message;
+              const isEmployee = (m.senderType || '').toLowerCase() === 'employee';
+              const row = document.createElement('div');
+              row.className = 'msg-row ' + (isEmployee ? 'from-employee' : 'from-others');
+              row.innerHTML = `
+                <div class="bubble">
+                  <div class="content"></div>
+                  <div class="meta"><span>${m.senderType}</span><span>${m.createdAt}</span></div>
+                </div>`;
+              row.querySelector('.content').textContent = m.content;
+
+              // box.appendChild(row);
+              box.scrollTop = box.scrollHeight;
+              ta.value = '';
+              autoresize();
+            } catch (err) {
+              alert('送出失敗：' + err.message);
+            } finally {
+              btn.disabled = false; ta.disabled = false; ta.focus();
+            }
+          });
+        });
+    </script>
+    }

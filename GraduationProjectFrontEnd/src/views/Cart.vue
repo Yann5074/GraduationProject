@@ -1,4 +1,6 @@
 <template>
+  <!--推薦商品-->
+  <RecommendList />
   <GlobalLoading scope="cart" message="載入購物車清單..." />
   <div class="title d-flex align-items-center mb-2">
     <i class="bi bi-cart"></i>
@@ -152,6 +154,7 @@ import { storeToRefs } from 'pinia'
 import { useLoading } from '@/stores/useLoading'
 import GlobalLoading from '@/components/GlobalLoading.vue'
 import Swal from 'sweetalert2'
+import RecommendList from '@/components/RecommendList.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
