@@ -16,7 +16,7 @@ namespace ApiProject.Services
         // 共用 mapping
         private static CAnnouncementDTO ToDto(TAnnouncement a)
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             return new CAnnouncementDTO
             {
                 Id = a.FId,
@@ -37,8 +37,7 @@ namespace ApiProject.Services
             if (active.HasValue)
                 q = q.Where(x => (x.FIsActive ?? false) == active.Value);
 
-            var list = await q.OrderByDescending(x => x.FLastUpdated ?? DateTime.MinValue)
-                              .ToListAsync(ct);
+            var list = await q.OrderByDescending(x => x.FLastUpdated ?? DateTime.MinValue).ToListAsync(ct);
 
             return list.Select(ToDto).ToList();
         }
@@ -62,6 +61,28 @@ namespace ApiProject.Services
             var a = await _context.TAnnouncements.AsNoTracking()
                                            .FirstOrDefaultAsync(x => x.FId == id, ct);
             return a == null ? null : ToDto(a);
+        }
+
+        public async Task<CAnnouncementDTO> CreateAsync(CSaveAnnouncementDTO dto, CancellationToken ct)
+        {
+            if (dto.EndAt.HasValue && dto.EndAt.Value < dto.StartAt)
+                throw new ArgumentException("結束時間不可早於開始時間");
+
+            var e = new TAnnouncement
+            {
+                FTitle = dto.Title,
+                FMessage = dto.Message,
+                FStartAt = dto.StartAt,
+                FEndAt = dto.EndAt,
+                FIsActive = dto.IsActive,
+                FPriority = dto.Priority,
+                FLastUpdated = DateTime.Now
+                // LastUpdated 由 DbContext.SaveChanges 補
+            };
+
+            _context.TAnnouncements.Add(e);
+            await _context.SaveChangesAsync(ct);
+            return ToDto(e);
         }
     }
 }
