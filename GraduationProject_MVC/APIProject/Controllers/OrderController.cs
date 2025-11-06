@@ -120,6 +120,19 @@ namespace ApiProject.Controllers
             return Ok(result);
         }
 
+        //獲取最後一筆訂單
+        //Get: api/Order/{orderId}/item
+        [Authorize]
+        [HttpGet("{orderId}/item")]
+        public async Task<ActionResult<IEnumerable<ResOrderItemForEventDTO>>> GetOrderItemForEventAsync(int orderId, CancellationToken ct)
+        {
+            var result = await _orderService.GetOrderItemForEventAsync(orderId, User, ct);
+
+            if (result is null || result.Count == 0)
+                return NotFound();
+            return Ok(result);
+        }
+
 
     }
 }

@@ -8,6 +8,7 @@ import ChatWidget from '@/components/Chat/ChatWidget.vue'
 import { useCartStore } from './stores/cartStore'
 import { syncCart } from './api/Cart'
 import GlobalLoading from './components/GlobalLoading.vue'
+import { getOrCreateGuestSessionId } from './utils/session'
 
 const route = useRoute()
 const router = useRouter()
@@ -84,6 +85,7 @@ onMounted(() => {
   document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((el) => new Dropdown(el))
   auth.hydrate()
   hydrateFromServer()
+  getOrCreateGuestSessionId()
   cart.hydrateCart()
 
   // 捲動監聽
@@ -124,6 +126,9 @@ watch(
     }
   },
 )
+
+
+
 </script>
 
 <template>
@@ -136,7 +141,7 @@ watch(
   >
     <div class="container">
       <!-- 左上 Logo icon -->
-      <RouterLink class="navbar-brand" to="/home">  FurniView<span>.</span></RouterLink>
+      <RouterLink class="navbar-brand" to="/home" style="color:white;"><img src="./assets/images/FurniViewLogo.png" class="logo"/> FurniView<span>.</span></RouterLink>
       <!-- <RouterLink class="navbar-brand" to="/home"><img src="./assets/images/Viewrniture.png" class="logo"/> Viewrniture<span>.</span></RouterLink> -->
 
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-expanded="false" aria-controls="navMain">
@@ -441,6 +446,6 @@ header {
 }
 
 :root{
-  --nav-h: 64px;
+  --nav-h: 85px;
 }
 </style>

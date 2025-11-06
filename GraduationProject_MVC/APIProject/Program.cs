@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using System.Security.AccessControl;
 using Common.Notifications;
+using Microsoft.Data.SqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,7 +53,8 @@ builder.Services.AddScoped<IPasswordHasher<TMember>, PasswordHasher<TMember>>();
 builder.Services.AddScoped<IHelpToolService, CMemberAuthService>();
 // 加入寄信相關設定 (從 Common.Notifications)
 builder.Services.AddNotification(builder.Configuration);
-
+builder.Services.AddScoped<IRecommonedService, CRecommonedService>();
+builder.Services.AddMemoryCache(options => { options.SizeLimit = 1025; }); //註冊記憶體
 // ✅ Session 需要「分散式快取」
 builder.Services.AddDistributedMemoryCache();
 
@@ -90,8 +92,10 @@ provider.Mappings[".ktx2"] = "image/ktx2";
 
 app.UseStaticFiles(new StaticFileOptions
 {
-    ContentTypeProvider = provider,
-    ServeUnknownFileTypes = true
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "http://localhost:5173");
+    }
 });
 
 //singlR即時通訊

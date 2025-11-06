@@ -246,7 +246,7 @@ async function boot() {
     const environment = new RoomEnvironment()                            // [MATCH-EXAMPLE]
     pmremGenerator = new THREE.PMREMGenerator(renderer)                  // [MATCH-EXAMPLE]
     pmremEnvRT = pmremGenerator.fromScene(environment)                   // [MATCH-EXAMPLE]
-    scene.background = new THREE.Color(0xbbbbbb)                         // [MATCH-EXAMPLE]
+    scene.background = new THREE.Color(0xffffff)                         // [MATCH-EXAMPLE]
     scene.environment = pmremEnvRT.texture                               // [MATCH-EXAMPLE]
 
      const hemi = new THREE.HemisphereLight(

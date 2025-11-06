@@ -19,5 +19,7 @@ namespace ApiProject.Interfaces
 
         public Task<ResultDTO> CreateOrderFromGuestAsync(ReqGuestOrderDTO reqDto);
 
+        public Task<IReadOnlyList<ResOrderItemForEventDTO>> GetOrderItemForEventAsync(int orderId, ClaimsPrincipal user, CancellationToken ct);
+
     }
 }

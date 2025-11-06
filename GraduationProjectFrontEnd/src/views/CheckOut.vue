@@ -144,6 +144,7 @@ import { memberCheckOut } from '@/api/Order'
 import Swal from 'sweetalert2'
 import { useLoading } from '@/stores/useLoading'
 import GlobalLoading from '@/components/GlobalLoading.vue'
+import { trackEvent } from '@/api/Event'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -151,6 +152,7 @@ const route = useRoute()
 const totalAmount = ref(0)
 //設定loading相關
 const {withLoading} = useLoading('checkout') // 建立訂單
+const lastOrderId = ref(null) //訂單紀錄
 
 const levelName = auth.user.levelName
 
@@ -300,6 +302,7 @@ async function submitOrder(){
       return await memberCheckOut(payload)
     })
     const orderId = result?.data?.orderId
+    lastOrderId.value = orderId
     // 組裝 ECPay 所需DTO
     const ecpay = {
       merchantTradeNo: String(orderId),
@@ -313,6 +316,7 @@ async function submitOrder(){
   
       if (payload.paymentMethod === 1){
         console.log('我的ECPay', ecpay)
+        await reportPurchase(orderId)
         Swal.fire({
           title: '訂單建立成功，請依付款方式完成支付',
           icon: 'success',
@@ -412,9 +416,12 @@ watch(form, () => {
 }, { deep: true })
 
 //付款監聽
-function handleECPayMessage(event){
+async function handleECPayMessage(event){
   if (event.data?.type !== 'ecpayPayment') return
   if (event.data.status === 'success'){
+    if(lastOrderId.value){
+      await reportPurchase(lastOrderId.value)
+    }
     Swal.fire({
       title: '付款成功',
       icon: 'success',
@@ -428,6 +435,24 @@ function handleECPayMessage(event){
       icon: 'error',
       confirmButtonText: '關閉'
     })
+  }
+}
+
+// 紀錄購買事件
+async function reportPurchase(orderId){
+  try{
+    const {data} = await http.get(`Order/${orderId}/item`);
+    const items = Array.isArray(data)? data : (data?.data?? [])
+        for(const i of items){
+          await trackEvent({
+            productId: i.productId ?? i.fProductId ?? i.ProductId,
+            productVariantId: i.productVariantId ?? i.fProductVariantId ?? i.ProductVariantId,
+            eventType: 3,
+            userId: auth.user?.memberId
+          });
+        }
+  }catch(err){
+    console.error("reportPurchase失敗", err)
   }
 }
 

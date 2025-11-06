@@ -1,5 +1,7 @@
 <!-- 產品列表頁 - 單選類別版本 -->
 <template>
+    <!--推薦商品-->
+  <RecommendList />
   <GlobalLoading scope="product" message="商品載入中..." />
   <div class="product-list-page">
     <div class="container py-4">
@@ -411,6 +413,7 @@ import { useRouter, useRoute } from 'vue-router'
 import ProductAPI from '@/api/Product'
 import { useLoading } from '@/stores/useLoading'
 import GlobalLoading from '@/components/GlobalLoading.vue'
+import RecommendList from '@/components/RecommendList.vue'
 
 const route = useRoute()
 const router = useRouter()

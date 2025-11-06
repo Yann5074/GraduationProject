@@ -216,6 +216,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[tUserEvents]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[tWorkDaily]",
          "ObjectType": 0
       }
