@@ -30,6 +30,7 @@ namespace ApiProject.Controllers
         // 給前台用的有效公告
         // GET: /api/announcement/active
         [HttpGet("active")]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public async Task<ActionResult<IEnumerable<CAnnouncementDTO>>> GetActive(CancellationToken ct)
         {
             var announcement = await _announcementService.GetActiveAsync(ct);

@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AnnouncementBar from '@/components/AnnouncementBar.vue';
+import FurnitureHero3D_ExternalPBR from '@/components/FurnitureHero3D.vue'
 
 const router = useRouter()
 const goShop = () => router.push({ name: 'ProductList' })
@@ -36,7 +37,7 @@ onMounted(() => {
 
       		<!-- 信任徽章 -->
       		<!-- <div class="trust mt-4">
-        		<img src="/asset/images/bolt.avif" alt="Trusted" />
+        		<img src="/asset/images/bolt.jpg" alt="Trusted" />
         		<span class="text-white-50 ms-2">超過 2,000 位設計師選用</span>
       		</div> -->
     	</div>
@@ -58,65 +59,44 @@ onMounted(() => {
   </section>
   <!-- End Announcement Section -->
 
-  <!-- Start Product Section -->
-		<div class="product-section">
-			<div class="container">
-				<div class="row">
+  <!-- Start 3D Section -->
+  <section class="hero-3d">
+  <div class="hero-inner container">
+    <!-- 左邊文字 -->
+    <div class="hero-copy">
+      <h3 class="hero-title">
+        Shabby Chic<br/>復古雙層餐盤座
+      </h3>
+      <p class="hero-desc">
+		細緻的仿舊工藝，讓時間在金屬表面留下溫柔的痕跡。無論是午後茶點、香氛蠟燭，或是乾燥花飾，這份優雅的層次感，都能為空間增添柔和的浪漫氣息。
+      </p>
 
-					<!-- Start Column 1 -->
-					<div class="col-md-12 col-lg-3 mb-5 mb-lg-0">
-						<h2 class="mb-4 section-title">Crafted with excellent material.</h2>
-						<p class="mb-4">Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate velit imperdiet dolor tempor tristique. </p>
-						<p><RouterLink class="btn btn-sm btn-outline-black" to="/shop">看更多</RouterLink></p>
-					</div> 
-					<!-- End Column 1 -->
+	  <!-- 之後放換顏色區 -->
+      <div class="hero-cta">
+        <!-- <RouterLink to="/products" class="btn btn-light btn-lg me-2">逛逛商品</RouterLink>
+        <RouterLink to="/design" class="btn btn-light btn-lg me-2">看佈置靈感</RouterLink> -->
+      </div>
 
-					<!-- Start Column 2 -->
-					<div class="col-12 col-md-4 col-lg-3 mb-5 mb-md-0">
-						<a class="product-item" href="cart.html">
-							<img src="../assets/images/product-1.png" class="img-fluid product-thumbnail">
-							<h3 class="product-title">Nordic Chair</h3>
-							<strong class="product-price">$50.00</strong>
+      <!-- 小亮點/賣點 -->
+      <ul class="hero-bullets">
+        <li>真實 PBR 材質</li>
+        <li>支援拖曳旋轉預覽</li>
+        <li>高對比易讀設計</li>
+      </ul>
+    </div>
 
-							<span class="icon-cross">
-								<img src="../assets/images/cross.svg" class="img-fluid">
-							</span>
-						</a>
-					</div> 
-					<!-- End Column 2 -->
+    <!-- 右邊 3D -->
+    <div class="hero-visual">
+      <FurnitureHero3D_ExternalPBR
+        model="/3D/shabbychic.glb"
+        tex-dir="/3D/"
+        :auto-rotate="true"
+      />
+    </div>
+  </div>
+</section>
 
-					<!-- Start Column 3 -->
-					<div class="col-12 col-md-4 col-lg-3 mb-5 mb-md-0">
-						<a class="product-item" href="cart.html">
-							<img src="../assets/images/product-2.png" class="img-fluid product-thumbnail">
-							<h3 class="product-title">Kruzo Aero Chair</h3>
-							<strong class="product-price">$78.00</strong>
-
-							<span class="icon-cross">
-								<img src="../assets/images/cross.svg" class="img-fluid">
-							</span>
-						</a>
-					</div>
-					<!-- End Column 3 -->
-
-					<!-- Start Column 4 -->
-					<div class="col-12 col-md-4 col-lg-3 mb-5 mb-md-0">
-						<a class="product-item" href="cart.html">
-							<img src="../assets/images/product-3.png" class="img-fluid product-thumbnail">
-							<h3 class="product-title">Ergonomic Chair</h3>
-							<strong class="product-price">$43.00</strong>
-
-							<span class="icon-cross">
-								<img src="../assets/images/cross.svg" class="img-fluid">
-							</span>
-						</a>
-					</div>
-					<!-- End Column 4 -->
-
-				</div>
-			</div>
-		</div>
-	<!-- End Product Section -->
+  <!-- End Product Section -->
 
   <!-- Start Why Choose Us Section -->
 		<div class="why-choose-section">
@@ -468,4 +448,105 @@ onMounted(() => {
   width:800px; height:260px; filter: blur(60px); opacity:.4;
   background: radial-gradient(ellipse at center, #5be7b5, transparent 60%);
 }
+
+/* ======= 3D ======= */
+.hero-3d {
+  /* 背景色可自行微調：深色＋淡漸層玻璃感 */
+  --ring: rgba(255,255,255,.08);
+
+  background:
+    radial-gradient(120% 140% at 85% 10%, var(--bg2) 0%, var(--bg1) 60%),
+    linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));
+  color: #000000;
+}
+
+.hero-inner {
+  display: grid;
+  grid-template-columns: 1.05fr 1.35fr;
+  /* align-items: center; */
+  gap: clamp(16px, 3vw, 40px);
+  padding: clamp(28px, 5vw, 80px) 0;
+  min-height: clamp(520px, 72vh, 860px);
+}
+
+.hero-copy {
+  max-width: 620px;
+}
+
+.hero-title {
+  font-size: clamp(28px, 3.2vw, 52px);
+  line-height: 1.1;
+  letter-spacing: .2px;
+  margin: 0 0 .5rem;
+  font-weight: 800;
+}
+
+.hero-desc {
+  font-size: clamp(15px, 1.4vw, 18px);
+  color: rgba(95, 68, 68, 0.85);
+  margin: 0 0 1.25rem;
+}
+
+.hero-cta .btn {
+  border-radius: 16px;
+  padding: .7rem 1.1rem;
+  font-weight: 700;
+  box-shadow: 0 10px 30px rgba(0,0,0,.15);
+}
+
+.hero-cta .btn-outline-light:hover {
+  color: #1b1e23;
+}
+
+.hero-bullets {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hero-bullets li {
+  border: 1px solid var(--ring);
+  padding: .45rem .7rem;
+  border-radius: 999px;
+  font-size: 14px;
+  color: #8B4513;
+  backdrop-filter: blur(6px);
+}
+
+/* 3D 區塊容器：有圓角、淡邊框與玻璃感 */
+.hero-visual {
+  position: relative;
+  width: 100%;
+  height: min(72vh, 680px);
+  overflow: hidden;
+}
+
+/* 讓你的 3D 組件撐滿右側容器 */
+.hero-visual .three-wrap,
+.hero-visual .three-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* 響應式：窄螢幕改成上下堆疊，文字在上、3D 在下 */
+@media (max-width: 992px) {
+  .hero-inner {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: clamp(20px, 6vw, 36px) 0;
+  }
+
+  .hero-visual {
+    height: min(56vh, 520px);
+  }
+
+  .hero-cta .btn {
+    width: 100%;
+    margin-bottom: .5rem;
+  }
+}
+
 </style>
