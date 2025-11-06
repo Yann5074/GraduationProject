@@ -2,9 +2,9 @@
 {
     public class ReqSendMessageDTO
     {
-       public int chatRoomId {  get; set; }
-       public string content { get; set; }
-       public string? visitorId {  get; set; }
-       public int? employeeId { get; set; }
+       public int ChatRoomId {  get; set; }
+       public string Content { get; set; }
+        public string SenderType { get; set; } = "member"; // member / user / employee
+
     }
 }
