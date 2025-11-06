@@ -39,5 +39,11 @@ namespace ApiProject.Interfaces
 
         //Google第三方登入
         public Task<ResMemberDTO> GoogleOauthSignInAsync(string idToken, CancellationToken ct = default);
+
+        //註冊驗證是否重複
+        Task<ResUniqueCheckDTO> CheckUniqueAsync(ReqUniqueCheckDTO req);
+        Task<bool> IsAccountTakenAsync(string account);
+        Task<bool> IsEmailTakenAsync(string email);
+        Task<bool> IsPhoneTakenAsync(string phone);
     }
 }

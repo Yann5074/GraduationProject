@@ -1,13 +1,21 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { registerAPI, loginAPI } from '@/api/Member'
+import {
+  registerAPI,
+  loginAPI,
+  // ✅ 僅保留逐一檢查 API
+  checkAccountAPI,
+  checkEmailAPI,
+  checkPhoneAPI,
+} from '@/api/Member'
 import http from '@/api/axios'
 
 const router = useRouter()
 const auth = useAuthStore()
 
+// -------- 表單資料 --------
 const step = ref(1)
 const loading = ref(false)
 
@@ -19,6 +27,14 @@ const password = ref('')
 const confirmPassword = ref('')
 const emailCode = ref('')
 
+// -------- 即時檢查狀態 --------
+const accState = ref('idle') // idle | checking | ok | dup | invalid | error
+const emailState = ref('idle')
+const phoneState = ref('idle')
+const accMsg = ref('')
+const emailMsg = ref('')
+const phoneMsg = ref('')
+
 const showPassword = ref(false)
 const showConfirm = ref(false)
 
@@ -26,26 +42,102 @@ const errorMsg = ref('')
 const infoMsg = ref('')
 const successMsg = ref('')
 
-const phoneInvalid = computed(() => {
-  if (!phone.value) return false
-  return !/^\d{10}$/.test(phone.value)
-})
+// -------- 基礎前端格式檢查 --------
+const isEmail = (v) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)
+const isPhone = (v) => /^\d{10}$/.test(v)
 
+const phoneInvalid = computed(() => (phone.value ? !isPhone(phone.value) : false))
 const pwdTooShort = computed(() => password.value.length > 0 && password.value.length < 6)
-
 const confirmTooShort = computed(
   () => confirmPassword.value.length > 0 && confirmPassword.value.length < 6,
 )
-
 const confirmMismatch = computed(() => {
   if (password.value.length < 6 || confirmPassword.value.length < 6) return false
   return password.value !== confirmPassword.value
 })
 
-function isEmailFormat(v) {
-  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)
+// -------- debounce 小工具 --------
+function useDebounce(fn, delay = 350) {
+  let t
+  return (...args) => {
+    clearTimeout(t)
+    t = setTimeout(() => fn(...args), delay)
+  }
 }
 
+// -------- 逐一檢查（重點） --------
+const checkAccount = useDebounce(async () => {
+  if (!account.value) {
+    accState.value = 'idle'
+    accMsg.value = ''
+    return
+  }
+  accState.value = 'checking'
+  try {
+    const { data } = await checkAccountAPI(account.value) // 期望 { available: boolean }
+    accState.value = data.available ? 'ok' : 'dup'
+    accMsg.value = data.available ? '此帳號可使用' : '此帳號已被註冊'
+  } catch {
+    accState.value = 'error'
+  }
+}, 300)
+
+const checkEmail = useDebounce(async () => {
+  if (!email.value) {
+    emailState.value = 'idle'
+    emailMsg.value = ''
+    return
+  }
+  if (!isEmail(email.value)) {
+    emailState.value = 'invalid'
+    emailMsg.value = 'Email 格式不正確'
+    return
+  }
+  emailState.value = 'checking'
+  try {
+    const { data } = await checkEmailAPI(email.value) // { available: boolean }
+    emailState.value = data.available ? 'ok' : 'dup'
+    emailMsg.value = data.available ? '此 Email 可使用' : '此 Email 已被註冊'
+  } catch {
+    emailState.value = 'error'
+  }
+}, 300)
+
+const checkPhone = useDebounce(async () => {
+  if (!phone.value) {
+    phoneState.value = 'idle'
+    phoneMsg.value = ''
+    return
+  }
+  if (!isPhone(phone.value)) {
+    phoneState.value = 'invalid'
+    phoneMsg.value = '手機需 10 碼數字'
+    return
+  }
+  phoneState.value = 'checking'
+  try {
+    const { data } = await checkPhoneAPI(phone.value) // { available: boolean }
+    phoneState.value = data.available ? 'ok' : 'dup'
+    phoneMsg.value = data.available ? '此手機可使用' : '此手機已被註冊'
+  } catch {
+    phoneState.value = 'error'
+  }
+}, 300)
+
+// 綁定 watcher（逐一檢查）
+watch(account, checkAccount)
+watch(email, checkEmail)
+watch(phone, checkPhone)
+
+// 是否仍在檢查中 / 三欄是否通過
+const checkingAny = computed(() =>
+  [accState.value, emailState.value, phoneState.value].includes('checking'),
+)
+const fieldsOk = computed(
+  () => accState.value === 'ok' && emailState.value === 'ok' && phoneState.value === 'ok',
+)
+
+// 可否送出「寄送驗證碼」
 const canSendCode = computed(() => {
   return (
     name.value &&
@@ -55,32 +147,34 @@ const canSendCode = computed(() => {
     password.value.length >= 6 &&
     confirmPassword.value.length >= 6 &&
     password.value === confirmPassword.value &&
-    !phoneInvalid.value &&
-    isEmailFormat(email.value) &&
+    isEmail(email.value) &&
+    isPhone(phone.value) &&
+    fieldsOk.value &&
+    !checkingAny.value &&
     !loading.value
   )
 })
 
 const canFinish = computed(() => {
-  return emailCode.value && emailCode.value.length >= 6 && !loading.value
+  return !!emailCode.value && emailCode.value.length >= 6 && !loading.value
 })
-// --- API wrappers ---
+
+// -------- 你原本的 API 包裝 --------
 function sendEmailCodeAPI(payload) {
   return http.post('/Member/send-email-code', payload)
 }
-
 function verifyEmailCodeAPI(payload) {
   return http.post('/Member/verify-email-code', payload)
 }
 
-// Step1 -> Step2
+// -------- Step1 -> Step2：寄送驗證碼 --------
 async function handleSendCode() {
   errorMsg.value = ''
   infoMsg.value = ''
   successMsg.value = ''
 
   if (!canSendCode.value) {
-    errorMsg.value = '請確認欄位都有填寫、格式正確，密碼一致且至少6碼'
+    errorMsg.value = '請確認欄位都有填寫、格式正確，且帳號/手機/Email 未重複'
     return
   }
 
@@ -91,7 +185,6 @@ async function handleSendCode() {
       errorMsg.value = res.data?.message || '驗證碼寄送失敗'
       return
     }
-
     infoMsg.value = `驗證碼已寄到 ${email.value}，請在 5 分鐘內輸入`
     step.value = 2
   } catch (err) {
@@ -102,14 +195,13 @@ async function handleSendCode() {
   }
 }
 
-// resend code in step2
+// -------- Step2：重新寄送 --------
 async function handleResend() {
   if (loading.value) return
   loading.value = true
   errorMsg.value = ''
   infoMsg.value = ''
   successMsg.value = ''
-
   try {
     const res = await sendEmailCodeAPI({ email: email.value })
     if (!res.data?.ok) {
@@ -124,7 +216,7 @@ async function handleResend() {
   }
 }
 
-// Step2 完成註冊
+// -------- Step2：完成註冊 --------
 async function handleFinish() {
   errorMsg.value = ''
   infoMsg.value = ''
@@ -137,18 +229,12 @@ async function handleFinish() {
 
   loading.value = true
   try {
-    // 1. 驗證 Email Code
-    const v1 = await verifyEmailCodeAPI({
-      email: email.value,
-      code: emailCode.value,
-    })
+    const v1 = await verifyEmailCodeAPI({ email: email.value, code: emailCode.value })
     if (!v1.data?.ok) {
       errorMsg.value = v1.data?.message || '驗證碼錯誤或已過期'
-      loading.value = false
       return
     }
 
-    // 2. 建立會員
     const registerRes = await registerAPI({
       name: name.value,
       phone: phone.value,
@@ -158,16 +244,11 @@ async function handleFinish() {
     })
     if (!registerRes.data?.ok) {
       errorMsg.value = registerRes.data?.message || '註冊失敗'
-      loading.value = false
       return
     }
 
-    // 3. 自動登入
     const loginRes = await loginAPI(account.value, password.value)
-    const userData = loginRes.data
-    await auth.login({ user: userData })
-
-    // 4. 成功提示 + 導回首頁
+    await auth.login({ user: loginRes.data })
     successMsg.value = '會員註冊成功'
     router.push('/home')
   } catch (err) {
@@ -245,10 +326,33 @@ async function handleFinish() {
                 v-model="phone"
                 type="text"
                 class="form-control"
-                placeholder="輸入手機"
+                :class="{
+                  'is-invalid': phoneState === 'dup' || phoneState === 'invalid',
+                }"
+                placeholder="輸入手機（10 碼）"
                 required
+                @input="phone = phone.replace(/\D/g, '').slice(0, 10)"
               />
-              <div v-if="phoneInvalid" class="text-danger small mt-1">手機號碼需為10位數字</div>
+              <!-- 基本格式錯誤（舊的檢查仍保留） -->
+              <div v-if="phoneInvalid" class="text-danger small mt-1">手機號碼需為 10 位數字</div>
+              <!-- 即時檢查提示 -->
+              <div class="small mt-1">
+                <template v-if="phoneState === 'checking'">
+                  <span class="spinner-border spinner-border-sm me-1"></span>檢查中…
+                </template>
+                <template v-else-if="phoneState === 'ok'">
+                  <span class="text-success">{{ phoneMsg || '此手機可使用' }}</span>
+                </template>
+                <template v-else-if="phoneState === 'dup'">
+                  <span class="text-danger">{{ phoneMsg || '此手機已被註冊' }}</span>
+                </template>
+                <template v-else-if="phoneState === 'invalid'">
+                  <span class="text-danger">{{ phoneMsg || '手機需 10 碼數字' }}</span>
+                </template>
+                <template v-else-if="phoneState === 'error'">
+                  <span class="text-danger">檢查失敗，稍後再試</span>
+                </template>
+              </div>
             </div>
 
             <!-- Email -->
@@ -258,11 +362,33 @@ async function handleFinish() {
                 v-model.trim="email"
                 type="email"
                 class="form-control"
-                placeholder="輸入Email"
+                :class="{
+                  'is-invalid': emailState === 'dup' || emailState === 'invalid',
+                }"
+                placeholder="輸入 Email"
                 required
               />
-              <div v-if="email && !isEmailFormat(email)" class="text-danger small mt-1">
+              <!-- 前端格式提示（保留） -->
+              <!-- <div v-if="email && !isEmail(email)" class="text-danger small mt-1">
                 Email 格式不正確
+              </div> -->
+              <!-- 即時檢查提示 -->
+              <div class="small mt-1">
+                <template v-if="emailState === 'checking'">
+                  <span class="spinner-border spinner-border-sm me-1"></span>檢查中…
+                </template>
+                <template v-else-if="emailState === 'ok'">
+                  <span class="text-success">{{ emailMsg || '此 Email 可使用' }}</span>
+                </template>
+                <template v-else-if="emailState === 'dup'">
+                  <span class="text-danger">{{ emailMsg || '此 Email 已被註冊' }}</span>
+                </template>
+                <template v-else-if="emailState === 'invalid'">
+                  <span class="text-danger">{{ emailMsg || 'Email 格式不正確' }}</span>
+                </template>
+                <template v-else-if="emailState === 'error'">
+                  <span class="text-danger">檢查失敗，稍後再試</span>
+                </template>
               </div>
             </div>
 
@@ -273,9 +399,30 @@ async function handleFinish() {
                 v-model="account"
                 type="text"
                 class="form-control"
+                :class="{
+                  'is-invalid': accState === 'dup' || accState === 'invalid',
+                }"
                 placeholder="輸入帳號"
                 required
               />
+              <!-- 即時檢查提示 -->
+              <div class="small mt-1">
+                <template v-if="accState === 'checking'">
+                  <span class="spinner-border spinner-border-sm me-1"></span>檢查中…
+                </template>
+                <template v-else-if="accState === 'ok'">
+                  <span class="text-success">{{ accMsg || '此帳號可使用' }}</span>
+                </template>
+                <template v-else-if="accState === 'dup'">
+                  <span class="text-danger">{{ accMsg || '此帳號已被註冊' }}</span>
+                </template>
+                <template v-else-if="accState === 'invalid'">
+                  <span class="text-danger">{{ accMsg || '帳號格式不符' }}</span>
+                </template>
+                <template v-else-if="accState === 'error'">
+                  <span class="text-danger">檢查失敗，稍後再試</span>
+                </template>
+              </div>
             </div>
 
             <!-- 密碼 -->
@@ -334,7 +481,6 @@ async function handleFinish() {
               class="btn btn-success w-100 send-btn"
               :disabled="!canSendCode || loading"
             >
-              <!-- ✅ 按下時顯示 spinner -->
               <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
               {{ loading ? '寄送中...' : '寄送驗證碼到我的信箱' }}
             </button>
@@ -373,7 +519,8 @@ async function handleFinish() {
               class="btn btn-primary w-100 finish-btn"
               :disabled="!canFinish || loading"
             >
-              完成註冊並登入
+              <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+              {{ loading ? '註冊中...' : '完成註冊並登入' }}
             </button>
 
             <button
@@ -382,6 +529,7 @@ async function handleFinish() {
               :disabled="loading"
               @click="handleResend"
             >
+              <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
               重新寄驗證碼
             </button>
 

@@ -1,6 +1,6 @@
 <script setup>
 import { RouterLink, RouterView, useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
-import { onMounted, ref, watch,  onBeforeUnmount } from 'vue'
+import { onMounted, ref, watch, onBeforeUnmount } from 'vue'
 import { Dropdown } from 'bootstrap'
 import http from '../src/api/axios'
 import { useAuthStore } from '@/stores/auth'
@@ -15,7 +15,7 @@ const router = useRouter()
 const isActive = (path) => route.path.startsWith(path)
 const auth = useAuthStore()
 const cart = useCartStore()
-const isHidden = ref(false)   // 預設顯示
+const isHidden = ref(false) // 預設顯示
 let lastY = 0
 let ticking = false
 
@@ -61,7 +61,6 @@ async function hydrateFromServer() {
     await auth.login({ user: me }) // 交給 auth 自己轉換 DTO
   } catch {
     auth.logout()
-
   }
 }
 
@@ -94,8 +93,8 @@ onMounted(() => {
 })
 
 // 換頁時重置為顯示（避免新頁面一進來就縮起來）
-onBeforeRouteUpdate((to, from, next) => { 
-  isHidden.value = false 
+onBeforeRouteUpdate((to, from, next) => {
+  isHidden.value = false
   next()
 })
 
@@ -126,25 +125,32 @@ watch(
     }
   },
 )
-
-
-
 </script>
 
 <template>
-  
   <!-- 上方導覽列 -->
   <nav
-    class="navbar navbar-expand-md nav-neo" 
-    :class="[{ 'nav-solid': $route.path !== '/home' }, { 'nav-hidden': isHidden }]" 
+    class="navbar navbar-expand-md nav-neo"
+    :class="[{ 'nav-solid': $route.path !== '/home' }, { 'nav-hidden': isHidden }]"
     aria-label="Main"
   >
     <div class="container">
       <!-- 左上 Logo icon -->
-      <RouterLink class="navbar-brand" to="/home" style="color:white;"><img src="./assets/images/FurniViewLogo.png" class="logo"/> FurniView<span>.</span></RouterLink>
+      <RouterLink class="navbar-brand" to="/home" style="color: white"
+        ><img src="./assets/images/FurniViewLogo.png" class="logo" /> FurniView<span
+          >.</span
+        ></RouterLink
+      >
       <!-- <RouterLink class="navbar-brand" to="/home"><img src="./assets/images/Viewrniture.png" class="logo"/> Viewrniture<span>.</span></RouterLink> -->
 
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-expanded="false" aria-controls="navMain">
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navMain"
+        aria-expanded="false"
+        aria-controls="navMain"
+      >
         <span class="navbar-toggler-icon"></span>
       </button>
 
@@ -245,7 +251,7 @@ watch(
     </div>
   </nav>
 
-  <main :class="['app-main', {'has-offset': route.path  !=='/home'}]">
+  <main :class="['app-main', { 'has-offset': route.path !== '/home' }]">
     <!-- 自己加的聊天室浮動元件 -->
     <ChatWidget />
 
@@ -255,7 +261,7 @@ watch(
     <!-- Footer（把 public 圖片改成 / 開頭） -->
     <footer class="footer-section">
       <div class="container relative">
-        <div class="sofa-img">
+        <div class="sofa-img pt-5">
           <!-- public 底下的圖，請用 /asset/... -->
           <!-- <img src="/asset/images/sofa.png" alt="Image" class="img-fluid" /> -->
         </div>
@@ -421,31 +427,45 @@ header {
 }*/
 
 .nav-neo {
-  position: fixed; top:0; left:0; right:0; z-index: 1030;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
   /* position: sticky; top:  0; z-index: 1030; */
   background: transparent;
-  transition: transform .28s ease, background-color .2s ease, box-shadow .2s ease;
+  transition:
+    transform 0.28s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.nav-neo.nav-solid { background: rgba(15,17,19,.9); backdrop-filter: blur(8px); box-shadow: 0 1px 0 rgba(255,255,255,.06); }
+.nav-neo.nav-solid {
+  background: rgba(15, 17, 19, 0.9);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06);
+}
 
 /* 往上滑出視口 */
 .nav-hidden {
   transform: translateY(-100%);
 }
 
-.nav-neo .nav-link { color: #fff; opacity:.9; }
-.nav-neo .nav-link.router-link-active { opacity:1 }
-
-
+.nav-neo .nav-link {
+  color: #fff;
+  opacity: 0.9;
+}
+.nav-neo .nav-link.router-link-active {
+  opacity: 1;
+}
 </style>
 
 <style>
-.app-main.has-offset{
+.app-main.has-offset {
   padding-top: var(--nav-h);
 }
 
-:root{
+:root {
   --nav-h: 85px;
 }
 </style>

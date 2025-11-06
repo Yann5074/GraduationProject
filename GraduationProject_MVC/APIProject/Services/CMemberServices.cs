@@ -739,5 +739,35 @@ namespace ApiProject.Services
                 UpdateTime = member.FUpdateTime
             };
         }
+
+        //註冊驗證是否重複
+        public async Task<bool> IsAccountTakenAsync(string account)
+        {
+            if (string.IsNullOrWhiteSpace(account)) return false;
+            return await _context.TMembers.AnyAsync(m => m.FAccount == account);
+        }
+
+        public async Task<bool> IsEmailTakenAsync(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return false;
+            return await _context.TMembers.AnyAsync(m => m.FEmail == email);
+        }
+
+        public async Task<bool> IsPhoneTakenAsync(string phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone)) return false;
+            return await _context.TMembers.AnyAsync(m => m.FPhone == phone);
+        }
+
+        public async Task<ResUniqueCheckDTO> CheckUniqueAsync(ReqUniqueCheckDTO req)
+        {
+            var res = new ResUniqueCheckDTO
+            {
+                AccountTaken = await IsAccountTakenAsync(req.Account ?? ""),
+                EmailTaken = await IsEmailTakenAsync(req.Email ?? ""),
+                PhoneTaken = await IsPhoneTakenAsync(req.Phone ?? "")
+            };
+            return res;
+        }
     }
 }
