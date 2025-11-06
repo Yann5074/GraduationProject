@@ -28,7 +28,7 @@ namespace ApiProject.Controllers
         }
 
         // 給前台用的有效公告
-        // GET: /api/announcement
+        // GET: /api/announcement/active
         [HttpGet("active")]
         public async Task<ActionResult<IEnumerable<CAnnouncementDTO>>> GetActive(CancellationToken ct)
         {
@@ -43,6 +43,14 @@ namespace ApiProject.Controllers
         {
             var announcement = await _announcementService.GetAsync(id, ct);
             return announcement is null ? NotFound() : Ok(announcement);
+        }
+
+        //POST: /api/announcements
+       [HttpPost]
+        public async Task<ActionResult<CAnnouncementDTO>> Create([FromBody] CSaveAnnouncementDTO dto, CancellationToken ct)
+        {
+            var created = await _announcementService.CreateAsync(dto, ct);
+            return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
         }
     }
 }
