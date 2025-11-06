@@ -375,14 +375,14 @@ namespace ApiProject.Services
             // 2. 準備信件內容
             //    這封就是使用者收到的驗證碼信
             var mail = new MailMessage();
-            mail.From = new MailAddress(userName, "FurniMart 驗證中心"); // 第二個參數是顯示名稱，可以改
+            mail.From = new MailAddress(userName, "FurniView 驗證中心"); // 第二個參數是顯示名稱，可以改
             mail.To.Add(toEmail);
             mail.Subject = "您的驗證碼";
             mail.Body =
                 $"您好！\r\n\r\n" +
                 $"您的驗證碼是：{code}\r\n" +
-                $"此驗證碼 5 分鐘內有效，請不要告訴別人。\r\n\r\n" +
-                $"FurniMart 敬上";
+                $"此驗證碼 5 分鐘內有效，請勿提供給任何人。\r\n\r\n" +
+                $" FurniView 敬上";
             mail.IsBodyHtml = false; // 如果你想做漂亮一點的 HTML，可以改成 true 並組 HTML
 
             // 3. 建 SMTP Client，連到 Gmail
