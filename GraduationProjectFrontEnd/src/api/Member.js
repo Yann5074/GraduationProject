@@ -46,15 +46,23 @@ export function googleLoginAPI(idToken) {
 }
 // 單一整合式檢查：一次檢查多欄位
 // 一次檢查多欄位：POST /api/Member/check-unique
+// 一次檢查多欄位：POST /api/Member/check-unique
 export async function checkDuplicateAPI(payload) {
   const res = await http.post('/Member/check-unique', payload)
-  const d = res.data || {}
-  // 後端回 { accountTaken, emailTaken, phoneTaken } ＝ 已被使用
+  // 後端是 ResultDTO，真正的內容在 data.data
+  const raw = res.data?.data || {} // ← 修正重點
+
+  // 可能是 camelCase 或 PascalCase，兩種都接
+  const accountTaken = raw.accountTaken ?? raw.AccountTaken
+  const emailTaken = raw.emailTaken ?? raw.EmailTaken
+  const phoneTaken = raw.phoneTaken ?? raw.PhoneTaken
+
+  // 回傳「available = 可用」的統一格式
   return {
     data: {
-      account: d.accountTaken === undefined ? undefined : !d.accountTaken, // true = 可用
-      email: d.emailTaken === undefined ? undefined : !d.emailTaken,
-      phone: d.phoneTaken === undefined ? undefined : !d.phoneTaken,
+      account: accountTaken === undefined ? undefined : !accountTaken,
+      email: emailTaken === undefined ? undefined : !emailTaken,
+      phone: phoneTaken === undefined ? undefined : !phoneTaken,
     },
   }
 }
@@ -62,17 +70,18 @@ export async function checkDuplicateAPI(payload) {
 // GET /api/Member/check-account?account=xxx
 export async function checkAccountAPI(account) {
   const res = await http.get('/Member/check-account', { params: { account } })
-  const raw = res.data
-  // 後端可能回 { taken:true/false } 或直接回 boolean，或少數情況回 { available:true/false }
+  const d = res.data?.data // ← 修正重點（ResultDTO.data）
+  // 後端有可能給 { taken: bool } 或 { AccountTaken: bool }
   const taken =
-    raw && typeof raw === 'object' && 'taken' in raw
-      ? raw.taken
-      : raw && typeof raw === 'object' && 'AccountTaken' in raw
-        ? raw.AccountTaken
-        : typeof raw === 'boolean'
-          ? raw
-          : raw && typeof raw === 'object' && 'available' in raw
-            ? !raw.available
+    d && 'taken' in d
+      ? d.taken
+      : d && 'AccountTaken' in d
+        ? d.AccountTaken
+        : // 少數情況：直接回 boolean 或 { available: bool }
+          typeof res.data === 'boolean'
+          ? res.data
+          : res.data && typeof res.data === 'object' && 'available' in res.data
+            ? !res.data.available
             : false
   return { data: { available: !taken } }
 }
@@ -80,16 +89,16 @@ export async function checkAccountAPI(account) {
 // GET /api/Member/check-email?email=xxx
 export async function checkEmailAPI(email) {
   const res = await http.get('/Member/check-email', { params: { email } })
-  const raw = res.data
+  const d = res.data?.data
   const taken =
-    raw && typeof raw === 'object' && 'taken' in raw
-      ? raw.taken
-      : raw && typeof raw === 'object' && 'EmailTaken' in raw
-        ? raw.EmailTaken
-        : typeof raw === 'boolean'
-          ? raw
-          : raw && typeof raw === 'object' && 'available' in raw
-            ? !raw.available
+    d && 'taken' in d
+      ? d.taken
+      : d && 'EmailTaken' in d
+        ? d.EmailTaken
+        : typeof res.data === 'boolean'
+          ? res.data
+          : res.data && typeof res.data === 'object' && 'available' in res.data
+            ? !res.data.available
             : false
   return { data: { available: !taken } }
 }
@@ -97,16 +106,16 @@ export async function checkEmailAPI(email) {
 // GET /api/Member/check-phone?phone=09xxxxxxxx
 export async function checkPhoneAPI(phone) {
   const res = await http.get('/Member/check-phone', { params: { phone } })
-  const raw = res.data
+  const d = res.data?.data
   const taken =
-    raw && typeof raw === 'object' && 'taken' in raw
-      ? raw.taken
-      : raw && typeof raw === 'object' && 'PhoneTaken' in raw
-        ? raw.PhoneTaken
-        : typeof raw === 'boolean'
-          ? raw
-          : raw && typeof raw === 'object' && 'available' in raw
-            ? !raw.available
+    d && 'taken' in d
+      ? d.taken
+      : d && 'PhoneTaken' in d
+        ? d.PhoneTaken
+        : typeof res.data === 'boolean'
+          ? res.data
+          : res.data && typeof res.data === 'object' && 'available' in res.data
+            ? !res.data.available
             : false
   return { data: { available: !taken } }
 }
