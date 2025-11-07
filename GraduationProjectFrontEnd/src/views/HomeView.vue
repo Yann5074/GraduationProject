@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted, ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import AnnouncementBar from '@/components/AnnouncementBar.vue';
 import FurnitureHero3D_ExternalPBR from '@/components/FurnitureHero3D.vue'
@@ -7,26 +7,153 @@ import FurnitureHero3D_ExternalPBR from '@/components/FurnitureHero3D.vue'
 const router = useRouter()
 const goShop = () => router.push({ name: 'ProductList' })
 
-onMounted(() => { 
-  // 若有影片，避免 iOS 自動全屏
-  const v = document.querySelector('.hero-video')
-  if (v) v.play().catch(()=>{})
+// === DOM refs ===
+const sectionEl = ref(null) // 影片外層 <section>
+const wrapEl = ref(null)    // 影片容器（做 scale / sticky）
+const videoEl = ref(null)   // <video>
+const textEl = ref(null)    // ← 新增：文字容器（上下移動的目標）
+
+// === 平滑參數（可調）===
+const SMOOTH = 0.18  // 0.06~0.18：愈小愈柔順、愈大反應愈跟手
+let currentY = 0     // 畫面上真正套用的位移
+let targetY = 0      // 計算得到的目標位移
+let animRAF = null
+let animating = false
+
+// === 播放控制 ===
+let observer
+
+// === 滾動放大（scroll → scale）===
+let ticking = false
+let distance = 500 // 從開始位置到「撐滿」的滾動距離；會在 onResize 依視窗高重算
+
+// === 文字上下停靠（scroll → translateY）===
+let startY = 0 // 上方停止位移
+let endY = 0   // 下方停止位移
+
+function clamp(n, min, max) { return Math.max(min, Math.min(n, max)) }
+function lerp(a, b, t) { return a + (b - a) * t }
+
+function step() {
+  // 慣性插值
+  currentY += (targetY - currentY) * SMOOTH
+  textEl.value?.style && (textEl.value.style.transform =
+    `translate(-50%, calc(-50% + ${currentY}px))`)
+
+  // 距離仍大就持續下一幀
+  if (Math.abs(targetY - currentY) > 0.5) {
+    animating = true
+    animRAF = requestAnimationFrame(step)
+  } else {
+    animating = false
+  }
+}
+
+function updateScale() {
+  ticking = false
+  if (!sectionEl.value || !wrapEl.value) return
+
+  const rect = sectionEl.value.getBoundingClientRect()
+  const vh = window.innerHeight || document.documentElement.clientHeight
+
+  // ==== A) Scale（你原本的放大效果）====
+  const trigger = vh * 0.33
+  const current = trigger - rect.top
+  const progress = clamp(current / distance, 0, 1)
+  const scale = 0.75 + 0.25 * progress
+  wrapEl.value.style.transform = `scale(${scale})`
+  wrapEl.value.style.transformOrigin = 'center top'
+
+  // ==== B) Caption TranslateY（平滑移動）====
+  if (textEl.value) {
+    // 以整個 section 的可滾動量來算進度：
+    const sectionHeight = sectionEl.value.offsetHeight
+    const maxScroll = Math.max(1, sectionHeight - vh)
+    const t = clamp(-rect.top, 0, maxScroll)
+    const ratio = t / maxScroll
+
+    // 在 onResize 中會依視窗與文字高度算好 startY / endY
+    const y = lerp(startY, endY, ratio)
+
+    // 🎯 改成：設定目標位移，讓動畫函式慢慢追上
+    targetY = y
+    if (!animating) {
+      animating = true
+      cancelAnimationFrame(animRAF)
+      animRAF = requestAnimationFrame(step)
+    }
+  }
+}
+
+function onScroll() {
+  if (!ticking) {
+    ticking = true
+    requestAnimationFrame(updateScale)
+  }
+}
+
+async function onResize() {
+  // 依視窗高度調整放大距離，視覺更自然
+  const vh = window.innerHeight || 800
+  distance = Math.round(vh * 0.75)
+
+  // 需要文字尺寸，保險起見等一次排版
+  await nextTick()
+
+  if (textEl.value) {
+    const textH = textEl.value.offsetHeight || 0
+    // 停靠距離：可調 0.30～0.45 之間，數值小→更靠近上下邊
+    const k = 0.35
+	const offsetUp = vh * 1   // 往上移動距離
+	const offsetDown = vh * 0.35 // 往下移動距離
+    startY = -(offsetUp + textH * 0.5) // 上方停靠
+	endY   =  (offsetDown + textH * 0.5) // 下方停靠
+  }
+
+  updateScale()
+}
+
+onMounted(async () => {
+  // IntersectionObserver：可見時播放，不可見暫停
+  observer = new IntersectionObserver(
+    (entries) => {
+      const entry = entries[0]
+      if (!videoEl.value) return
+      if (entry.isIntersecting) {
+        videoEl.value.play().catch(() => {})
+      } else {
+        videoEl.value.pause()
+      }
+    },
+    { threshold: 0.35 }
+  )
+  if (videoEl.value) observer.observe(videoEl.value)
+
+  await onResize()
+  window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('resize', onResize)
 })
 
+onUnmounted(() => {
+  if (observer && videoEl.value) observer.unobserve(videoEl.value)
+  window.removeEventListener('scroll', onScroll)
+  window.removeEventListener('resize', onResize)
+})
 </script>
+
 
 <template>
   <!-- Start Hero Section -->
 	<section class="hero-neo">
  		<!-- 用影片；若沒有影片就改成背景圖 -->
-    	<video class="hero-video" autoplay muted loop playsinline preload="auto" poster="/asset/images/hero-poster.jpg">
+    	<video class="hero-video" autoplay muted loop playsinline preload="auto" >
       		<source src="/asset/videos/hero2.mp4" type="video/mp4" />
     	</video>
 
     	<div class="hero-overlay"></div>
 
     	<div class="container d-flex flex-column justify-content-center align-items-start h-100">
-      		<h1 class="display-3 fw-bold text-white lh-1 mb-3">Make Interiors <br><span class="grad">Feel Alive</span>
+      		<h1 class="display-3 fw-bold text-white lh-1 mb-3 ">Make Interiors <br><span class="grad">Feel Alive</span>
       		</h1>
       		<p class="lead text-white-50 mb-4">即時渲染展示你的家居靈感
       		</p>
@@ -34,12 +161,6 @@ onMounted(() => {
         	<button class="btn btn-neo btn-lg px-4" @click="goShop">開始選購</button>
         	<RouterLink to="/design" class="btn btn-outline-light btn-lg px-4">看看靈感</RouterLink>
       		</div>
-
-      		<!-- 信任徽章 -->
-      		<!-- <div class="trust mt-4">
-        		<img src="/asset/images/bolt.jpg" alt="Trusted" />
-        		<span class="text-white-50 ms-2">超過 2,000 位設計師選用</span>
-      		</div> -->
     	</div>
 
     		<!-- 漂浮光暈 -->
@@ -51,9 +172,6 @@ onMounted(() => {
   <!-- Start Announcement Section -->
   <section class="announcement py-3 bg-transparent text-dark text-center">
     <div class="container">
-      <!-- <p class="mb-0 fs-5">
-        🎉 全館限時優惠中！滿 NT$2000 免運費，活動至 11/15 截止
-      </p> -->
 	  <AnnouncementBar />
     </div>
   </section>
@@ -96,70 +214,33 @@ onMounted(() => {
   </div>
 </section>
 
-  <!-- End Product Section -->
+  <!-- End 3D Section -->
 
-  <!-- Start Why Choose Us Section -->
-		<div class="why-choose-section">
-			<div class="container">
-				<div class="row justify-content-between">
-					<div class="col-lg-6">
-						<h2 class="section-title">Why Choose Us</h2>
-						<p>Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate velit imperdiet dolor tempor tristique.</p>
+  <!-- Start video Section -->
+   <section ref="sectionEl" class="video-section">
+	<!-- <h3 class="text-center mb-5">EAGO 椅凳 — 現代優雅的完美平衡</h3> -->
+    <!-- 會隨滾動上下移動，並在上下方各自停止 -->
+    <div ref="textEl" class="caption">
+      <h4 class="cap-title">感受每個角度的細節</h4>
+      <p class="cap-desc">
+        在 3D 空間中自由旋轉、放大與探索，體驗設計線條與材質紋理的完美結合。
+      </p>
+    </div>
 
-						<div class="row my-5">
-							<div class="col-6 col-md-6">
-								<div class="feature">
-									<div class="icon">
-										<img src="../assets/images/truck.svg" alt="Image" class="imf-fluid">
-									</div>
-									<h3>Fast &amp; Free Shipping</h3>
-									<p>Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate.</p>
-								</div>
-							</div>
-
-							<div class="col-6 col-md-6">
-								<div class="feature">
-									<div class="icon">
-										<img src="../assets/images/bag.svg" alt="Image" class="imf-fluid">
-									</div>
-									<h3>Easy to Shop</h3>
-									<p>Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate.</p>
-								</div>
-							</div>
-
-							<div class="col-6 col-md-6">
-								<div class="feature">
-									<div class="icon">
-										<img src="../assets/images/support.svg" alt="Image" class="imf-fluid">
-									</div>
-									<h3>24/7 Support</h3>
-									<p>Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate.</p>
-								</div>
-							</div>
-
-							<div class="col-6 col-md-6">
-								<div class="feature">
-									<div class="icon">
-										<img src="../assets/images/return.svg" alt="Image" class="imf-fluid">
-									</div>
-									<h3>Hassle Free Returns</h3>
-									<p>Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate.</p>
-								</div>
-							</div>
-
-						</div>
-					</div>
-
-					<div class="col-lg-5">
-						<div class="img-wrap">
-							<img src="../assets/images/why-choose-us-img.jpg" alt="Image" class="img-fluid">
-						</div>
-					</div>
-
-				</div>
-			</div>
-		</div>
-	<!-- End Why Choose Us Section -->
+    <div ref="wrapEl" class="video-wrap">
+      <video
+        ref="videoEl"
+  class="showcase-video"
+  src="/asset/videos/home2.mp4"
+  autoplay
+  muted
+  playsinline
+  loop
+  preload="metadata"
+      ></video>
+    </div>
+  </section>
+	<!-- End video Section -->
 
   <!-- Start We Help Section -->
 		<div class="we-help-section">
@@ -405,7 +486,7 @@ onMounted(() => {
   position:absolute; inset:0; background: radial-gradient(1200px 600px at 20% 20%, rgba(59,93,80,.50), rgba(15,17,19,.55) 50%, rgba(15,17,19,.85) 100%);
 }
 .hero-neo .container{ position:relative; z-index:2; }
-.grad{ background: linear-gradient(90deg,#8ef7c2,#74d6ff,#b7a6ff); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.grad{ background: linear-gradient(90deg,#8ef7c2,#74d6ff,#b7a6ff); -webkit-background-clip:text; background-clip:text; }
 
 /* 漂浮光暈 */
 .glow{ position:absolute; filter: blur(40px); opacity:.45; z-index:1; }
@@ -477,7 +558,7 @@ onMounted(() => {
   font-size: clamp(28px, 3.2vw, 52px);
   line-height: 1.1;
   letter-spacing: .2px;
-  margin: 0 0 .5rem;
+  margin: 0 0 .9rem;
   font-weight: 800;
 }
 
@@ -514,6 +595,8 @@ onMounted(() => {
   font-size: 14px;
   color: #8B4513;
   backdrop-filter: blur(6px);
+  background: #fff2de;
+  box-shadow: 0 0 6px 1px rgba(0, 0, 0, 0.1);
 }
 
 /* 3D 區塊容器：有圓角、淡邊框與玻璃感 */
@@ -549,4 +632,78 @@ onMounted(() => {
   }
 }
 
+/* 字體 */
+.shadows-into-light-regular {
+  font-family: "Shadows Into Light", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* 影片 */
+.video-section {
+  padding: 7rem 0 3rem;
+  position: relative;
+  isolation: isolate;
+  /* 讓 sticky/滾動有空間：可依版面微調 200~260vh */
+  height: 220vh;
+  overflow: clip;
+}
+
+/* 外框容器：用來維持比例，但背景改成透明 */
+.video-wrap {
+  /* 使用容器維持 16:9，影片再 cover 住 */
+  aspect-ratio: 16 / 9;
+  position: sticky;
+  width: 100%;
+  overflow: hidden;
+  z-index: 0;
+  background: transparent !important;
+  /* transform-origin: center top; */
+}
+
+.video-wrap.scroll-scale {
+  overflow: hidden;
+  position: relative;
+}
+
+/* 讓外層容器吃到 scale，避免影響排版流 */
+.scroll-scale {
+  transform-origin: center top; /* 從上緣長大，看起來更順 */
+  will-change: transform;
+  transition: border-radius 0.2s linear; /* 圓角小幅過渡 */
+}
+
+/* 影片本體：不加外框、不留邊 */
+.showcase-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  z-index: 0;
+  position: relative;
+  transform: translateY(0.5px);
+}
+
+/* 影片下方字體 */
+.caption {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* JS 會覆寫 Y 偏移 */
+  z-index: 3;             /* 文字層在上 */
+  text-align: center;
+  color: #000000;
+  padding: 0 1rem;
+  max-width: 960px;
+  will-change: transform;
+  transition: transform 0.08s linear;
+  text-shadow: 0 2px 12px rgba(0,0,0,.45); /* 提升可讀性 */
+}
+.cap-title { font-size: clamp(20px, 3.2vw, 36px); margin: 0 0 .5rem; }
+.cap-desc  { font-size: clamp(14px, 2vw, 18px); line-height: 1.6; margin: 0; text-shadow: 0 2px 12px rgba(0,0,0,.45); }
+
+/* 尊重使用者「降低動態效果」偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-scale { transform: none !important; transition: none !important; }
+}
 </style>
