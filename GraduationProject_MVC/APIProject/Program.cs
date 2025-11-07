@@ -57,6 +57,8 @@ builder.Services.AddScoped<IRecommonedService, CRecommonedService>();
 builder.Services.AddMemoryCache(options => { options.SizeLimit = 1025; }); //註冊記憶體
 //公告
 builder.Services.AddScoped<IAnnouncementService, CAnnouncementService>();
+//首頁熱銷商品
+builder.Services.AddScoped<IAnalyticsService, CAnalyticsService>();
 // ✅ Session 需要「分散式快取」
 builder.Services.AddDistributedMemoryCache();
 

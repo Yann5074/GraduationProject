@@ -3,6 +3,7 @@ import { onMounted, onUnmounted, ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import AnnouncementBar from '@/components/AnnouncementBar.vue';
 import FurnitureHero3D_ExternalPBR from '@/components/FurnitureHero3D.vue'
+import AnalyticsArea from '@/components/AnalyticsArea.vue';
 
 const router = useRouter()
 const goShop = () => router.push({ name: 'ProductList' })
@@ -218,7 +219,6 @@ onUnmounted(() => {
 
   <!-- Start video Section -->
    <section ref="sectionEl" class="video-section">
-	<!-- <h3 class="text-center mb-5">EAGO 椅凳 — 現代優雅的完美平衡</h3> -->
     <!-- 會隨滾動上下移動，並在上下方各自停止 -->
     <div ref="textEl" class="caption">
       <h4 class="cap-title">感受每個角度的細節</h4>
@@ -230,192 +230,23 @@ onUnmounted(() => {
     <div ref="wrapEl" class="video-wrap">
       <video
         ref="videoEl"
-  class="showcase-video"
-  src="/asset/videos/home2.mp4"
-  autoplay
-  muted
-  playsinline
-  loop
-  preload="metadata"
+        class="showcase-video"
+        src="/asset/videos/home2.mp4"
+        autoplay
+        muted
+        playsinline
+        loop
+        preload="metadata"
       ></video>
     </div>
   </section>
 	<!-- End video Section -->
 
-  <!-- Start We Help Section -->
-		<div class="we-help-section">
-			<div class="container">
-				<div class="row justify-content-between">
-					<div class="col-lg-7 mb-5 mb-lg-0">
-						<div class="imgs-grid">
-							<div class="grid grid-1"><img src="../assets/images/img-grid-1.jpg" alt="Untree.co"></div>
-							<div class="grid grid-2"><img src="../assets/images/img-grid-2.jpg" alt="Untree.co"></div>
-							<div class="grid grid-3"><img src="../assets/images/img-grid-3.jpg" alt="Untree.co"></div>
-						</div>
-					</div>
-					<div class="col-lg-5 ps-lg-5">
-						<h2 class="section-title mb-4">We Help You Make Modern Interior Design</h2>
-						<p>Donec facilisis quam ut purus rutrum lobortis. Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate velit imperdiet dolor tempor tristique. Pellentesque habitant morbi tristique senectus et netus et malesuada</p>
-
-						<ul class="list-unstyled custom-list my-4">
-							<li>Donec vitae odio quis nisl dapibus malesuada</li>
-							<li>Donec vitae odio quis nisl dapibus malesuada</li>
-							<li>Donec vitae odio quis nisl dapibus malesuada</li>
-							<li>Donec vitae odio quis nisl dapibus malesuada</li>
-						</ul>
-						<p><a herf="#" class="btn">Explore</a></p>
-					</div>
-				</div>
-			</div>
-		</div>
-	<!-- End We Help Section -->
-
-  <!-- Start Popular Product -->
-		<div class="popular-product">
-			<div class="container">
-				<div class="row">
-
-					<div class="col-12 col-md-6 col-lg-4 mb-4 mb-lg-0">
-						<div class="product-item-sm d-flex">
-							<div class="thumbnail">
-								<img src="../assets/images/product-1.png" alt="Image" class="img-fluid">
-							</div>
-							<div class="pt-3">
-								<h3>Nordic Chair</h3>
-								<p>Donec facilisis quam ut purus rutrum lobortis. Donec vitae odio </p>
-								<p><a href="#">Read More</a></p>
-							</div>
-						</div>
-					</div>
-
-					<div class="col-12 col-md-6 col-lg-4 mb-4 mb-lg-0">
-						<div class="product-item-sm d-flex">
-							<div class="thumbnail">
-								<img src="../assets/images/product-2.png" alt="Image" class="img-fluid">
-							</div>
-							<div class="pt-3">
-								<h3>Kruzo Aero Chair</h3>
-								<p>Donec facilisis quam ut purus rutrum lobortis. Donec vitae odio </p>
-								<p><a href="#">Read More</a></p>
-							</div>
-						</div>
-					</div>
-
-					<div class="col-12 col-md-6 col-lg-4 mb-4 mb-lg-0">
-						<div class="product-item-sm d-flex">
-							<div class="thumbnail">
-								<img src="../assets/images/product-3.png" alt="Image" class="img-fluid">
-							</div>
-							<div class="pt-3">
-								<h3>Ergonomic Chair</h3>
-								<p>Donec facilisis quam ut purus rutrum lobortis. Donec vitae odio </p>
-								<p><a href="#">Read More</a></p>
-							</div>
-						</div>
-					</div>
-
-				</div>
-			</div>
-		</div>
-	<!-- End Popular Product -->
-
-  <!-- Start Testimonial Slider -->
-		<div class="testimonial-section">
-			<div class="container">
-				<div class="row">
-					<div class="col-lg-7 mx-auto text-center">
-						<h2 class="section-title">Testimonials</h2>
-					</div>
-				</div>
-
-				<div class="row justify-content-center">
-					<div class="col-lg-12">
-						<div class="testimonial-slider-wrap text-center">
-
-							<div id="testimonial-nav">
-								<span class="prev" data-controls="prev"><span class="fa fa-chevron-left"></span></span>
-								<span class="next" data-controls="next"><span class="fa fa-chevron-right"></span></span>
-							</div>
-
-							<div class="testimonial-slider">
-								
-								<div class="item">
-									<div class="row justify-content-center">
-										<div class="col-lg-8 mx-auto">
-
-											<div class="testimonial-block text-center">
-												<blockquote class="mb-5">
-													<p>&ldquo;Donec facilisis quam ut purus rutrum lobortis. Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate velit imperdiet dolor tempor tristique. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Integer convallis volutpat dui quis scelerisque.&rdquo;</p>
-												</blockquote>
-
-												<div class="author-info">
-													<div class="author-pic">
-														<img src="../assets/images/person-1.png" alt="Maria Jones" class="img-fluid">
-													</div>
-													<h3 class="font-weight-bold">Maria Jones</h3>
-													<span class="position d-block mb-3">CEO, Co-Founder, XYZ Inc.</span>
-												</div>
-											</div>
-
-										</div>
-									</div>
-								</div> 
-								<!-- END item -->
-
-								<div class="item">
-									<div class="row justify-content-center">
-										<div class="col-lg-8 mx-auto">
-
-											<div class="testimonial-block text-center">
-												<blockquote class="mb-5">
-													<p>&ldquo;Donec facilisis quam ut purus rutrum lobortis. Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate velit imperdiet dolor tempor tristique. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Integer convallis volutpat dui quis scelerisque.&rdquo;</p>
-												</blockquote>
-
-												<div class="author-info">
-													<div class="author-pic">
-														<img src="../assets/images/person-1.png" alt="Maria Jones" class="img-fluid">
-													</div>
-													<h3 class="font-weight-bold">Maria Jones</h3>
-													<span class="position d-block mb-3">CEO, Co-Founder, XYZ Inc.</span>
-												</div>
-											</div>
-
-										</div>
-									</div>
-								</div> 
-								<!-- END item -->
-
-								<div class="item">
-									<div class="row justify-content-center">
-										<div class="col-lg-8 mx-auto">
-
-											<div class="testimonial-block text-center">
-												<blockquote class="mb-5">
-													<p>&ldquo;Donec facilisis quam ut purus rutrum lobortis. Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate velit imperdiet dolor tempor tristique. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Integer convallis volutpat dui quis scelerisque.&rdquo;</p>
-												</blockquote>
-
-												<div class="author-info">
-													<div class="author-pic">
-														<img src="../public/asset/images/person-1.png" alt="Maria Jones" class="img-fluid">
-													</div>
-													<h3 class="font-weight-bold">Maria Jones</h3>
-													<span class="position d-block mb-3">CEO, Co-Founder, XYZ Inc.</span>
-												</div>
-											</div>
-
-										</div>
-									</div>
-								</div> 
-								<!-- END item -->
-
-							</div>
-
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	<!-- End Testimonial Slider -->
+  <!-- Start products Section -->
+		<div>
+      <AnalyticsArea/>
+    </div>
+	<!-- End products Section -->
 
   <!-- Start Blog Section -->
 		<div class="blog-section">
@@ -643,7 +474,7 @@ onUnmounted(() => {
 .video-section {
   padding: 7rem 0 3rem;
   position: relative;
-  isolation: isolate;
+  /*isolation: isolate;*/
   /* 讓 sticky/滾動有空間：可依版面微調 200~260vh */
   height: 220vh;
   overflow: clip;
@@ -656,9 +487,9 @@ onUnmounted(() => {
   position: sticky;
   width: 100%;
   overflow: hidden;
-  z-index: 0;
+  /* z-index: 0; */
   background: transparent !important;
-  /* transform-origin: center top; */
+  transform-origin: center top;
 }
 
 .video-wrap.scroll-scale {
@@ -679,7 +510,7 @@ onUnmounted(() => {
   height: 100%;
   object-fit: cover;
   display: block;
-  z-index: 0;
+  /* z-index: 0; */
   position: relative;
   transform: translateY(0.5px);
 }
@@ -690,7 +521,7 @@ onUnmounted(() => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%); /* JS 會覆寫 Y 偏移 */
-  z-index: 3;             /* 文字層在上 */
+  /* z-index: 3; */
   text-align: center;
   color: #000000;
   padding: 0 1rem;
