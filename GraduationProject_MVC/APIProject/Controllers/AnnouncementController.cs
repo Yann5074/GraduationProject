@@ -38,7 +38,7 @@ namespace ApiProject.Controllers
             return Ok(announcement);
         }
 
-        // GET: /api/announcement/5
+        // GET: /api/announcement/id
         [HttpGet("{id:int}")]
         public async Task<ActionResult<CAnnouncementDTO>> Get(int id, CancellationToken ct)
         {
@@ -46,7 +46,7 @@ namespace ApiProject.Controllers
             return announcement is null ? NotFound() : Ok(announcement);
         }
 
-        //POST: /api/announcements
+        //POST: /api/announcement/create
        [HttpPost]
         public async Task<ActionResult<CAnnouncementDTO>> Create([FromBody] CSaveAnnouncementDTO dto, CancellationToken ct)
         {

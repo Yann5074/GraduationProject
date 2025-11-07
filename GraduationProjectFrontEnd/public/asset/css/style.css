@@ -4,7 +4,7 @@
 * Author URI: https://untree.co/
 * License: https://creativecommons.org/licenses/by/3.0/
 */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@200..900&display=swap');
 
 body {
   overflow-x: hidden;
@@ -12,12 +12,11 @@ body {
 }
 
 body {
-  font-family: "Inter", sans-serif;
+  font-family: "Chiron GoRound TC", sans-serif;
+  font-optical-sizing: auto;
   font-weight: 400;
-  line-height: 28px;
-  color: #6a6a6a;
-  font-size: 14px;
-  background-color: #eff2f1;
+  /* 預設權重，可依需求調整 */
+  font-style: normal;
 }
 
 a {
@@ -971,3 +970,11 @@ textarea {
 }
 
 /*# sourceMappingURL=style.css.map */
+
+
+.chiron-goround-tc {
+  font-family: "Chiron GoRound TC", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: weight;
+  font-style: normal;
+}
