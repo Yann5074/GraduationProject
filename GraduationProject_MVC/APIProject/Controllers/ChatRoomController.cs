@@ -152,6 +152,7 @@ namespace ApiProject.Controllers
             // 下面走AI 解析 + DB 篩選 → 推回 bot
             var result = await _svc.ParseAndQueryAsync(req.Message, ct);
 
+            
             await _hub.Clients.Group($"room:{req.ChatRoomId}")
                 .SendAsync("ReceiveMessage", new
                 {
@@ -160,8 +161,8 @@ namespace ApiProject.Controllers
                     content = result.BotText,
                     createdAt = DateTime.UtcNow,
                     parsed = result.Parsed,
-                    items = result.Items
-                });
+                    items = result.Items  // ← 這裡就是灰色茶几那包
+                });  //這裡記得加  ,ct
 
             return Ok(result);
         }

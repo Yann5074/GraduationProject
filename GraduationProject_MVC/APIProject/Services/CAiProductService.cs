@@ -131,7 +131,9 @@ namespace ApiProject.Services
                         Name = x.Name,
                         Category = x.Category,
                         Color = x.Color,
-                        Price = x.Price
+                        Price = x.Price,
+                        //ImageUrl = x.FImage,          // 從你的 tProduct
+                        //Description = x.FDescription  // 同上
                     })
                     .ToListAsync();  //(ct)
 
