@@ -55,7 +55,7 @@ onMounted(async () => {
   // 3) 進入房間後記得加入群組（這台客戶端的角色是什麼就帶什麼）
   // 範例：這頁是「member」後台在看某一個房
   await connection.invoke('JoinRoom', selectedId.value.toString())
-  console.log(`Joined Room ${selectedId.value} ✅`)
+  console.log(`Joined Roomm ${selectedId.value} ✅`)
 })
   
 
