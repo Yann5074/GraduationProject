@@ -239,7 +239,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TCategory>(entity =>
         {
-            entity.HasKey(e => e.FCategoryId).HasName("PK__tCategor__53E607B34A351C7A");
+            entity.HasKey(e => e.FCategoryId).HasName("PK__tCategor__53E607B388239237");
 
             entity.ToTable("tCategory");
 
@@ -335,7 +335,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TColor>(entity =>
         {
-            entity.HasKey(e => e.FColorId).HasName("PK__tColor__7107245566D56031");
+            entity.HasKey(e => e.FColorId).HasName("PK__tColor__71072455FD8C6F68");
 
             entity.ToTable("tColor");
 
@@ -360,7 +360,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TColorOptionTexture>(entity =>
         {
-            entity.HasKey(e => e.FTextureId).HasName("PK__tColorOp__8DAFFC86788DC85C");
+            entity.HasKey(e => e.FTextureId).HasName("PK__tColorOp__8DAFFC86A866F052");
 
             entity.ToTable("tColorOptionTexture");
 
@@ -437,7 +437,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TDeliveryStatus>(entity =>
         {
-            entity.HasKey(e => e.FDeliveryStatus).HasName("PK__tDeliver__D6E794C0BCD81467");
+            entity.HasKey(e => e.FDeliveryStatus).HasName("PK__tDeliver__D6E794C0A3D04DB0");
 
             entity.ToTable("tDeliveryStatus");
 
@@ -450,7 +450,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TEmailVerification>(entity =>
         {
-            entity.HasKey(e => e.FEmailVerificationId).HasName("PK__tEmailVe__CF847B06FA3DD611");
+            entity.HasKey(e => e.FEmailVerificationId).HasName("PK__tEmailVe__CF847B06BBF60AE5");
 
             entity.ToTable("tEmailVerification");
 
@@ -519,7 +519,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TEmployeePasswordReset>(entity =>
         {
-            entity.HasKey(e => e.FResetId).HasName("PK__tEmploye__11AED4F1969ED697");
+            entity.HasKey(e => e.FResetId).HasName("PK__tEmploye__11AED4F168FC6405");
 
             entity.ToTable("tEmployeePasswordReset");
 
@@ -565,7 +565,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TExternalLogin>(entity =>
         {
-            entity.HasKey(e => e.FExternalLoginId).HasName("PK__tExterna__3589B5A8C56FF554");
+            entity.HasKey(e => e.FExternalLoginId).HasName("PK__tExterna__3589B5A8BBB82969");
 
             entity.ToTable("tExternalLogin");
 
@@ -690,7 +690,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TMaterial>(entity =>
         {
-            entity.HasKey(e => e.FMaterialId).HasName("PK__tMateria__C6A05347E71F34E2");
+            entity.HasKey(e => e.FMaterialId).HasName("PK__tMateria__C6A05347F2FE3D7F");
 
             entity.ToTable("tMaterial");
 
@@ -778,7 +778,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TModel>(entity =>
         {
-            entity.HasKey(e => e.FModelId).HasName("PK__tModel__58EC54A1C87984BB");
+            entity.HasKey(e => e.FModelId).HasName("PK__tModel__58EC54A1BC489575");
 
             entity.ToTable("tModel");
 
@@ -865,7 +865,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TOrderStatus>(entity =>
         {
-            entity.HasKey(e => e.FOrderStatus).HasName("PK__tOrderSt__D3DDFC1FE4F88265");
+            entity.HasKey(e => e.FOrderStatus).HasName("PK__tOrderSt__D3DDFC1F43F7D1C6");
 
             entity.ToTable("tOrderStatus");
 
@@ -893,7 +893,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TPartColorOption>(entity =>
         {
-            entity.HasKey(e => e.FColorOptionId).HasName("PK__tPartCol__59A0F309282A972D");
+            entity.HasKey(e => e.FColorOptionId).HasName("PK__tPartCol__59A0F309DD2DBB29");
 
             entity.ToTable("tPartColorOption");
 
@@ -922,7 +922,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TPaymentMethod>(entity =>
         {
-            entity.HasKey(e => e.FPaymentMethod).HasName("PK__tPayment__48E89E2AD0BBCDD6");
+            entity.HasKey(e => e.FPaymentMethod).HasName("PK__tPayment__48E89E2A16A93287");
 
             entity.ToTable("tPaymentMethod");
 
@@ -935,7 +935,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TPaymentStatus>(entity =>
         {
-            entity.HasKey(e => e.FPaymentStatus).HasName("PK__tPayment__8EC1BEDA0710BA77");
+            entity.HasKey(e => e.FPaymentStatus).HasName("PK__tPayment__8EC1BEDA6D85073C");
 
             entity.ToTable("tPaymentStatus");
 
@@ -948,7 +948,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TPickupMethod>(entity =>
         {
-            entity.HasKey(e => e.FPickupMethod).HasName("PK__tPickupM__694CB279F8198AE4");
+            entity.HasKey(e => e.FPickupMethod).HasName("PK__tPickupM__694CB2792AFA49CE");
 
             entity.ToTable("tPickupMethod");
 
@@ -961,7 +961,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TProduct>(entity =>
         {
-            entity.HasKey(e => e.FProductId).HasName("PK__tProduct__6168D8E03BADDE3B");
+            entity.HasKey(e => e.FProductId).HasName("PK__tProduct__6168D8E0E4D9250B");
 
             entity.ToTable("tProduct");
 
@@ -992,9 +992,13 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TProductAsset>(entity =>
         {
-            entity.HasKey(e => e.FAssetId).HasName("PK__tProduct__C2AB153DA1B3B9B8");
+            entity.HasKey(e => e.FAssetId).HasName("PK__tProduct__C2AB153D70829BC8");
 
             entity.ToTable("tProductAsset");
+
+            entity.HasIndex(e => new { e.FProductId, e.FIsPrimary, e.FSortOrder }, "IX_ProductAsset_ProductCover").IsDescending(false, true, false);
+
+            entity.HasIndex(e => new { e.FProductVariantId, e.FIsPrimary, e.FSortOrder }, "IX_ProductAsset_VariantCover").IsDescending(false, true, false);
 
             entity.Property(e => e.FAssetId).HasColumnName("fAssetId");
             entity.Property(e => e.FAssetType)
@@ -1034,7 +1038,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TProductPart>(entity =>
         {
-            entity.HasKey(e => e.FPartId).HasName("PK__tProduct__62095C71673AEA40");
+            entity.HasKey(e => e.FPartId).HasName("PK__tProduct__62095C718A498B41");
 
             entity.ToTable("tProductPart");
 
@@ -1068,7 +1072,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TProductVariant>(entity =>
         {
-            entity.HasKey(e => e.FProductVariantId).HasName("PK__tProduct__F6532C31DAABAD13");
+            entity.HasKey(e => e.FProductVariantId).HasName("PK__tProduct__F6532C316B7ADB96");
 
             entity.ToTable("tProductVariant");
 
@@ -1114,7 +1118,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TPstatus>(entity =>
         {
-            entity.HasKey(e => e.FPstatus).HasName("PK__tPStatus__478B7BFB4A03F223");
+            entity.HasKey(e => e.FPstatus).HasName("PK__tPStatus__478B7BFB91441542");
 
             entity.ToTable("tPStatus");
 
@@ -1189,7 +1193,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TTexture>(entity =>
         {
-            entity.HasKey(e => e.FTextureId).HasName("PK__tTexture__8DAFFC86708FB7C5");
+            entity.HasKey(e => e.FTextureId).HasName("PK__tTexture__8DAFFC86F647113D");
 
             entity.ToTable("tTexture");
 
@@ -1236,7 +1240,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TUserEvent>(entity =>
         {
-            entity.HasKey(e => e.FEventId).HasName("PK__tUserEve__8FE96ADA6E2B7E5B");
+            entity.HasKey(e => e.FEventId).HasName("PK__tUserEve__8FE96ADABF7CDC55");
 
             entity.ToTable("tUserEvents");
 
@@ -1263,7 +1267,7 @@ public partial class dbFurniMartContext : DbContext
 
         modelBuilder.Entity<TWorkDaily>(entity =>
         {
-            entity.HasKey(e => e.FWorkDailyId).HasName("PK__tWorkDai__1010254934BDDB36");
+            entity.HasKey(e => e.FWorkDailyId).HasName("PK__tWorkDai__1010254914D48DD4");
 
             entity.ToTable("tWorkDaily");
 
