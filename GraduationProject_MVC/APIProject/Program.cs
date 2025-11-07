@@ -14,10 +14,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 builder.Services.AddSignalR();
-builder.Services.AddScoped<ChatAiProductService>();
 builder.Services.AddSingleton<ChatClient>(serviceProvider =>
 {
-    var key = "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";
+    var key = "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";
     var model = "gpt-4o";
 
     return new ChatClient(model, key);
@@ -53,6 +52,7 @@ builder.Services.AddScoped<IOrderService, COrderService>();
 builder.Services.AddScoped<ICartService, CCartService>();
 builder.Services.AddScoped<IMemberService, CMemberServices>();
 builder.Services.AddScoped<IPasswordHasher<TMember>, PasswordHasher<TMember>>();
+builder.Services.AddScoped<IAiProductService, AiProductService>();
 // 加入 CMemberAuthService
 builder.Services.AddScoped<IHelpToolService, CMemberAuthService>();
 

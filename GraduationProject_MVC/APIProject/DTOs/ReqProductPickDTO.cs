@@ -10,5 +10,7 @@
         public string Category { get; set; } = "";
         public string Color { get; set; } = "";
         public decimal? Price { get; set; }
+        public string? ImageUrl { get; set; }  // ← 加這個欄位
+        public string? Description { get; set; } // ← 加這個欄位
     }
 }

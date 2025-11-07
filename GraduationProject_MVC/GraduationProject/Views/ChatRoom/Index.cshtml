@@ -281,9 +281,13 @@
           .build();
 
         // 2️⃣ 接收訊息
-               // 2️⃣ 接收訊息（僅 content, senderType）
-        connection.on("ReceiveMessage", function (content, senderType) {
-          console.log("收到訊息：", { senderType, content });
+        connection.on("ReceiveMessage", function (msg) {
+          console.log("收到訊息：", msg);
+          // 取欄位
+        const chatRoomId = msg?.chatRoomId;
+        const senderType = msg?.senderType ?? "";
+        const content    = msg?.content ?? "";
+        const createdAt  = msg?.createdAt;
 
           // 取得當前時間字串
           const now = new Date();

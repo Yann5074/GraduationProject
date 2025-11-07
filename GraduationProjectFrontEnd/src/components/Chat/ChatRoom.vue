@@ -40,15 +40,11 @@ const connection  = new singalR.HubConnectionBuilder()
 
 onMounted(async () => {
   // 2) 監聽後端推播  singalR的傳遞為  '方法名稱', (參數) => {}
-  connection.on('ReceiveMessage', (content,senderType) => {
-    console.log("Received message via SignalR:", content,senderType);
+  connection.on('ReceiveMessage', (payload:any) => {
+    console.log("Received message via SignalR:", payload);
     // payload = { chatRoomId, content, senderType, senderId, createdAt }
    
-      messages.value.push({
-  content: content,
-  senderType: senderType,
-  createdAt: new Date().toISOString() // 給個時間
-      }) 
+      messages.value.push(payload) ;
   })
 
   await connection.start()
@@ -64,7 +60,7 @@ onMounted(async () => {
   
 
 function getBubbleClass(type: string) {
-  return type === 'visitor' || type === 'member'
+  return type === 'bot' || type === 'member'
     ? 'message-bubble right'
     : 'message-bubble left'
 }
@@ -74,21 +70,21 @@ connection.start().then(() => {
     console.log("SignalR Connected.");
   }).catch((err) => console.log("Error while establishing connection :(" + err));
 
-const { data } = await http.post('/ChatRoom/Index',
+const { data } = await http.post('/chat/Index',
  {
   withCredentials: true // ✅ 一定要加這個
 })
  selectedId.value = data.selectedId
   messages.value = data.messages ?? []
   console.log("123456")
-}
+};
 
 async function send() {
-  if (!selectedId.value || !content.value.trim()) return
-
-  await http.post('/ChatRoom/SendMessage', { chatRoomId: selectedId.value, content: content.value.trim() },{ withCredentials: true });
-  await connection.invoke("SendToRole", selectedId.value.toString(), "member", content.value.trim());
-  content.value = ''
+const { data: payload } = await http.post(
+  '/chat/TriggerAiResponseOnlyMember',
+  { chatRoomId: selectedId.value, senderType: 'member', message: content.value.trim() },
+  { withCredentials: true }
+);
   await loadMessages()
 }
 
