@@ -54,7 +54,7 @@ namespace GraduationProject.Controllers
             var json = HttpContext.Session.GetString(CEmployeeDictionary.SK_LOGINED_USER);
             var user = json is null ? null : JsonSerializer.Deserialize<SessionUser>(json);
 
-            return RedirectToAction("List", "Employee");
+            return RedirectToAction("OrderDashboard", "Analytics");
         }
 
         //登出
@@ -127,15 +127,6 @@ namespace GraduationProject.Controllers
             return RedirectToAction(nameof(Login));
         }
 
-        //public IActionResult Index()
-        //{
-        //    return View();
-        //}
-
-        //public IActionResult Privacy()
-        //{
-        //    return View();
-        //}
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
