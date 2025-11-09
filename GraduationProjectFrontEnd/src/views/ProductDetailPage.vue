@@ -294,6 +294,23 @@
       </div>
       <!--推薦商品-->
       <RecommendList />
+          <!-- 相似商品 -->
+    <div v-if="similarProducts.length > 0" class="row mt-5">
+      <div class="col-12">
+        <h3 class="mb-4">相似商品</h3>
+        <div class="row g-3">
+          <div v-for="p in similarProducts" :key="p.fProductId" class="col-6 col-md-3">
+            <div class="card h-100 related-card" @click="goToProduct(p.fProductId)">
+              <img :src="p.mainImageUrl" class="card-img-top" :alt="p.fName" @error="handleImageError" />
+              <div class="card-body">
+                <h6 class="card-title text-truncate">{{ p.fName }}</h6>
+                <p class="text-primary fw-bold mb-0">NT$ {{ formatPrice(p.minPrice || p.MinPrice) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
       <!-- 相關產品 -->
       <div v-if="relatedProducts.length > 0" class="row mt-5">
@@ -349,6 +366,7 @@ const selectedImage = ref('')
 const productImages = ref([])
 const relatedProducts = ref([])
 let enterTs = 0
+const similarProducts = ref([])
 
 
 const viewerKey = computed(() => `${productId.value}-${currentVariantId.value ?? 'none'}`)
@@ -479,6 +497,7 @@ async function loadProductDetail() {
       
       setupProductImages()
       await loadVariants(pid )
+      await loadSimilarProducts(productId.value)   
       await loadRelatedProducts(product.value.fCategoryId)
     } else {
       console.error(' 載入失敗:', response)
@@ -643,6 +662,33 @@ async function loadRelatedProducts(categoryId) {
     console.error(' 載入相關產品失敗:', err)
   }
 }
+
+async function loadSimilarProducts(pid, count = 8) {
+  try {
+    const res = await ProductAPI.getSimilarProducts(pid, count)
+    // 兼容兩種格式：{success,data} 或 axios 原生 {data:{success,data}}
+    const payload = res?.data?.data ?? res?.data ?? res
+    const items = Array.isArray(payload) ? payload : []
+
+    similarProducts.value = items
+      .filter(p => p.fProductId !== product.value.fProductId)
+      .slice(0, 4)
+      .map(p => {
+        let imageUrl = p.mainImageUrl || p.MainImageUrl
+        if (!imageUrl && p.assets?.length) {
+          const primaryAsset = p.assets.find(a => a.fIsPrimary || a.FIsPrimary) || p.assets[0]
+          imageUrl = primaryAsset?.fUrl || primaryAsset?.FUrl
+        }
+        return { ...p, mainImageUrl: getStableImageUrl(imageUrl) }
+      })
+  } catch (err) {
+    console.error('載入相似商品失敗:', err)
+    similarProducts.value = []
+  }
+}
+
+
+
 
 // 選擇變體
 function selectVariant(variant) {

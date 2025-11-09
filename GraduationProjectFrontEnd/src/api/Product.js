@@ -324,33 +324,32 @@ export const ProductAPI = {
      */
     async getSimilarProducts(productId, count = 4) {
         try {
-            const response = await http.get(`/Product/${productId}/similar`, {
-                params: { count }
-            })
-
+            const response = await http.get(`/Product/${productId}/similar`, { params: { count } })
             console.log('相似產品回應:', response)
 
-            // 解析包裝的回應
-            if (response && response.success) {
+            const payload = response?.data
+            if (payload?.success) {
                 return {
                     success: true,
-                    data: response.data || []
+                    data: payload.data || []
                 }
             }
 
-            return {
-                success: true,
-                data: Array.isArray(response) ? response : []
+            // 後備容錯：如果後端哪天改成直接回陣列
+            if (Array.isArray(payload)) {
+                return { success: true, data: payload }
             }
+            if (Array.isArray(response)) {
+                return { success: true, data: response }
+            }
+
+            return { success: true, data: [] }
         } catch (error) {
             console.error('取得相似產品失敗:', error)
-            return {
-                success: false,
-                message: error.message || '取得相似產品失敗',
-                data: []
-            }
+            return { success: false, message: error.message || '取得相似產品失敗', data: [] }
         }
     },
+
 
 
 
