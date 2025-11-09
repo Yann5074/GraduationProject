@@ -3,6 +3,7 @@ using ApiProject.Interfaces;
 using ApiProject.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Math;
 using System.Diagnostics.Eventing.Reader;
 using System.Text;
 
@@ -69,8 +70,17 @@ namespace ApiProject.Services
                         .FirstOrDefault() ?? "/ProductImages/default.png",
                     TotalStock = p.ProductVariants.Sum(v => v.FStock ?? 0),
                     IsAvailable = p.FPstatus == 1 && p.ProductVariants.Sum(v => v.FStock ?? 0) > 0,
-                    MinPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Min(v => v.FPrice),
-                    MaxPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Max(v => v.FPrice),
+                    MinPrice = p.ProductVariants
+                        .Where(v => v.FPrice.HasValue)
+                        .Select(v => v.FPrice)
+                        .DefaultIfEmpty()
+                        .Min(),
+
+                                        MaxPrice = p.ProductVariants
+                        .Where(v => v.FPrice.HasValue)
+                        .Select(v => v.FPrice)
+                        .DefaultIfEmpty()
+                        .Max(),
                     AvailableColorCount = p.ProductVariants
                         .Where(v => v.FColorId.HasValue && v.FPstatus == 1)
                         .Select(v => v.FColorId)
@@ -215,28 +225,33 @@ namespace ApiProject.Services
                     .ThenInclude(v => v.Color)
                 .FirstOrDefaultAsync(p => p.FProductId == id);
 
-            if (product == null)
-            {
-                return null;
-            }
+            if (product == null) return null;
 
-            // 取得主圖
+            // 主圖
             var primaryAsset = product.ProductAssets
                 .Where(a => !string.IsNullOrEmpty(a.FUrl) && (a.FIsPrimary ?? false))
                 .OrderBy(a => a.FSortOrder)
                 .FirstOrDefault();
 
-            // 取得 3D 模型
-            var modelAsset = product.ProductAssets
-                .FirstOrDefault(a => a.FAssetType == "3d_model");
+            // 3D / 環境貼圖
+            var modelAsset = product.ProductAssets.FirstOrDefault(a => a.FAssetType == "3d_model");
+            var envMapAsset = product.ProductAssets.FirstOrDefault(a => a.FAssetType == "env_map");
 
-            // 取得環境貼圖（可選）
-            var envMapAsset = product.ProductAssets
-                .FirstOrDefault(a => a.FAssetType == "env_map");
+            // 任一變體（拿三圍與重量；允許為 null）
+            var variant = product.ProductVariants.FirstOrDefault();
+            var len = variant?.FLength ?? 0m;
+            var wid = variant?.FWidth ?? 0m;
+            var hei = variant?.FHeight ?? 0m;
+            var weight = variant?.FWeight ?? 0m;
 
-            // 取得變體三圍 +重量
-            var variant = product.ProductVariants
-                .FirstOrDefault();
+            // 價格區間（只計算上架中的變體；空集合不拋例外）
+            var pricedList = product.ProductVariants
+                .Where(v => v.FPstatus == 1 && v.FPrice.HasValue)
+                .Select(v => v.FPrice!.Value)
+                .ToList();
+
+            decimal? minPrice = pricedList.Count > 0 ? pricedList.Min() : (decimal?)null;
+            decimal? maxPrice = pricedList.Count > 0 ? pricedList.Max() : (decimal?)null;
 
             var result = new ResProductDetailDTO
             {
@@ -248,12 +263,11 @@ namespace ApiProject.Services
                 FWarrantyMonth = product.FWarrantyMonth,
                 FAssemblyRequired = product.FAssemblyRequired,
 
-                // 產品三圍 + 重量
-                FLength = (decimal)variant.FLength,
-                FWidth = (decimal)variant.FWidth,
-                FHeight = (decimal)variant.FHeight,
-                FWeight = (decimal)variant.FWeight,
-
+                // 產品三圍 + 重量（null 安全）
+                FLength = len,
+                FWidth = wid,
+                FHeight = hei,
+                FWeight = weight,
 
                 // 主圖 URL
                 MainImageUrl = primaryAsset?.FUrl
@@ -264,10 +278,8 @@ namespace ApiProject.Services
                         .FirstOrDefault()
                     ?? "/ProductImages/default.png",
 
-                // 3D 模型路徑
+                // 3D / 環境貼圖
                 F3dModelPath = modelAsset?.FUrl,
-
-                // 環境貼圖路徑
                 EnvMapUrl = envMapAsset?.FUrl,
 
                 // 素材列表
@@ -285,6 +297,8 @@ namespace ApiProject.Services
                         FIsPrimary = a.FIsPrimary ?? false,
                         FSortOrder = a.FSortOrder ?? 0
                     }).ToList(),
+
+                // 圖片清單
                 Images = product.ProductAssets
                     .Where(a => a.FAssetType == "image")
                     .OrderBy(a => a.FSortOrder)
@@ -294,10 +308,9 @@ namespace ApiProject.Services
                         FUrl = a.FUrl,
                         FIsPrimary = a.FIsPrimary ?? false,
                         FSortOrder = a.FSortOrder ?? 0
-                    })
-                    .ToList(),
+                    }).ToList(),
 
-                // 變體列表（只顯示上架中的）
+                // 變體（只顯示上架中的）
                 Variants = product.ProductVariants
                     .Where(v => v.FPstatus == 1)
                     .Select(v => new ResProductVariantDTO
@@ -307,49 +320,40 @@ namespace ApiProject.Services
                         FPrice = v.FPrice,
                         FStock = v.FStock,
                         FColorId = v.FColorId,
-                        ColorName = v.Color?.FColorName,
-                        ColorCode = v.Color?.FColorCode,
-                        ColorHex = v.Color?.FColorHex ?? v.Color?.FColorCode,
+                        ColorName = v.Color != null ? v.Color.FColorName : null,
+                        ColorCode = v.Color != null ? v.Color.FColorCode : null,
+                        ColorHex = v.Color != null ? (v.Color.FColorHex ?? v.Color.FColorCode) : null,
                         FSizeLabel = v.FSizeLabel
                     }).ToList(),
 
+                // 可選顏色（null 安全：FStock/FColorId）
                 AvailableColors = product.ProductVariants
-                    .Where(v => v.Color != null && v.FStock > 0)
+                    .Where(v => v.Color != null && (v.FStock ?? 0) > 0)
                     .Select(v => new ResColorVariantDTO
                     {
                         VariantId = v.FProductVariantId,
-                        ColorId = v.FColorId.Value,
-                        ColorName = v.Color.FColorName,
-                        ColorCode = v.Color.FColorCode,
-                        ColorHex = v.Color.FColorHex,
-                        Thumbnail = v.Color.FThumbnail,
+                        ColorId = v.FColorId.GetValueOrDefault(),
+                        ColorName = v.Color!.FColorName,
+                        ColorCode = v.Color!.FColorCode,
+                        ColorHex = v.Color!.FColorHex,
+                        Thumbnail = v.Color!.FThumbnail,
                         Price = v.FPrice ?? 0,
                         Stock = v.FStock ?? 0,
                         SKU = v.FSku,
-                        //SizeLabel = v.FSizeLabel
-                    })
-                    .ToList(),
+                        // SizeLabel = v.FSizeLabel
+                    }).ToList(),
 
-                // 庫存總計（只計算上架中的變體）
+                // 庫存總計 / 可購買
                 TotalStock = product.ProductVariants
                     .Where(v => v.FPstatus == 1)
                     .Sum(v => v.FStock ?? 0),
 
-                // 是否可購買
                 IsAvailable = product.FPstatus == 1 &&
-                              product.ProductVariants
-                                  .Where(v => v.FPstatus == 1)
-                                  .Sum(v => v.FStock ?? 0) > 0,
+                              product.ProductVariants.Where(v => v.FPstatus == 1).Sum(v => v.FStock ?? 0) > 0,
 
-                // 價格區間（只計算上架中的變體）
-                MinPrice = product.ProductVariants
-                    .Where(v => v.FPrice.HasValue && v.FPstatus == 1)
-                    .Min(v => v.FPrice),
-
-                MaxPrice = product.ProductVariants
-                    .Where(v => v.FPrice.HasValue && v.FPstatus == 1)
-                    .Max(v => v.FPrice),
-
+                // 價格區間（用上面先算好的變數）
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
 
                 // 時間戳記
                 FCreateTime = product.FCreateTime,
@@ -358,6 +362,7 @@ namespace ApiProject.Services
 
             return result;
         }
+
 
 
         public async Task<List<ResProductListDTO>> GetSimilarProductsAsync(int productId, int count = 4)
@@ -434,8 +439,17 @@ namespace ApiProject.Services
                         .FirstOrDefault() ?? "/ProductImages/default.png",
                     TotalStock = p.ProductVariants.Sum(v => v.FStock ?? 0),
                     IsAvailable = p.FPstatus == 1 && p.ProductVariants.Sum(v => v.FStock ?? 0) > 0,
-                    MinPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Min(v => v.FPrice),
-                    MaxPrice = p.ProductVariants.Where(v => v.FPrice.HasValue).Max(v => v.FPrice),
+                    MinPrice = p.ProductVariants
+                    .Where(v => v.FPrice.HasValue)
+                    .Select(v => v.FPrice)
+                    .DefaultIfEmpty()
+                    .Min(),
+
+                    MaxPrice = p.ProductVariants
+                    .Where(v => v.FPrice.HasValue)
+                    .Select(v => v.FPrice)
+                    .DefaultIfEmpty()
+                    .Max(),
                     FCreateTime = p.FCreateTime,
                     FUpdateTime = p.FUpdateTime
                 })
