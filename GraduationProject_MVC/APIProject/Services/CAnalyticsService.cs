@@ -25,10 +25,25 @@ namespace ApiProject.Services
             public string? TopVariantSKU { get; set; }
         }
 
-        public async Task<IReadOnlyList<BestSellerDto>> GetBestSellersAsync(CBestSellerQueryDTO query, CancellationToken ct = default)
+        public async Task<IReadOnlyList<CBestSellerDTO>> GetBestSellersAsync(CBestSellerQueryDTO query, CancellationToken ct = default)
         {
+            int year = DateTime.Now.Year;
+
+            DateTime start = new DateTime(year, 1, 1, 0, 0, 0);
+            DateTime end = start.AddYears(1);
+
+            // 覆寫成該年整年
+            query = new CBestSellerQueryDTO
+            {
+                From = start,
+                To = end,
+                Top = query.Top <= 0 ? 5 : query.Top,
+                Statuses = string.IsNullOrWhiteSpace(query.Statuses) ? "2,3,4,5" : query.Statuses
+            };
+
+            //查詢前N筆商品資料(避免上架中產品篩選完少於5筆)
             var wantTop = (query.Top <= 0 ? 5 : query.Top);
-            var fetchN = Math.Max(10, wantTop * 5); // 避免後續過濾掉非上架商品後不足
+            var fetchN = Math.Max(10, wantTop * 5);//至少10筆或wantTop * 5取大者
 
             // ⚠️ 不改動原本 SQL，只在外層做程式碼過濾（商品需上架）
             var sql = @"
@@ -88,7 +103,8 @@ ORDER BY
                 .SqlQueryRaw<BestSellerRow>(sql, pFrom, pTo, pTop, pSta)
                 .ToListAsync(ct);
 
-            if (raw.Count == 0) return Array.Empty<BestSellerDto>();
+            //沒資料回空集合
+            if (raw.Count == 0) return Array.Empty<CBestSellerDTO>();
 
             // 僅保留「上架中」商品（tProduct.fPStatus = 1）
             var productIds = raw.Select(r => r.ProductId).Distinct().ToArray();
@@ -103,15 +119,16 @@ ORDER BY
             var result = raw
                 .Where(r => online.Contains(r.ProductId))
                 .Take(wantTop)
-                .Select(r => new BestSellerDto(
-                    r.ProductId,
-                    r.ProductName,
-                    r.TotalQuantity,
-                    r.TotalSalesAmount,
-                    r.VariantCount,
-                    r.TopVariantId,
-                    r.TopVariantSKU
-                ))
+                .Select(r => new CBestSellerDTO
+                {
+                    ProductId = r.ProductId,
+                    ProductName = r.ProductName,
+                    TotalQuantity = r.TotalQuantity,
+                    TotalSalesAmount = r.TotalSalesAmount,
+                    VariantCount = r.VariantCount,
+                    TopVariantId = r.TopVariantId,
+                    TopVariantSKU = r.TopVariantSKU
+                })
                 .ToList();
 
             return result;

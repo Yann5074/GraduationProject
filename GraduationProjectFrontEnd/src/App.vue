@@ -252,10 +252,6 @@ watch(
     <!-- Footer（把 public 圖片改成 / 開頭） -->
     <footer class="footer-section">
       <div class="container relative">
-        <div class="sofa-img pt-5">
-          <!-- public 底下的圖，請用 /asset/... -->
-          <!-- <img src="/asset/images/sofa.png" alt="Image" class="img-fluid" /> -->
-        </div>
 
         <div class="row">
           <div class="col-lg-8">
@@ -264,7 +260,7 @@ watch(
                 <span class="me-1">
                   <img src="/asset/images/envelope-outline.svg" alt="Image" class="img-fluid" />
                 </span>
-                <span>Subscribe to Newsletter</span>
+                <span>訂閱電子期刊</span>
               </h3>
 
               <form action="#" class="row g-3">
@@ -287,12 +283,10 @@ watch(
         <div class="row g-5 mb-5">
           <div class="col-lg-4">
             <div class="mb-4 footer-logo-wrap">
-              <a href="#" class="footer-logo">Furni<span>.</span></a>
+              <a href="#" class="footer-logo">FurniView<span>.</span></a>
             </div>
             <p class="mb-4">
-              Donec facilisis quam ut purus rutrum lobortis. Donec vitae odio quis nisl dapibus
-              malesuada. Nullam ac aliquet velit. Aliquam vulputate velit imperdiet dolor tempor
-              tristique. Pellentesque habitant
+              讓設計成為日常的一部分。<br>我們用細節與質感，打造專屬於你的生活空間。
             </p>
 
             <ul class="list-unstyled custom-social">
@@ -315,35 +309,31 @@ watch(
             <div class="row links-wrap">
               <div class="col-6 col-sm-6 col-md-3">
                 <ul class="list-unstyled">
-                  <li><a href="#">About us</a></li>
-                  <li><a href="#">Services</a></li>
-                  <li><a href="#">Blog</a></li>
-                  <li><a href="#">Contact us</a></li>
+                  <li><a href="#">關於我們</a></li>
+                  <li><a href="#">布置靈感</a></li>
+                  <li><a href="#">查看商品</a></li>
                 </ul>
               </div>
 
               <div class="col-6 col-sm-6 col-md-3">
                 <ul class="list-unstyled">
-                  <li><a href="#">Support</a></li>
-                  <li><a href="#">Knowledge base</a></li>
-                  <li><a href="#">Live chat</a></li>
+                  <li><a href="#">常見問題</a></li>
+                  <li><a href="#">出貨與退換貨</a></li>
+                  <li><a href="#">聯絡客服</a></li>
                 </ul>
               </div>
 
               <div class="col-6 col-sm-6 col-md-3">
                 <ul class="list-unstyled">
-                  <li><a href="#">Jobs</a></li>
-                  <li><a href="#">Our team</a></li>
-                  <li><a href="#">Leadership</a></li>
-                  <li><a href="#">Privacy Policy</a></li>
+                  <li><a href="#">加入我們</a></li>
+                  <li><a href="#">團隊資訊</a></li>
                 </ul>
               </div>
 
               <div class="col-6 col-sm-6 col-md-3">
                 <ul class="list-unstyled">
-                  <li><a href="#">Nordic Chair</a></li>
-                  <li><a href="#">Kruzo Aero</a></li>
-                  <li><a href="#">Ergonomic Chair</a></li>
+                  <li><a href="#">隱私權政策</a></li>
+                  <li><a href="#">使用條款</a></li>
                 </ul>
               </div>
             </div>
@@ -352,19 +342,10 @@ watch(
 
         <div class="border-top copyright">
           <div class="row pt-4">
-            <div class="col-lg-6">
-              <p class="mb-2 text-center text-lg-start">
-                Copyright &copy;{{ new Date().getFullYear() }}. All Rights Reserved. &mdash;
-                Designed with love by <a href="https://untree.co">Untree.co</a> Distributed By
-                <a hreff="https://themewagon.com">ThemeWagon</a>
+            <div class="col-12">
+              <p class="mb-2 text-center text-sm-end">
+                 &copy;{{ new Date().getFullYear() }}. Viewniture. All rights reserved.
               </p>
-            </div>
-
-            <div class="col-lg-6 text-center text-lg-end">
-              <ul class="list-unstyled d-inline-flex ms-auto">
-                <li class="me-4"><a href="#">Terms &amp; Conditions</a></li>
-                <li><a href="#">Privacy Policy</a></li>
-              </ul>
             </div>
           </div>
         </div>

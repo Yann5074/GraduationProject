@@ -28,7 +28,6 @@ onMounted(async () => {
 
 <template>
   <section class="container my-5">
-    <h3 class="fw-bold mb-3">熱銷商品排行 🔥</h3>
 
     <div v-if="loading" class="text-muted">載入中...</div>
 
