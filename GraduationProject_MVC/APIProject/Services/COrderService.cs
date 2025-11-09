@@ -32,6 +32,16 @@ namespace ApiProject.Services
             var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
             if (idCheck.Ok != true)
                 return new List<ResOrderDTO>();
+
+            var photos = _context.TProductAssets
+                .AsNoTracking()
+                .Where(p => p.FUrl != null &&
+                (p.FAssetType == "image" || p.FMimeType.StartsWith("image/")) &&
+                !p.FUrl.Contains("/3D") && (p.FUrl.EndsWith(".png") || p.FUrl.EndsWith(".jpg")
+                || p.FUrl.EndsWith(".jpeg") || p.FUrl.EndsWith(".webp") || p.FUrl.EndsWith(".gif")
+                || p.FUrl.EndsWith(".bmp") || p.FUrl.EndsWith(".svg"))
+                );
+
             var query = _context.TOrders
                 .Include(o => o.Employee)
                 .Include(o => o.OrderStatus)
@@ -63,7 +73,17 @@ namespace ApiProject.Services
                         ProductInfo = ((int)od.ProductVariant.FLength).ToString() + " x " + ((int)od.ProductVariant.FWidth).ToString() + " x " + ((int)od.ProductVariant.FHeight).ToString() + " cm" +" / " + ((int)od.ProductVariant.FWeight).ToString() + " Kg",
                         UnitPrice = od.FUnitPrice,
                         Quantity = od.FQuantity,
-                        ImageUrl = od.ProductVariant.ProductAsset.FUrl,
+                        ImageUrl = photos.Where(p => p.FProductId == od.ProductVariant.FProductId && p.FProductVariantId == od.FProductVariantId)
+                        .OrderByDescending(p => p.FIsPrimary)
+                        .ThenBy(p => p.FSortOrder)
+                        .Select(p => p.FUrl)
+                        .FirstOrDefault()
+                        ?? photos.Where(p => p.FProductId == od.ProductVariant.FProductId && p.FProductVariantId == null)
+                        .OrderByDescending(p => p.FIsPrimary)
+                        .ThenBy(p => p.FSortOrder)
+                        .Select(p => p.FUrl)
+                        .FirstOrDefault()
+                        ?? "/ProductImages/default.png"
                     })
                 });
             return await query.ToListAsync();
@@ -75,6 +95,16 @@ namespace ApiProject.Services
             var idCheck = await _memberAuth.ValidateAndGetMemberAsync(user, ct);
             if (idCheck.Ok != true)
                 return new List<ResOrderDTO>();
+
+            var photos = _context.TProductAssets
+                .AsNoTracking()
+                .Where(p => p.FUrl != null &&
+                (p.FAssetType == "image" || p.FMimeType.StartsWith("image/")) &&
+                !p.FUrl.Contains("/3D") && (p.FUrl.EndsWith(".png") || p.FUrl.EndsWith(".jpg")
+                || p.FUrl.EndsWith(".jpeg") || p.FUrl.EndsWith(".webp") || p.FUrl.EndsWith(".gif")
+                || p.FUrl.EndsWith(".bmp") || p.FUrl.EndsWith(".svg"))
+                );
+
             var query = _context.TOrders
                 .Include(o => o.OrderDetail)
                     .ThenInclude(od => od.ProductVariant)
@@ -112,7 +142,17 @@ namespace ApiProject.Services
                     ProductInfo = od.ProductVariant.FLength.ToString() + " x" + od.ProductVariant.FWidth.ToString() + " x" + od.ProductVariant.FHeight.ToString() + " / " + od.ProductVariant.FWeight.ToString() + "Kg",
                     UnitPrice = od.FUnitPrice,
                     Quantity = od.FQuantity,
-                    ImageUrl = od.ProductVariant.ProductAsset.FUrl,
+                    ImageUrl = photos.Where(p => p.FProductId == od.ProductVariant.FProductId && p.FProductVariantId == od.FProductVariantId)
+                        .OrderByDescending(p => p.FIsPrimary)
+                        .ThenBy(p => p.FSortOrder)
+                        .Select(p => p.FUrl)
+                        .FirstOrDefault()
+                        ?? photos.Where(p => p.FProductId == od.ProductVariant.FProductId && p.FProductVariantId == null)
+                        .OrderByDescending(p => p.FIsPrimary)
+                        .ThenBy(p => p.FSortOrder)
+                        .Select(p => p.FUrl)
+                        .FirstOrDefault()
+                        ?? "/ProductImages/default.png"
                 })
 
             }).OrderByDescending(o => o.OrderTime)
