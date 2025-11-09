@@ -16,7 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<ChatClient>(serviceProvider =>
 {
-    var key = "api-key";
+    var key = "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";
     var model = "gpt-4o";
 
     return new ChatClient(model, key);

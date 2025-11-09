@@ -5,6 +5,70 @@
     }
 
     <style>
+        /*新增的*/
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 6px;
+    }
+
+    .product-card {
+        display: block;
+        background: #fff;
+        color: #111;
+        border-radius: 10px;
+        overflow: hidden;
+        text-decoration: none;
+    }
+
+        .product-card img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .product-card .info {
+            padding: 8px;
+        }
+
+        .product-card .name {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .product-card .meta {
+            display: flex;
+            gap: 8px;
+            font-size: 12px;
+            align-items: center;
+        }
+
+        .product-card .tag {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 2px 6px;
+            border-radius: 999px;
+        }
+
+        .product-card .price {
+            font-weight: 700;
+        }
+
+        .product-card .desc {
+            font-size: 12px;
+            color: #444;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+    .ai-text {
+        margin-top: 6px;
+        opacity: .85;
+    }
+
         /* ===== 左側：列表（沿用原本淺色） ===== */
         .page {
             display: grid;
@@ -224,7 +288,8 @@
 
                         <div class="msg-row @(isEmployee ? "from-employee" : "from-others")">
                             <div class="bubble" data-id="@m.MessageId">
-                                <div class="content">@m.Content</div>
+                            <div class="content" data-json="@Html.Raw((m.Content ?? "").Replace("\"", "&quot;"))">
+                                @m.Content</div>
                                 <div class="meta">
                                     <span class="sender">@m.SenderType</span>
                                     <span>@m.CreatedAt?.ToString("yyyy/MM/dd HH:mm")</span>
@@ -350,50 +415,93 @@
             }
         }
 
-
+                <script>
         // 5️⃣ 啟動
         startConnection();
+
         document.addEventListener('DOMContentLoaded', function () {
-        const box  = document.getElementById('messages');
-             const form = document.querySelector('form.composer');
-             const ta   = document.getElementById('msgInput');
-             const btn  = document.getElementById('sendBtn');
+          const box  = document.getElementById('messages');
+          const form = document.querySelector('form.composer');
+          const ta   = document.getElementById('msgInput');
+          const btn  = document.getElementById('sendBtn');
 
           if (!form) {
             console.error('❌ 找不到 form.composer，請確認 Script 在 <body> 最後或使用 DOMContentLoaded 包住。');
             return;
           }
 
-          console.log('✅ 已找到 form：', form);
-
           if (box) box.scrollTop = box.scrollHeight;
           if (!ta || !btn) return;
 
+          // ========= 會把 .content 裡的 JSON 轉成商品卡片 =========
+          function renderBubbleContent(contentEl) {
+            if (!contentEl) return;
+            // 來源一：我們把原文字放在 innerText，同時把同一份字串放 data-json（安全起見）
+            // 若你已經把 data-json 放在 Razor，就用那個，否則就抓 innerText 兜用
+            const rawAttr = contentEl.getAttribute('data-json');
+            const raw = (rawAttr ?? contentEl.textContent ?? '').trim();
+            if (!raw || !(raw.startsWith('[') || raw.startsWith('{'))) return;
+
+            let payload = null;
+            try { payload = JSON.parse(raw); } catch { return; }
+
+            const items = Array.isArray(payload) ? payload
+                        : (payload && Array.isArray(payload.items) ? payload.items : null);
+            const contentText = Array.isArray(payload) ? '找到幾個符合條件的商品，給您參考～'
+                              : (payload && payload.content) || '';
+
+            if (!items || !items.length) return;
+
+            const html = `
+              <div class="product-grid">
+                ${items.map(it => `
+                  <a class="product-card" href="${(it.linkUrl || '#')}" target="_blank" rel="noopener">
+                    <img src="${(it.imageUrl ? ('https://localhost:7131' + it.imageUrl) : 'https://placehold.co/300x200?text=Product')}" />
+                    <div class="info">
+                      <div class="name">${(it.name || '')}</div>
+                      <div class="meta">
+                        ${it.inStock ? '<span class="tag">現貨</span>' : ''}
+                        ${it.price != null ? `<span class="price">NT$ ${Number(it.price).toLocaleString()}</span>` : ''}
+                      </div>
+                      ${it.desc ? `<div class="desc">${it.desc}</div>` : ''}
+                    </div>
+                  </a>
+                `).join('')}
+              </div>
+              ${contentText ? `<div class="ai-text">${contentText}</div>` : ''}
+            `;
+            contentEl.innerHTML = html;
+          }
+
+          // 初次載入：把所有 .bubble .content 都跑一次轉換（若是 JSON 會變卡片）
+          document.querySelectorAll('.bubble .content').forEach(renderBubbleContent);
+
+          // ========= 輸入框行為 =========
           const autoresize = () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 160) + 'px'; };
           ta.addEventListener('input', autoresize);
           autoresize();
 
           ta.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();   // 阻止 textarea 自動換行
-            form.requestSubmit(); // ✅ 模擬點擊 <button type="submit">
+              e.preventDefault();   // 阻止 textarea 自動換行
+              form.requestSubmit(); // ✅ 模擬點擊 <button type="submit">
             }
           });
 
+          // ========= 送出訊息（員工 → 純文字；若是 JSON 也會自動轉卡片） =========
           form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const text = ta.value.trim();
             if (!text) return;
 
-
             const fd = new FormData(form);
-
-             const chatRoomId = "@Model.SelectedId";
+            const chatRoomId = "@Model.SelectedId";
 
             try {
-
+              // 同步廣播給 SignalR（右側立即顯示）
               await connection.invoke("SendToRole", chatRoomId, "employee", text);
 
+              // 後端落 DB
               const res = await fetch(form.action, { method: 'POST', body: fd });
               if (!res.ok) throw new Error('Network error');
               const data = await res.json();
@@ -408,10 +516,23 @@
                   <div class="content"></div>
                   <div class="meta"><span>${m.senderType}</span><span>${m.createdAt}</span></div>
                 </div>`;
-              row.querySelector('.content').textContent = m.content;
 
-              // box.appendChild(row);
-              box.scrollTop = box.scrollHeight;
+              const contentDiv = row.querySelector('.content');
+
+              // 1) 先塞原文字
+              contentDiv.textContent = m.content ?? '';
+
+              // 2) 若這筆是 JSON（例如你手動貼上 JSON 以測試），也支援轉卡片
+              //    把同一份字串放進 data-json，呼叫 render 轉為卡片
+              if (m.content && (m.content.trim().startsWith('[') || m.content.trim().startsWith('{'))) {
+                contentDiv.setAttribute('data-json', m.content.trim());
+                renderBubbleContent(contentDiv);
+              }
+
+              // 加進列表＆清空輸入
+              const container = document.getElementById("messages");
+              container.appendChild(row);
+              container.scrollTop = container.scrollHeight;
               ta.value = '';
               autoresize();
             } catch (err) {
@@ -422,4 +543,3 @@
           });
         });
     </script>
-    }
