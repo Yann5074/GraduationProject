@@ -21,6 +21,7 @@ namespace GraduationProject.Interfaces
         bool SkuExists(string sku, int? excludeVariantId = null);
 
         (string url, string? mime) UploadAsset(IFormFile file);
+        (string url, string? mime) UploadAsset(IFormFile file, string? assetType);
 
         // ===== 下拉選單（分類 / 顏色 / 狀態 / 貼圖） =====
         List<SelectListItem> GetCategoryOptions();

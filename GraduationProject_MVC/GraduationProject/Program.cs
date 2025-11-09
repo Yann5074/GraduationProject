@@ -3,6 +3,7 @@ using GraduationProject.Interfaces;
 using GraduationProject.Models;
 using GraduationProject.Options;
 using GraduationProject.Services;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.StaticFiles;
@@ -13,6 +14,21 @@ using Common.Notifications;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+//調整 Kestrel 請求大小限制
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 200 * 1024 * 1024; // 200 MB
+});
+
+//調整 FormOptions
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 200 * 1024 * 1024; // 200 MB
+    options.ValueLengthLimit = int.MaxValue;
+    options.MultipartHeadersLengthLimit = int.MaxValue;
+});
+
 
 builder.Services.AddControllersWithViews();
 

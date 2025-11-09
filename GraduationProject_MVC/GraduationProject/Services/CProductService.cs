@@ -301,6 +301,7 @@ namespace GraduationProject.Services
             var now = DateTime.Now;
             foreach (var a in assets.Where(x => x != null && x.Deleted != true))
             {
+                if (string.IsNullOrWhiteSpace(a.Url)) continue;
                 var entity = new TProductAsset
                 {
                     FProductId = productId,
@@ -344,31 +345,62 @@ namespace GraduationProject.Services
             return pid;
         }
 
-        
+
         public (string url, string? mime) UploadAsset(IFormFile file)
+            => UploadAsset(file, null); // ★ 舊呼叫相容
+
+        public (string url, string? mime) UploadAsset(IFormFile file, string? assetType)
         {
-            if (file == null || file.Length == 0) throw new InvalidOperationException("Empty file.");
+            _logger.LogInformation("UploadAsset start, fileName={FileName}, length={Length}, assetType={AssetType}",
+                file?.FileName, file?.Length, assetType);
+
+            if (file == null || file.Length == 0)
+                throw new InvalidOperationException("Empty file.");
 
             var webRoot = _env.WebRootPath ?? Path.Combine(AppContext.BaseDirectory, "wwwroot");
-            var folder = Path.Combine(webRoot, "ProductImages");
-            if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
 
-            var ext = Path.GetExtension(file.FileName);
+            var ext = (Path.GetExtension(file.FileName) ?? "").ToLowerInvariant();
+
+            // 以 header 優先，其次副檔名判斷
+            bool isPbr = (assetType ?? "").StartsWith("pbr-", StringComparison.OrdinalIgnoreCase);
+            bool isGlb = string.Equals(assetType, "glb", StringComparison.OrdinalIgnoreCase) || ext == ".glb";
+            bool isGltf = string.Equals(assetType, "gltf", StringComparison.OrdinalIgnoreCase) || ext == ".gltf";
+
+            // 決定儲存資料夾
+            string subFolder;
+            if (isGlb || isGltf)
+                subFolder = Path.Combine("ProductImages", "3D", "Models");
+            else if (isPbr)
+                subFolder = Path.Combine("ProductImages", "3D", "Textures");
+            else
+                subFolder = Path.Combine("ProductImages");
+
+            var folder = Path.Combine(webRoot, subFolder);
+            Directory.CreateDirectory(folder);
+
+            var safeBase = Path.GetFileNameWithoutExtension(file.FileName) ?? "file";
+            foreach (var c in Path.GetInvalidFileNameChars()) safeBase = safeBase.Replace(c, '_');
             if (string.IsNullOrWhiteSpace(ext)) ext = ".bin";
-            var name = $"{Guid.NewGuid():N}{ext}";
+
+            var name = $"{Guid.NewGuid():N}_{safeBase}{ext}";
             var full = Path.Combine(folder, name);
 
-            using (var fs = new FileStream(full, FileMode.CreateNew))
-            {
+            using (var fs = new FileStream(full, FileMode.Create, FileAccess.Write, FileShare.None))
                 file.CopyTo(fs);
-            }
 
-            var url = $"/ProductImages/{name}";
-            var mime = string.IsNullOrWhiteSpace(file.ContentType) ? null : file.ContentType;
+            var url = "/" + Path.Combine(subFolder, name).Replace('\\', '/');
+
+            string? mime = string.IsNullOrWhiteSpace(file.ContentType) ? null : file.ContentType;
+
+            // basecolor 依你需求將 mime 設成 null
+            if (string.Equals(assetType, "pbr-basecolor", StringComparison.OrdinalIgnoreCase))
+                mime = null;
+
+            _logger.LogInformation("UploadAsset done, url={Url}, mime={Mime}", url, mime);
             return (url, mime);
         }
 
-       
+
         public List<SelectListItem> GetCategoryOptions()
         {
             return _db.TCategories

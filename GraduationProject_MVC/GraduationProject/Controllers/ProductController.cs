@@ -3,6 +3,7 @@ using GraduationProject.Interfaces;
 using GraduationProject.Models;
 using GraduationProject.Services;
 using GraduationProject.ViewModels;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.CodeAnalysis;
@@ -108,13 +109,41 @@ namespace GraduationProject.Controllers
 
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult UploadAsset(IFormFile file)
+        [IgnoreAntiforgeryToken] // ★ 跨來源最穩（若同來源要開防偽，改成 [ValidateAntiForgeryToken] 並在前端帶 token）
+        public IActionResult UploadAsset(
+            [FromForm] IFormFile file,                                      // ★ 必須叫 file
+            [FromHeader(Name = "X-AssetType")] string? assetType = null)    // ★ 用 header 帶資產類型
         {
-            if (file == null || file.Length == 0) return BadRequest("No file.");
-            var (url, mime) = _ProductService.UploadAsset(file);
-            return Json(new { url, mime });
+            try
+            {
+                if (file == null || file.Length == 0)
+                    return BadRequest("檔案為空");
+
+                var (url, mime) = _ProductService.UploadAsset(file, assetType);
+
+                // basecolor 的 mime 按你的需求置為 null（若 service 已做可省略）
+                if (string.Equals(assetType, "pbr-basecolor", StringComparison.OrdinalIgnoreCase))
+                    mime = null;
+
+                return Json(new
+                {
+                    url,
+                    mime,
+                    name = Path.GetFileName(url),
+                    fileType = Path.GetExtension(url).TrimStart('.')
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "UploadAsset failed");
+                return BadRequest(ex.Message);
+            }
         }
+
+
+
+
+
 
         // --------- 小工具：建置 Create 用 VM ----------
         private CProductEditViewModel BuildCreateViewModel(CProductUpdateDTO dto)
@@ -195,114 +224,6 @@ namespace GraduationProject.Controllers
 
 
 
-        [HttpPost("UploadAsset")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UploadAsset(IFormFile file, [FromServices] IWebHostEnvironment env)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("檔案為空");
-
-            // 取得副檔名
-            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-
-            // 檔案大小限制
-            const long MaxImageSize = 10L * 1024 * 1024; // 10MB for images
-            const long Max3DModelSize = 100L * 1024 * 1024; // 100MB for 3D models
-
-            // 允許的圖片副檔名
-            var allowedImageExt = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-                { ".png", ".jpg", ".jpeg", ".gif", ".webp" };
-
-            // 允許的3D模型副檔名
-            var allowed3DModelExt = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-                { ".glb", ".gltf" };
-
-            string saveDir;
-            string publicUrlPrefix;
-
-            // 判斷檔案類型
-            if (allowedImageExt.Contains(ext))
-            {
-                // 處理圖片檔案
-                if (!string.IsNullOrWhiteSpace(file.ContentType) && !file.ContentType.StartsWith("image/"))
-                    return BadRequest("圖片檔案的 MIME 類型不正確");
-
-                if (file.Length > MaxImageSize)
-                    return BadRequest("圖片檔案過大，請小於 10MB");
-
-                // 儲存到 ProductImages 資料夾
-                var webRoot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                saveDir = Path.Combine(webRoot, "ProductImages");
-                publicUrlPrefix = "/ProductImages/";
-            }
-            else if (allowed3DModelExt.Contains(ext))
-            {
-                // 處理3D模型檔案
-                if (file.Length > Max3DModelSize)
-                    return BadRequest("3D模型檔案過大，請小於 100MB");
-
-                // 儲存到 ProductModels 資料夾
-                var webRoot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                saveDir = Path.Combine(webRoot, "ProductModels");
-                publicUrlPrefix = "/ProductModels/";
-            }
-            else
-            {
-                return BadRequest($"不支援的檔案類型。僅允許：圖片({string.Join(", ", allowedImageExt)}) 或 3D模型({string.Join(", ", allowed3DModelExt)})");
-            }
-
-            // 建立目錄
-            Directory.CreateDirectory(saveDir);
-
-            // 保留原始檔名
-            var originalFileName = Path.GetFileName(file.FileName);
-            var fileNameWithoutExt = Path.GetFileNameWithoutExtension(originalFileName);
-
-            // 處理檔名中的非法字元
-            var invalidChars = Path.GetInvalidFileNameChars();
-            foreach (var c in invalidChars)
-            {
-                fileNameWithoutExt = fileNameWithoutExt.Replace(c, '_');
-            }
-
-            // 檢查檔名是否已存在，如果存在就加上編號
-            var finalFileName = $"{fileNameWithoutExt}{ext}";
-            var fullPath = Path.Combine(saveDir, finalFileName);
-
-            int counter = 1;
-            while (System.IO.File.Exists(fullPath))
-            {
-                finalFileName = $"{fileNameWithoutExt}_{counter}{ext}";
-                fullPath = Path.Combine(saveDir, finalFileName);
-                counter++;
-            }
-
-            // 寫檔
-            await using (var fs = System.IO.File.Create(fullPath))
-            {
-                await file.CopyToAsync(fs);
-            }
-
-            var publicUrl = $"{publicUrlPrefix}{finalFileName}";
-
-            // 根據檔案類型設定正確的 MIME type
-            string mimeType = file.ContentType;
-            if (ext == ".glb")
-                mimeType = "model/gltf-binary";
-            else if (ext == ".gltf")
-                mimeType = "model/gltf+json";
-
-            return Json(new
-            {
-                url = publicUrl,                      // 實際儲存的 URL
-                mime = mimeType,                      // MIME 類型
-                name = finalFileName,                 // 實際儲存的檔名
-                originalFileName = originalFileName,  // 原始檔名
-                fileType = ext.TrimStart('.'),        // 檔案類型
-                isImage = allowedImageExt.Contains(ext),  // 是否為圖片
-                is3DModel = allowed3DModelExt.Contains(ext)  // 是否為3D模型
-            });
-        }
 
     }
 
