@@ -76,13 +76,13 @@ const fetchImagesFor = async (list) => {
 
 /** 點卡片跳商品詳頁 */
 const getDetailTo = (p) => ({
-  name: 'ProductDetail',   // 🔸你的詳頁路由名稱，如不同請修改這裡
+  name: 'ProductDetail',
   params: { id: p.productId }
 })
 
 // ====== lifecycle ======
 onMounted(async () => {
-  const from = new Date(Date.now() - 60 * 24 * 3600 * 1000).toISOString()
+  const from = new Date(Date.now() - 365 * 24 * 3600 * 1000).toISOString()//把365天換成毫秒
   const to = new Date().toISOString()
 
   try {
