@@ -227,7 +227,7 @@ namespace ApiProject.Controllers
                         FSenderType = "bot",  //寫死 因為AI一定回
                         FSenderId = "bot01",   // ← 傳送者 bot 的編號
                         FContent = json,
-                        FContentType = "text",
+                        FContentType = "ai",
                         FCreatedAt = DateTime.Now
                     };
 

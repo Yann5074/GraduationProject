@@ -415,7 +415,6 @@
             }
         }
 
-                <script>
         // 5️⃣ 啟動
         startConnection();
 
@@ -456,7 +455,7 @@
               <div class="product-grid">
                 ${items.map(it => `
                   <a class="product-card" href="${(it.linkUrl || '#')}" target="_blank" rel="noopener">
-                    <img src="${(it.imageUrl ? ('https://localhost:7131' + it.imageUrl) : 'https://placehold.co/300x200?text=Product')}" />
+                    <img src="${(it.ImageUrl ? ('https://localhost:7131' + it.ImageUrl) : 'https://placehold.co/300x200?text=Product')}" />
                     <div class="info">
                       <div class="name">${(it.name || '')}</div>
                       <div class="meta">
@@ -531,7 +530,7 @@
 
               // 加進列表＆清空輸入
               const container = document.getElementById("messages");
-              container.appendChild(row);
+              // container.appendChild(row);
               container.scrollTop = container.scrollHeight;
               ta.value = '';
               autoresize();

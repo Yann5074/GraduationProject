@@ -109,7 +109,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted,nextTick, watch } from 'vue'
 import http from '@/api/axios'
 import * as signalR from '@microsoft/signalr'
 
@@ -144,9 +144,9 @@ const showTemplates = ref(true) // ★
 // ★新增：三個模板（按鈕 → 依序推送 steps）
 const TEMPLATES = [ // ★
   {
-    label: '我想要了解產品規格',
+    label: '我想要了解SING 單人沙發產品規格',
     steps: [
-      { role: 'member', content: '我想要了解產品規格' },
+      { role: 'member', content: '我想要了解SING 單人沙發產品規格' },
       { role: 'bot', content: '您好，您詢問的產品為 SING 單人沙發。', hideAlsoViewed: true },
       { role: 'bot', items: [
           {
@@ -163,7 +163,7 @@ const TEMPLATES = [ // ★
     ]
   },
   {
-    label: 'SING 單人沙發 vs Tonbo 雙人沙發',
+    label: 'SING 單人沙發 與 Tonbo 雙人沙發的差異',
     steps: [
       { role: 'member', content: '我想要比較產品：SING 單人沙發 與 Tonbo 雙人沙發的差異' },
       { role: 'bot', content: '您好，以下為這兩款家具產品的敘述與資訊：', hideAlsoViewed: true },
@@ -207,7 +207,7 @@ const connection = new signalR.HubConnectionBuilder()
   .withUrl('https://localhost:7131/chathub')
   .withAutomaticReconnect()
   .build()
-
+   
 onMounted(async () => {
   // 收訊（後端推的是「一個物件 payload」）
   connection.on('ReceiveMessage', (payload: any) => {
@@ -244,7 +244,11 @@ const box = ref<HTMLElement | null>(null)
 
 function scrollToBottom() {
   if (!box.value) return
-  box.value.scrollTop = box.value.scrollHeight
+  // 保險做法：放到下一幀，確保 layout 完成
+  requestAnimationFrame(() => {
+    if (!box.value) return
+    box.value.scrollTop = box.value.scrollHeight
+  })
 }
 
 async function loadMessages() {
@@ -255,6 +259,7 @@ async function loadMessages() {
   )
   selectedId.value = data.selectedId
   messages.value = data.messages ?? []
+  await nextTick() 
   scrollToBottom()
 
   showTemplates.value = true // ★每次進入聊天室都顯示模板
