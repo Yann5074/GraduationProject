@@ -124,17 +124,17 @@ const ALSO_VIEWED = [
   {
     img: 'https://localhost:7131/ProductImages/03.jpeg',
     title: 'EAGO 椅凳',
-    link: '#',
+    link: 'http://localhost:5173/products/1',
   },
   {
     img: 'https://localhost:7131/ProductImages/t01.webp',
     title: 'ROUND 雙色圓桌',
-    link: '#',
+    link: 'http://localhost:5173/products/2',
   },
   {
     img: 'https://localhost:7131/ProductImages/table01.webp',
     title: 'Rey 咖啡桌',
-    link: '#',
+    link: 'http://localhost:5173/products/3',
   },
 ]
 
@@ -154,7 +154,7 @@ const TEMPLATES = [ // ★
             imageUrl: '/ProductImages/STANDARD_SOFA_Brick_Red.jpg',
             price: 25600,
             inStock: true,
-            linkUrl: '#',
+            linkUrl: 'http://localhost:5173/products/7',
             desc: '亞麻布加超纖皮提供您舒適座感，白蠟木紋理美觀自然，安全穩固，北歐簡約設計，時尚有型'
           }
         ],
@@ -173,7 +173,7 @@ const TEMPLATES = [ // ★
             imageUrl: '/ProductImages/STANDARD_SOFA_Brick_Red.jpg',
             price: 25600,
             inStock: true,
-            linkUrl: '#',
+            linkUrl: 'http://localhost:5173/products/7',
             desc: '亞麻布加超纖皮提供您舒適座感，白蠟木紋理美觀自然，安全穩固，北歐簡約設計，時尚有型'
           },
           {
@@ -181,7 +181,7 @@ const TEMPLATES = [ // ★
             imageUrl: '/ProductImages/Tonbo_Sofa_Black_1-1_1.jpg',
             price: 35600,
             inStock: true,
-            linkUrl: '#',
+            linkUrl: 'http://localhost:5173/products/9',
             desc: 'Tonbo Sofa 擁有較小的尺寸與邊緣柔和的方形結構，並配有厚實的軟墊，是十分適合飯店環境和辦公室的理想選擇。'
           }
         ],

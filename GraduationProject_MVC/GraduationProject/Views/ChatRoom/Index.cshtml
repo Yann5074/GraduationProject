@@ -5,6 +5,19 @@
     }
 
     <style>
+
+
+    .ai-empty {
+        opacity: .95;
+        line-height: 1.6;
+    }
+
+        .ai-empty .tags {
+            margin-top: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
         /*新增的*/
     .product-grid {
         display: grid;
@@ -241,6 +254,8 @@
                     opacity: .5;
                     cursor: not-allowed;
                 }
+
+
     </style>
 
 
@@ -433,24 +448,33 @@
           if (!ta || !btn) return;
 
           // ========= 會把 .content 裡的 JSON 轉成商品卡片 =========
-          function renderBubbleContent(contentEl) {
-            if (!contentEl) return;
-            // 來源一：我們把原文字放在 innerText，同時把同一份字串放 data-json（安全起見）
-            // 若你已經把 data-json 放在 Razor，就用那個，否則就抓 innerText 兜用
-            const rawAttr = contentEl.getAttribute('data-json');
-            const raw = (rawAttr ?? contentEl.textContent ?? '').trim();
-            if (!raw || !(raw.startsWith('[') || raw.startsWith('{'))) return;
+        function renderBubbleContent(contentEl) {
+          if (!contentEl) return;
 
-            let payload = null;
-            try { payload = JSON.parse(raw); } catch { return; }
+          // 先讀 data-json；沒有就用文字內容兜
+          const rawAttr = contentEl.getAttribute('data-json');
+          const raw = (rawAttr ?? contentEl.textContent ?? '').trim();
+          if (!raw || !(raw.startsWith('[') || raw.startsWith('{'))) return;
 
-            const items = Array.isArray(payload) ? payload
-                        : (payload && Array.isArray(payload.items) ? payload.items : null);
-            const contentText = Array.isArray(payload) ? '找到幾個符合條件的商品，給您參考～'
-                              : (payload && payload.content) || '';
+          let payload = null;
+          try { payload = JSON.parse(raw); } catch { return; }
 
-            if (!items || !items.length) return;
+          // 支援兩種格式：
+          // 1) 舊：直接是 items 陣列
+          // 2) 新：{ content, parsed, items }
+          const items = Array.isArray(payload) ? payload
+                      : (payload && Array.isArray(payload.items) ? payload.items : null);
 
+          // 顯示在卡片下方的 AI 說明文字
+          const contentText = Array.isArray(payload)
+            ? '找到幾個符合條件的商品，給您參考～'
+            : (payload && payload.content) || '';
+
+          // 取 parsed（若有的話，用來顯示目前條件）
+          const parsed = !Array.isArray(payload) && payload && payload.parsed ? payload.parsed : null;
+
+          // ✅ 情況 A：有商品 → 顯示商品卡
+          if (items && items.length) {
             const html = `
               <div class="product-grid">
                 ${items.map(it => `
@@ -470,7 +494,33 @@
               ${contentText ? `<div class="ai-text">${contentText}</div>` : ''}
             `;
             contentEl.innerHTML = html;
+            return;
           }
+
+          // ✅ 情況 B：沒有商品 → 顯示空狀態 +（可選）條件標籤
+         const fallbackText = '目前沒有剛好符合的商品，我可以幫您換個條件再找找看喔～';
+
+          // 將 parsed 轉為小標籤（若有）
+          let tagsHtml = '';
+          if (parsed && (parsed.Category || parsed.Color || parsed.PriceMin != null || parsed.PriceMax != null)) {
+            const tags = [];
+            if (parsed.Category) tags.push(`<span class="tag">分類：${parsed.Category}</span>`);
+            if (parsed.Color)    tags.push(`<span class="tag">顏色：${parsed.Color}</span>`);
+            if (parsed.PriceMin != null || parsed.PriceMax != null) {
+              const min = parsed.PriceMin != null ? Number(parsed.PriceMin).toLocaleString() : '—';
+              const max = parsed.PriceMax != null ? Number(parsed.PriceMax).toLocaleString() : '—';
+              tags.push(`<span class="tag">預算：${min} ~ ${max}</span>`);
+            }
+            tagsHtml = `<div class="tags">${tags.join('')}</div>`;
+          }
+
+          contentEl.innerHTML = `
+            <div class="ai-empty">
+              ${fallbackText}
+              ${tagsHtml}
+            </div>
+          `;
+        }
 
           // 初次載入：把所有 .bubble .content 都跑一次轉換（若是 JSON 會變卡片）
           document.querySelectorAll('.bubble .content').forEach(renderBubbleContent);
