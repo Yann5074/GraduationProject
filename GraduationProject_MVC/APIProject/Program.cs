@@ -11,12 +11,19 @@ using Microsoft.Extensions.FileProviders;
 using System.Security.AccessControl;
 using Common.Notifications;
 using Microsoft.Data.SqlClient;
+using OpenAI.Chat;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 builder.Services.AddSignalR();
-builder.Services.AddScoped<ChatAiProductService>();
+builder.Services.AddSingleton<ChatClient>(serviceProvider =>
+{
+    var key = "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";
+    var model = "gpt-4o";
+
+    return new ChatClient(model, key);
+});
 
 
 
@@ -39,7 +46,8 @@ builder.Services.AddCors(option =>
     });
 });
 
-
+//AI註冊的
+builder.Services.AddScoped<IAiProductService, AiProductService>();
 // DbContext（只保留一次）
 builder.Services.AddDbContext<dbFurniMartContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("dbFurniMart")));
