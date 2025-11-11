@@ -1,24 +1,29 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿
+using Microsoft.AspNetCore.SignalR;
 
 namespace ApiProject.Hubs
 {
     public class ChatHub : Hub
     {
-        // 前端在進入聊天室後要先呼叫
+        // 前端連上後要呼叫，加入 room:{chatRoomId}
         public async Task JoinRoom(string chatRoomId)
         {
-            //room:16 門牌號碼
-            var roomGroup = $"room:{chatRoomId}";
-
-            //這條連線加入這個群組，之後 Clients.Group(roomGroup) 就能只推給在這組的連線。
-            //Context.ConnectionId：這個使用者目前這條 SignalR 連線的 ID。
-            await Groups.AddToGroupAsync(Context.ConnectionId, roomGroup);
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"room:{chatRoomId}");
         }
 
-        // 如果要從 Hub 直接發送也可以用這支
+        // （選用）員工或系統直接廣播（物件 payload）
         public async Task SendToRole(string chatRoomId, string senderType, string content)
         {
-            await Clients.Group($"room:{chatRoomId}").SendAsync("ReceiveMessage", content, senderType);
+            await Clients.Group($"room:{chatRoomId}")
+                .SendAsync("ReceiveMessage", new
+                {
+                    chatRoomId,
+                    senderType,  // "employee" / "member" / "user" / "bot"
+                    content,
+                    createdAt = DateTime.UtcNow
+                    
+                }); //記得加上,ct
         }
     }
 }
+
