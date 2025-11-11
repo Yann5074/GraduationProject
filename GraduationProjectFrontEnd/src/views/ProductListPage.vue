@@ -503,7 +503,7 @@ watch(() => route.query, () => {
 onMounted(async () => {
   await withLoading(async () =>{
     await loadFilterOptions()
-    syncFiltersFromURL()
+    /*syncFiltersFromURL()*/
     await loadProducts()
   })
 })
