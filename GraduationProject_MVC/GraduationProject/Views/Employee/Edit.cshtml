@@ -30,13 +30,13 @@
             </div>
 
             <div class="mb-3">
-                <label asp-for="FPhone" class="form-label"></label>
+                <label asp-for="FPhone" class="form-label">電話</label>
                 <input asp-for="FPhone" class="form-control" type="tel" />
                 <span asp-validation-for="FPhone" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
-                <label asp-for="FEmail" class="form-label"></label>
+                <label asp-for="FEmail" class="form-label">Email</label>
                 <input asp-for="FEmail" class="form-control" type="email" />
                 <span asp-validation-for="FEmail" class="text-danger"></span>
             </div>
@@ -84,7 +84,7 @@
             </div>
 
             <div class="mb-3">
-                <label asp-for="FBloodType" class="form-label"></label>
+                <label asp-for="FBloodType" class="form-label">血型</label>
                 <select asp-for="FBloodType" class="form-select">
                     <option value="">請選擇</option>
                     <option value="A">A</option>
@@ -96,7 +96,7 @@
             </div>
 
             <div class="mb-3">
-                <label asp-for="FHireDate" class="form-label"></label>
+                <label asp-for="FHireDate" class="form-label">到職日</label>
                 <input asp-for="FHireDate" type="date" class="form-control" />
                 <span asp-validation-for="FHireDate" class="text-danger"></span>
             </div>
@@ -146,7 +146,7 @@
                 <span asp-validation-for="FStatusId" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="FAccount" class="form-label"></label>
+                <label asp-for="FAccount" class="form-label">帳號</label>
                 <input asp-for="FAccount" class="form-control" readonly />
                 <span asp-validation-for="FAccount" class="text-danger"></span>
             </div>
@@ -168,13 +168,13 @@
             </div>
 
             <div class="mb-3">
-                <label asp-for="FLoginTime" class="form-label"></label>
+                <label asp-for="FLoginTime" class="form-label">註冊日期</label>
                 <input asp-for="FLoginTime" class="form-control" type="datetime-local" />
                 <span asp-validation-for="FLoginTime" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
-                <label asp-for="FChangePasswordTime" class="form-label"></label>
+                <label asp-for="FChangePasswordTime" class="form-label">最近更新密碼時間</label>
                 <input asp-for="FChangePasswordTime" class="form-control" type="datetime-local" readonly />
                 <span asp-validation-for="FChangePasswordTime" class="text-danger"></span>
             </div>
